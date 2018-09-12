@@ -33,6 +33,9 @@ include_directories(SYSTEM ${OpenMP_INCLUDE_PATH})
 
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("${PROJECT_SOURCE_DIR}/thirdparty")
+
+
 
 set(raspigcd2_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/raspigcd.cpp )
 file(GLOB_RECURSE lib_SOURCES "src/*.cpp")
@@ -40,7 +43,7 @@ file(GLOB_RECURSE raspigcd2_TESTS "tests/*.cpp")
 list(REMOVE_ITEM lib_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/raspigcd.cpp)
 
 add_library(raspigcd2 SHARED ${lib_SOURCES})
-add_executable(gcd ${raspigcd2_SOURCES})
+add_executable(gcd ${raspigcd2_SOURCES} ${lib_SOURCES})
 #add_executable(gcd_test EXCLUDE_FROM_ALL ${raspigcd2_TESTS} ) 
 
 install (TARGETS raspigcd2 DESTINATION lib)
