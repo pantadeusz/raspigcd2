@@ -23,6 +23,7 @@ class stepper_config_t
     int dir;
     int en;
     int step;
+    double stepsPerMm;
 };
 
 /**
@@ -53,6 +54,8 @@ class configuration_t
 
     /// zwraca statyczna domy
     static configuration_t &get();
+
+    configuration_t &load_defaults();
 };
 
 } // namespace raspigcd
