@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     double dt = cfg.tick_duration;
     double a = 5000;
     int ticks = 0;
-    for (double p = 0.0; p < 2;) {
+/*    for (double p = 0.0; p < 3;) {
         //if (v < 500) {
             v = (v + a * dt) * 0.999;
         //} else v = 500;
@@ -36,35 +36,28 @@ int main(int argc, char **argv)
         }
 
         executor_commands.push_back(executor_command);
-    }
-/* /
-    for (int avv = 5; avv >= 0; avv--) {
-    for (int i = 0; i < cfg.hardware.steppers[2].stepsPerMm*1; i++) {
+    } */
+
+    for (int avv = 20; avv >= 10; avv--) {
+    for (int i = 0; i < cfg.hardware.steppers[2].stepsPerMm*5; i++) {
         raspigcd::executor_command_t executor_command;
         executor_command.v = 0;
-        executor_command.b.dir0 = 1;
-        executor_command.b.step0 = 1;
-        executor_command.b.step1 = 0;
-        executor_command.b.step2 = 0;
-        executor_command.b.step3 = 0;
+        executor_command.b.dir2 = 1;
+        executor_command.b.step2 = 1;
         executor_commands.push_back(executor_command);
-        executor_command.b.step0 = 0;
+        executor_command.b.step2 = 0;
         for (int j = 0; j < avv; j++) executor_commands.push_back(executor_command);
     }
-    for (int i = 0; i < cfg.hardware.steppers[2].stepsPerMm*1; i++) {
+    for (int i = 0; i < cfg.hardware.steppers[2].stepsPerMm*5; i++) {
         raspigcd::executor_command_t executor_command;
         executor_command.v = 0;
-        executor_command.b.dir0 = 0;
-        executor_command.b.step0 = 1;
-        executor_command.b.step1 = 0;
-        executor_command.b.step2 = 0;
-        executor_command.b.step3 = 0;
+        executor_command.b.dir2 = 0;
+        executor_command.b.step2 = 1;
         executor_commands.push_back(executor_command);
-        executor_command.b.step0 = 0;
+        executor_command.b.step2 = 0;
         for (int j = 0; j < avv; j++) executor_commands.push_back(executor_command);
     }
     }
-  */
     executor.enable(true);
     executor.execute(executor_commands);
     executor.enable(false);

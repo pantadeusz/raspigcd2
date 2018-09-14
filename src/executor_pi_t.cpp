@@ -169,7 +169,11 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
     configuration_t conf = configuration_t::get();
     auto steppers = conf.hardware.steppers;
     // commands are in fomat step, dir
-    int step_clear = 0;
+    unsigned int step_clear =
+            (1 << steppers[0].step) |
+            (1 << steppers[1].step) |
+            (1 << steppers[2].step) |
+            (1 << steppers[3].step);
 
     auto ttime = std::chrono::microseconds((unsigned long) conf.tick_duration*1000000);
     auto t = std::chrono::system_clock::now();
@@ -177,19 +181,19 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
     for (auto c : commands)
     {
         // step direction
-        int dir_set =
+        unsigned int dir_set =
             (c.b.dir0 << steppers[0].dir) |
             (c.b.dir1 << steppers[1].dir) |
             (c.b.dir2 << steppers[2].dir) |
             (c.b.dir3 << steppers[3].dir);
-        int dir_clear =
+        unsigned int dir_clear =
             ((1 - c.b.dir0) << steppers[0].dir) |
             ((1 - c.b.dir1) << steppers[1].dir) |
             ((1 - c.b.dir2) << steppers[2].dir) |
             ((1 - c.b.dir3) << steppers[3].dir);
 
         // shoud do step?
-        int step_set =
+        unsigned int step_set =
             (c.b.step0 << steppers[0].step) |
             (c.b.step1 << steppers[1].step) |
             (c.b.step2 << steppers[2].step) |
@@ -204,6 +208,7 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
         {volatile int delayloop = 1000; while (delayloop--);}
         // clear all steps
         GPIO_CLR = step_clear;
+        {volatile int delayloop = 1000; while (delayloop--);}
         std::this_thread::sleep_until(nextT);
         t = nextT;
         ttime + t;
