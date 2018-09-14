@@ -24,18 +24,14 @@ int main(int argc, char **argv)
         p = p + v*dt;
         raspigcd::executor_command_t executor_command;
         executor_command.v = 0;
-        executor_command.b.dir0 = 1;
-        
-        executor_command.b.step1 = 0;
-        executor_command.b.step2 = 0;
-        executor_command.b.step3 = 0;
+        executor_command.b.dir2 = 1;
 
         if (p > (((double)ticks)/cfg.hardware.steppers[2].stepsPerMm)) {
-            executor_command.b.step0 = 1;
+            executor_command.b.step2 = 1;
             ticks++;
             std::cerr << " ++ " << p << " " << v  << "  -> "  << (((double)ticks)/cfg.hardware.steppers[2].stepsPerMm) << std::endl;
         } else {
-            executor_command.b.step0 = 0;
+            executor_command.b.step2 = 0;
             std::cerr << "    " << p << " " << v  << "  -> "  << (((double)ticks)/cfg.hardware.steppers[2].stepsPerMm) << std::endl;
         }
 
