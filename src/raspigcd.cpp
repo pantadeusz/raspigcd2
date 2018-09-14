@@ -38,7 +38,7 @@ int main(int argc, char **argv)
         executor_commands.push_back(executor_command);
     } */
 
-    for (int avv = 20; avv >= 10; avv--) {
+    for (int avv = 500; avv >= 498; avv--) {
     for (int i = 0; i < cfg.hardware.steppers[2].stepsPerMm*5; i++) {
         raspigcd::executor_command_t executor_command;
         executor_command.v = 0;

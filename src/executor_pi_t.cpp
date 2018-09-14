@@ -202,13 +202,13 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
         // first set directions
         GPIO_SET = dir_set;
         GPIO_CLR = dir_clear;
-        {volatile int delayloop = 1000; while (delayloop--);}
+        {volatile int delayloop = 100; while (delayloop--);}
         // set step to do
         GPIO_SET = step_set;
-        {volatile int delayloop = 1000; while (delayloop--);}
+        {volatile int delayloop = 200; while (delayloop--);}
         // clear all steps
         GPIO_CLR = step_clear;
-        {volatile int delayloop = 1000; while (delayloop--);}
+        {volatile int delayloop = 100; while (delayloop--);}
         std::this_thread::sleep_until(nextT);
         t = nextT;
         ttime + t;
