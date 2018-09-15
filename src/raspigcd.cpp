@@ -76,24 +76,29 @@ int main(int argc, char **argv)
         executor_commands.push_back(executor_command);
     } */
 
-    for (int avv = 500; avv >= 498; avv--) {
+    executor.set_position({0,0,0,0});
+    for (int avv = 10; avv >= 1; avv--) {
     for (int i = 0; i < cfg.hardware.steppers[2].stepsPerMm*5; i++) {
         executor_command_t executor_command;
         executor_command.v = 0;
         executor_command.b.dir2 = 1;
-        executor_command.b.step2 = 1;
-        executor_commands.push_back(executor_command);
+
         executor_command.b.step2 = 0;
         for (int j = 0; j < avv; j++) executor_commands.push_back(executor_command);
+
+        executor_command.b.step2 = 1;
+        executor_commands.push_back(executor_command);
     }
     for (int i = 0; i < cfg.hardware.steppers[2].stepsPerMm*5; i++) {
         executor_command_t executor_command;
         executor_command.v = 0;
         executor_command.b.dir2 = 0;
-        executor_command.b.step2 = 1;
-        executor_commands.push_back(executor_command);
+
         executor_command.b.step2 = 0;
         for (int j = 0; j < avv; j++) executor_commands.push_back(executor_command);
+
+        executor_command.b.step2 = 1;
+        executor_commands.push_back(executor_command);
     }
     }
     executor.enable(true);
