@@ -3,6 +3,7 @@
 
 #include <executor_t.hpp>
 #include <configuration_t.hpp>
+#include <steps_t.hpp>
 
 /*
 
@@ -18,11 +19,11 @@ class executor_pi_t : public executor_t
     executor_pi_t();
     executor_pi_t(const executor_t& that) = delete;
   public:
-    std::array<int,4> steps_from_origin_;
+    steps_t steps_from_origin_;
 
 
-    void set_position(const std::array<int,4> &steps);
-    std::array<int,4> get_position() const;
+    void set_position(const steps_t &steps);
+    steps_t get_position() const;
 
     /**
    * executes list of commands.

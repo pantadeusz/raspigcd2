@@ -232,10 +232,10 @@ void executor_pi_t::enable(bool en)
     }
 }
 
-void executor_pi_t::set_position(const std::array<int,4> &steps) {
+void executor_pi_t::set_position(const steps_t &steps) {
     steps_from_origin_ = steps;
 }
-std::array<int,4> executor_pi_t::get_position() const {
+steps_t executor_pi_t::get_position() const {
     return steps_from_origin_;
 }
 

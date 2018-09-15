@@ -3,6 +3,7 @@
 
 #include <configuration_t.hpp>
 #include <array>
+#include <steps_t.hpp>
 
 /*
 
@@ -41,8 +42,8 @@ class executor_t
      * @brief set the value of steps from origin (in steps, not in mm or other unit)
      * 
      */
-    virtual void set_position(const std::array<int,4> &steps)  = 0;
-    virtual std::array<int,4> get_position() const = 0;
+    virtual void set_position(const steps_t &steps)  = 0;
+    virtual steps_t get_position() const = 0;
 
     /**
    * executes list of commands.
