@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     } */
 
     executor.set_position({0,0,0,0});
-    for (int avv = 10; avv >= 1; avv--) {
+    for (int avv = 30; avv >= 10; avv-=5) {
     for (int i = 0; i < cfg.hardware.steppers[2].stepsPerMm*5; i++) {
         executor_command_t executor_command;
         executor_command.v = 0;
