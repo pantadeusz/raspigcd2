@@ -26,7 +26,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <thread>
-
+#include <cstring>
 // RASPBERRY PI GPIO - docs from http://www.pieter-jan.com/node/15
 
 #include <stdio.h>
@@ -109,8 +109,9 @@ namespace raspigcd
 executor_pi_t::executor_pi_t()
 {
     configuration_t &configuration = configuration_t::get();
-    if (map_peripheral(&gpio) == -1) {
-            throw std::invalid_argument("Failed to map the physical GPIO registers into the virtual memory space.");
+    if (map_peripheral(&gpio) == -1)
+    {
+        throw std::invalid_argument("Failed to map the physical GPIO registers into the virtual memory space.");
     }
     // Define pin 7 as output
     for (auto c : configuration.hardware.steppers)
@@ -130,12 +131,11 @@ executor_pi_t::~executor_pi_t()
     unmap_peripheral(&gpio);
 }
 
-executor_pi_t &executor_pi_t::get() {
+executor_pi_t &executor_pi_t::get()
+{
     static executor_pi_t instance;
     return instance;
 }
-
-
 
 /** from Gordon's Wiring Pi */
 /* void dmseconsHard (unsigned int howLong)
@@ -166,16 +166,25 @@ void dmsecons (unsigned int howLong)
 
 int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
 {
+    {
+        sched_param sch_params;
+        sch_params.sched_priority = sched_get_priority_max(SCHED_RR);
+
+        if (pthread_setschedparam(pthread_self(), SCHED_RR, &sch_params))
+        {
+            std::cerr << "Warning: Failed to set Thread scheduling : " << std::strerror(errno) << std::endl;
+        }
+    }
     configuration_t conf = configuration_t::get();
     auto steppers = conf.hardware.steppers;
     // commands are in fomat step, dir
     unsigned int step_clear =
-            (1 << steppers[0].step) |
-            (1 << steppers[1].step) |
-            (1 << steppers[2].step) |
-            (1 << steppers[3].step);
+        (1 << steppers[0].step) |
+        (1 << steppers[1].step) |
+        (1 << steppers[2].step) |
+        (1 << steppers[3].step);
 
-    auto ttime = std::chrono::microseconds((unsigned long) (conf.tick_duration/0.000001 ));
+    auto ttime = std::chrono::microseconds((unsigned long)(conf.tick_duration / 0.000001));
     auto t = std::chrono::system_clock::now();
     auto nextT = ttime + t;
     int current_tick_n = 0;
@@ -203,14 +212,26 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
         // first set directions
         GPIO_SET = dir_set;
         GPIO_CLR = dir_clear;
-        {volatile int delayloop = 50; while (delayloop--);}
+        {
+            volatile int delayloop = 50;
+            while (delayloop--)
+                ;
+        }
         // set step to do
         GPIO_SET = step_set;
         nextT = t + ttime * current_tick_n;
-        {volatile int delayloop = 100; while (delayloop--);}
+        {
+            volatile int delayloop = 100;
+            while (delayloop--)
+                ;
+        }
         // clear all steps
         GPIO_CLR = step_clear;
-        {volatile int delayloop = 20; while (delayloop--);}
+        {
+            volatile int delayloop = 20;
+            while (delayloop--)
+                ;
+        }
         current_tick_n++;
         std::this_thread::sleep_until(nextT);
         //t = nextT;
@@ -235,12 +256,13 @@ void executor_pi_t::enable(bool en)
     }
 }
 
-void executor_pi_t::set_position(const steps_t &steps) {
+void executor_pi_t::set_position(const steps_t &steps)
+{
     steps_from_origin_ = steps;
 }
-steps_t executor_pi_t::get_position() const {
+steps_t executor_pi_t::get_position() const
+{
     return steps_from_origin_;
 }
-
 
 } // namespace raspigcd

@@ -59,9 +59,9 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
     distance_t target_position(0,0,0,0); // calculated as simulation in meters
     distance_t velocity(0,0,0,0); // current velocity in m/s
     distance_t force(0,0,0,0); // current force N
-    distance_t force_from_motor(10,10,10,10); // maximal force for given motor
-    distance_t friction_coeff(0.0001,0.0001,0.0001,0.0001); // maximal force for given motor
-    distance_t mass(10,10,10,10); // current mass in kg
+    distance_t force_from_motor(50,50,50,50); // maximal force for given motor
+    distance_t friction_coeff(0.0005,0.0005,0.0005,0.0005); // maximal force for given motor
+    distance_t mass(9,9,9,9); // current mass in kg
     distance_t break_distance(0.01,0.01,0.01,0.01); // 1mm 
 
 
