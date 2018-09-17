@@ -54,7 +54,7 @@ std::vector<executor_command_t>  genSinWave() {
 //    steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(0)*amplitude;
     for (double t = 0.0; t < T;t+=cfg.tick_duration) {
         steps_t new_steps;
-        new_steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(t*3.141592653589793238462643*8)*amplitude*std::sin(3.141592653589793238462643*t/T);
+        new_steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(t*3.141592653589793238462643*10)*amplitude*std::sin(3.141592653589793238462643*t/T);
         auto st = chase_steps(steps,new_steps);
         executor_commands.insert(executor_commands.end(),st.begin(), st.end());
         steps = new_steps;
