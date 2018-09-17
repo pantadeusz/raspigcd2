@@ -166,20 +166,7 @@ void dmsecons (unsigned int howLong)
 }
 / * end of copied code */
 
-int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
-{
-  {
-    sched_param sch_params;
-    sch_params.sched_priority = sched_get_priority_max(SCHED_RR);
-
-    if (pthread_setschedparam(pthread_self(), SCHED_RR, &sch_params))
-    {
-      std::cerr << "Warning: Failed to set Thread scheduling : "
-                << std::strerror(errno) << std::endl;
-    }
-  }
-
-  {
+void test_time_of_delays() {
   auto t0 = std::chrono::system_clock::now();
     {
     volatile int delayloop = 50;
@@ -200,8 +187,20 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
   auto t1 = std::chrono::system_clock::now();
   double elaspedTimeMs = std::chrono::duration<double, std::micro>(t1-t0).count();
   std::cerr << "time for tick: " << elaspedTimeMs << " microseconds"<< std::endl;
-  }
+}
 
+int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
+{
+  {
+    sched_param sch_params;
+    sch_params.sched_priority = sched_get_priority_max(SCHED_RR);
+
+    if (pthread_setschedparam(pthread_self(), SCHED_RR, &sch_params))
+    {
+      std::cerr << "Warning: Failed to set Thread scheduling : "
+                << std::strerror(errno) << std::endl;
+    }
+  }
 
   configuration_t conf = configuration_t::get();
   auto steppers = conf.hardware.steppers;
@@ -261,8 +260,6 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
     }
     current_tick_n++;
     std::this_thread::sleep_until(nextT);
-    // t = nextT;
-    // ttime + t;
   }
   return 0;
 }
