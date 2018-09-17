@@ -175,9 +175,10 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
             (1 << steppers[2].step) |
             (1 << steppers[3].step);
 
-    auto ttime = std::chrono::microseconds((unsigned long) conf.tick_duration*1000000);
+    auto ttime = std::chrono::microseconds((unsigned long) (conf.tick_duration/0.000001 ));
     auto t = std::chrono::system_clock::now();
     auto nextT = ttime + t;
+    int current_tick_n = 0;
     for (auto c : commands)
     {
         // step direction
@@ -202,16 +203,18 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
         // first set directions
         GPIO_SET = dir_set;
         GPIO_CLR = dir_clear;
-        {volatile int delayloop = 50; while (delayloop--);}
+        {volatile int delayloop = 40; while (delayloop--);}
         // set step to do
         GPIO_SET = step_set;
-        {volatile int delayloop = 100; while (delayloop--);}
+        {volatile int delayloop = 90; while (delayloop--);}
         // clear all steps
         GPIO_CLR = step_clear;
         {volatile int delayloop = 50; while (delayloop--);}
+        current_tick_n++;
+        nextT = t + ttime * current_tick_n;
         std::this_thread::sleep_until(nextT);
-        t = nextT;
-        ttime + t;
+        //t = nextT;
+        //ttime + t;
     }
     return 0;
 }

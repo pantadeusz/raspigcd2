@@ -12,7 +12,7 @@ configuration_t &configuration_t::get()
 
 
 configuration_t &configuration_t::load_defaults() {
-    tick_duration = 50.0/1000000.0;
+    tick_duration = 45.0*0.000001;
     hardware.spindles = {
         {pin : 18}
     };
