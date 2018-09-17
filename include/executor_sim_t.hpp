@@ -20,6 +20,8 @@
 #include <steps_t.hpp>
 #include <configuration_t.hpp>
 
+#include <mutex>
+
 /*
 
  This is the lowest level executor. It generates signals to pins
@@ -35,8 +37,8 @@ class executor_sim_t : public executor_t
     executor_sim_t();
     executor_sim_t(const executor_t& that) = delete;
 
-    steps_t steps_from_origin_;
-
+    steps_t _steps_from_origin;
+    static std::mutex _mutex_steps_from_origin;
   public:
 
     void set_position(const steps_t &steps);

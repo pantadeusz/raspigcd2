@@ -21,6 +21,8 @@
 #include <configuration_t.hpp>
 #include <steps_t.hpp>
 
+#include <atomic>
+
 /*
 
  This is the lowest level executor. It generates signals to pins
@@ -34,8 +36,8 @@ class executor_pi_t : public executor_t
     ~executor_pi_t();
     executor_pi_t();
     executor_pi_t(const executor_t& that) = delete;
+    std::atomic<int> _position[8];
   public:
-    steps_t steps_from_origin_;
 
 
     void set_position(const steps_t &steps);
