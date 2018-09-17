@@ -20,10 +20,11 @@ class spindle_config_t
 class stepper_config_t
 {
   public:
-    int dir;
-    int en;
-    int step;
-    double stepsPerMm;
+    int dir; // direction pin
+    int en; // enable pin
+    int step; // step pin
+    double stepsPerMm; // steps per mm linear movement that is on this motor
+    int direction_reverse; // should be the direction reversed?
 };
 
 /**

@@ -14,19 +14,12 @@
 namespace raspigcd
 {
 
+struct executor_motor_command_t {
+    unsigned char step: 1, dir: 1;
+};
+
 union executor_command_t {
-    struct 
-    {
-        unsigned char
-            step0 : 1,
-            dir0 : 1,
-            step1 : 1,
-            dir1 : 1,
-            step2 : 1,
-            dir2 : 1,
-            step3 : 1,
-            dir3 : 1;
-    } b;
+    executor_motor_command_t b[4];
     int v;
 };
 

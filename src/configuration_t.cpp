@@ -21,25 +21,29 @@ configuration_t &configuration_t::load_defaults() {
             dir : 27,
             en : 10,
             step : 22,
-            stepsPerMm : 100
+            stepsPerMm : 100,
+            direction_reverse:0
         },
         {
             dir : 4,
             en : 10,
             step : 17,
-            stepsPerMm : 100
+            stepsPerMm : 100,
+            direction_reverse:0
         },
         {
             dir : 9,
             en : 10,
             step : 11,
-            stepsPerMm : 100
+            stepsPerMm : 100,
+            direction_reverse:0
         },
         {
             dir : 0,
             en : 10,
             step : 5,
-            stepsPerMm : 100
+            stepsPerMm : 100,
+            direction_reverse:0
         }};
     hardware.buttons = {
         {pin : 21, pullup:true}, {pin : 20, pullup:true}, {pin : 16, pullup:true}, {pin : 12, pullup:true}};

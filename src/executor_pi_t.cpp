@@ -182,33 +182,33 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
     {
         // step direction
         unsigned int dir_set =
-            (c.b.dir0 << steppers[0].dir) |
-            (c.b.dir1 << steppers[1].dir) |
-            (c.b.dir2 << steppers[2].dir) |
-            (c.b.dir3 << steppers[3].dir);
+            (c.b[0].dir << steppers[0].dir) |
+            (c.b[1].dir << steppers[1].dir) |
+            (c.b[2].dir << steppers[2].dir) |
+            (c.b[3].dir << steppers[3].dir);
         unsigned int dir_clear =
-            ((1 - c.b.dir0) << steppers[0].dir) |
-            ((1 - c.b.dir1) << steppers[1].dir) |
-            ((1 - c.b.dir2) << steppers[2].dir) |
-            ((1 - c.b.dir3) << steppers[3].dir);
+            ((1 - c.b[0].dir) << steppers[0].dir) |
+            ((1 - c.b[1].dir) << steppers[1].dir) |
+            ((1 - c.b[2].dir) << steppers[2].dir) |
+            ((1 - c.b[3].dir) << steppers[3].dir);
 
         // shoud do step?
         unsigned int step_set =
-            (c.b.step0 << steppers[0].step) |
-            (c.b.step1 << steppers[1].step) |
-            (c.b.step2 << steppers[2].step) |
-            (c.b.step3 << steppers[3].step);
+            (c.b[0].step << steppers[0].step) |
+            (c.b[1].step << steppers[1].step) |
+            (c.b[2].step << steppers[2].step) |
+            (c.b[3].step << steppers[3].step);
 
         // first set directions
         GPIO_SET = dir_set;
         GPIO_CLR = dir_clear;
-        {volatile int delayloop = 100; while (delayloop--);}
+        {volatile int delayloop = 50; while (delayloop--);}
         // set step to do
         GPIO_SET = step_set;
-        {volatile int delayloop = 200; while (delayloop--);}
+        {volatile int delayloop = 100; while (delayloop--);}
         // clear all steps
         GPIO_CLR = step_clear;
-        {volatile int delayloop = 100; while (delayloop--);}
+        {volatile int delayloop = 50; while (delayloop--);}
         std::this_thread::sleep_until(nextT);
         t = nextT;
         ttime + t;

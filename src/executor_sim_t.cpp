@@ -76,10 +76,7 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
     {
         int dir[4] = {0,0,0,0};
         // step direction
-        dir[0] = c.b.step0*(c.b.dir0*2 - 1);
-        dir[1] = c.b.step1*(c.b.dir1*2 - 1);
-        dir[2] = c.b.step2*(c.b.dir2*2 - 1);
-        dir[3] = c.b.step3*(c.b.dir3*2 - 1);
+        for (auto i : {0,1,2,3}) dir[i] = c.b[i].step*(c.b[i].dir*2 - 1);
         for (int i:{0,1,2,3}) {
             steps_from_origin_[i] += dir[i];
             target_position[i] = ((double)steps_from_origin_[i])/(conf.hardware.steppers[i].stepsPerMm*1000.0); // in meters
