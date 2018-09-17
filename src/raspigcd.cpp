@@ -38,7 +38,7 @@ std::vector<executor_command_t> chase_steps(const steps_t &steps_, steps_t desti
 
 std::vector<executor_command_t>  genSinWave() {
     static double amplitude = 10; // in milimeters
-    
+    static double T = 3;
     auto &cfg = configuration_t::get();
 
     std::vector<executor_command_t> executor_commands;
@@ -51,10 +51,10 @@ std::vector<executor_command_t>  genSinWave() {
          executor_commands.push_back(e);
     }
 
-    steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(0)*amplitude;
-    for (double t = 0.0; t < 3.0;t+=cfg.tick_duration) {
+//    steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(0)*amplitude;
+    for (double t = 0.0; t < T;t+=cfg.tick_duration) {
         steps_t new_steps;
-        new_steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(t*3.14*8)*amplitude;
+        new_steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(t*3.141592653589793238462643*8)*amplitude*std::sin(3.141592653589793238462643*t/T);
         auto st = chase_steps(steps,new_steps);
         executor_commands.insert(executor_commands.end(),st.begin(), st.end());
         steps = new_steps;
