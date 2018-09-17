@@ -23,7 +23,7 @@ using namespace raspigcd;
 int steps_to_do(const steps_t &steps_, const steps_t &destination_steps_)
 {
     int ret = 0;
-    for (int i = 0; i < steps_.size(); i++)
+    for (unsigned int i = 0; i < steps_.size(); i++)
     {
         ret = std::max(std::abs(steps_[i] - destination_steps_[i]), ret);
     }
@@ -37,16 +37,16 @@ int steps_to_do(const steps_t &steps_, const steps_t &destination_steps_)
  */
 std::vector<executor_command_t> chase_steps(const steps_t &steps_, steps_t destination_steps_)
 {
-    auto &cfg = configuration_t::get();
+    //auto &cfg = configuration_t::get();
     std::vector<executor_command_t> ret;
     auto steps = steps_;
     executor_command_t executor_command;
     do
     {
         executor_command.v = 0;
-        for (int i = 0; i < steps.size(); i++)
+        for (unsigned int i = 0; i < steps.size(); i++)
         {
-            executor_command.b[i].dir = ((destination_steps_[i] > steps[i]) ? 1 : 0) * ((cfg.hardware.steppers[i].direction_reverse) ? -1 : 1);
+            executor_command.b[i].dir = ((destination_steps_[i] > steps[i]) ? 1 : 0);// TODO: (not obviosu) * ((cfg.hardware.steppers[i].direction_reverse) ? -1 : 1);
             executor_command.b[i].step = (destination_steps_[i] - steps[i]) ? 1 : 0;
             if (destination_steps_[i] > steps[i])
                 steps[i]++;
@@ -62,7 +62,7 @@ std::vector<executor_command_t> chase_steps(const steps_t &steps_, steps_t desti
  * @brief generates sinusoidal wave with given maximal amplitude in milimeters and given time in seconds
  * 
  */
-std::vector<executor_command_t> genSinWave(double amplitude = 15, //< in milimeters
+std::vector<executor_command_t> generate_sin_wave_for_test(double amplitude = 15, //< in milimeters
                                            double T = 10,         //< in seconds
                                            int axis = 2           //< axis to move
                                            )
@@ -81,15 +81,26 @@ std::vector<executor_command_t> genSinWave(double amplitude = 15, //< in milimet
     }
 
     //    steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(0)*amplitude;
+    int minimal_step_skip = 1000000000;
     for (double t = 0.0; t < T; t += cfg.tick_duration)
     {
         steps_t new_steps;
         new_steps[axis] = cfg.hardware.steppers[axis].steps_per_mm * std::cos(t * 3.141592653589793238462643 * 5) * amplitude * std::sin(3.141592653589793238462643 * t / T);
         auto st = chase_steps(steps, new_steps);
+        if (st.size() == 1) {
+            if (st.back().v != 0){
+                int d = 0;
+                for (int i = executor_commands.size() -1; i > 0; i--) {
+                     if (executor_commands[i].v != 0) break;
+                     else d++;
+                }
+                if (d < minimal_step_skip) minimal_step_skip = d;
+            }
+        }
         executor_commands.insert(executor_commands.end(), st.begin(), st.end());
         steps = new_steps;
     }
-    std::cerr << "generated " << executor_commands.size() << "steps" << std::endl;
+    std::cerr << "generated " << executor_commands.size() << "steps; minimal step skip: " << minimal_step_skip << std::endl;
     return executor_commands;
 }
 
@@ -104,7 +115,7 @@ int main(int argc, char **argv)
 
     executor.enable(true);
     //executor.execute(executor_commands);
-    executor.execute(genSinWave());
+    executor.execute(generate_sin_wave_for_test());
     executor.enable(false);
 
     return 0;

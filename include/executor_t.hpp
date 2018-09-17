@@ -34,7 +34,7 @@ struct executor_motor_command_t {
 };
 
 union executor_command_t {
-    executor_motor_command_t b[4];
+    executor_motor_command_t b[DEGREES_OF_FREEDOM];
     int v;
 };
 

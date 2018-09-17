@@ -15,6 +15,9 @@
 
 #include "configuration_t_json.hpp"
 
+
+
+
 namespace raspigcd
 {
 
@@ -36,32 +39,31 @@ configuration_t &configuration_t::load_defaults() {
             dir : 27,
             en : 10,
             step : 22,
-            steps_per_mm : 100,
-            direction_reverse:0
+            steps_per_mm : 100
         },
         {
             dir : 4,
             en : 10,
             step : 17,
-            steps_per_mm : 100,
-            direction_reverse:0
+            steps_per_mm : 100
         },
         {
             dir : 9,
             en : 10,
             step : 11,
-            steps_per_mm : 100,
-            direction_reverse:0
+            steps_per_mm : 100
         },
         {
             dir : 0,
             en : 10,
             step : 5,
-            steps_per_mm : 100,
-            direction_reverse:0
+            steps_per_mm : 100
         }};
     hardware.buttons = {
         {pin : 21, pullup:true}, {pin : 20, pullup:true}, {pin : 16, pullup:true}, {pin : 12, pullup:true}};
+
+    layout.name = "corexy";
+    layout.scale = {1.0,1.0,1.0,1.0};
     return *this;
 }
 /* **************************************************************************
@@ -87,6 +89,25 @@ std::ostream &operator<<(std::ostream &os, spindle_config_t const &value)
     return os;
 }
 
+
+void to_json(nlohmann::json &j, const layout_config_t &p)
+{
+    j = nlohmann::json{
+        {"name", p.name},
+        {"scale", p.scale}
+        };
+}
+
+void from_json(const nlohmann::json &j, layout_config_t &p)
+{
+    p.name = j.value("name", p.name);
+    p.scale = j.value("scale", p.scale);
+}
+
+std::ostream &operator<<(std::ostream &os, layout_config_t const &value)
+{
+    nlohmann::json j = value; os << j.dump(2); return os;
+}
 
 
 void to_json(nlohmann::json &j, const stepper_config_t &p)
@@ -167,12 +188,14 @@ void to_json(nlohmann::json &j, const configuration_t &p)
 {
     j = nlohmann::json{
         {"hardware", p.hardware},
+        {"layout", p.layout },
         {"tick_duration", p.tick_duration}};
 }
 
 void from_json(const nlohmann::json &j, configuration_t &p)
 {
     p.hardware = j.value("hardware", p.hardware);
+    p.layout = j.value("layout", p.layout);
     p.tick_duration = j.value("tick_duration", p.tick_duration);
 }
 

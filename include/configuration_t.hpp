@@ -17,9 +17,14 @@
 #define __RASPIGCD_CONFIGURATION_T_HPP__
 
 #include <vector>
+#include <string>
 
 namespace raspigcd
 {
+
+const int DEGREES_OF_FREEDOM = 4;
+
+
 /**
  * configuration of spindle - spindle is controlled by separate thread
  * */
@@ -38,9 +43,8 @@ class stepper_config_t
     int dir; // direction pin
     int en; // enable pin
     int step; // step pin
-    double steps_per_mm; // steps per mm linear movement that is on this motor
+    double steps_per_mm; // steps per mm linear movement that is on this motor. This can be negative
     inline double steps_per_m() const {return steps_per_mm*1000.0;}
-    int direction_reverse; // should be the direction reversed?
 };
 
 /**
@@ -61,6 +65,14 @@ class hardware_config_t
     std::vector<button_config_t> buttons;
 };
 
+class layout_config_t
+{
+    public:
+    std::vector<double> scale; ///< scale along each axis (can be negative)
+    std::string name; ///< name of layout selected: 'corexy' 'cartesian'
+};
+
+
 class configuration_t
 {
   public:
@@ -68,6 +80,7 @@ class configuration_t
     double tick_duration; // czas ticku w sekundach. 0.00005 = 50mikrosekund
 
     hardware_config_t hardware;
+    layout_config_t layout;
 
     /// zwraca statyczna domy
     static configuration_t &get();
