@@ -210,7 +210,7 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
         {volatile int delayloop = 100; while (delayloop--);}
         // clear all steps
         GPIO_CLR = step_clear;
-        {volatile int delayloop = 50; while (delayloop--);}
+        {volatile int delayloop = 20; while (delayloop--);}
         current_tick_n++;
         std::this_thread::sleep_until(nextT);
         //t = nextT;
