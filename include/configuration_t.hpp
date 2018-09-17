@@ -23,7 +23,8 @@ class stepper_config_t
     int dir; // direction pin
     int en; // enable pin
     int step; // step pin
-    double stepsPerMm; // steps per mm linear movement that is on this motor
+    double steps_per_mm; // steps per mm linear movement that is on this motor
+    inline double steps_per_m() const {return steps_per_mm*1000.0;}
     int direction_reverse; // should be the direction reversed?
 };
 

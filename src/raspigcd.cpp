@@ -36,9 +36,13 @@ std::vector<executor_command_t> chase_steps(const steps_t &steps_, steps_t desti
     return ret;
 }
 
-std::vector<executor_command_t>  genSinWave() {
-    static double amplitude = 15; // in milimeters
-    static double T = 10;
+/**
+ * @brief generates sinusoidal wave with given maximal amplitude in milimeters and given time in seconds
+ * 
+ */
+std::vector<executor_command_t>  genSinWave(double amplitude = 15, // in milimeters
+        double T = 10 // in seconds
+        ) {
     auto &cfg = configuration_t::get();
 
     std::vector<executor_command_t> executor_commands;
@@ -54,7 +58,7 @@ std::vector<executor_command_t>  genSinWave() {
 //    steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(0)*amplitude;
     for (double t = 0.0; t < T;t+=cfg.tick_duration) {
         steps_t new_steps;
-        new_steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(t*3.141592653589793238462643*5)*amplitude*std::sin(3.141592653589793238462643*t/T);
+        new_steps[axis] = cfg.hardware.steppers[axis].steps_per_mm*std::cos(t*3.141592653589793238462643*5)*amplitude*std::sin(3.141592653589793238462643*t/T);
         auto st = chase_steps(steps,new_steps);
         executor_commands.insert(executor_commands.end(),st.begin(), st.end());
         steps = new_steps;
@@ -72,7 +76,7 @@ int main(int argc, char **argv)
     std::cout << cfg << std::endl;
     executor_t &executor = executor_t::get();
     std::vector<executor_command_t> executor_commands;
-    executor_commands.reserve(cfg.hardware.steppers[2].stepsPerMm*2*10);
+    executor_commands.reserve(cfg.hardware.steppers[2].steps_per_mm*2*10);
     double v = 0.0;
     double dt = cfg.tick_duration;
     double a = 5000;
@@ -100,7 +104,7 @@ int main(int argc, char **argv)
 
     executor.set_position({0,0,0,0});
     for (int avv = 30; avv >= 10; avv-=5) {
-    for (int i = 0; i < cfg.hardware.steppers[2].stepsPerMm*5; i++) {
+    for (int i = 0; i < cfg.hardware.steppers[2].steps_per_mm*5; i++) {
         executor_command_t executor_command;
         executor_command.v = 0;
         executor_command.b[2].dir = 1;
@@ -111,7 +115,7 @@ int main(int argc, char **argv)
         executor_command.b[2].step = 1;
         executor_commands.push_back(executor_command);
     }
-    for (int i = 0; i < cfg.hardware.steppers[2].stepsPerMm*5; i++) {
+    for (int i = 0; i < cfg.hardware.steppers[2].steps_per_mm*5; i++) {
         executor_command_t executor_command;
         executor_command.v = 0;
         executor_command.b[2].dir = 0;

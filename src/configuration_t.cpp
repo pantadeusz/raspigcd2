@@ -21,28 +21,28 @@ configuration_t &configuration_t::load_defaults() {
             dir : 27,
             en : 10,
             step : 22,
-            stepsPerMm : 100,
+            steps_per_mm : 100,
             direction_reverse:0
         },
         {
             dir : 4,
             en : 10,
             step : 17,
-            stepsPerMm : 100,
+            steps_per_mm : 100,
             direction_reverse:0
         },
         {
             dir : 9,
             en : 10,
             step : 11,
-            stepsPerMm : 100,
+            steps_per_mm : 100,
             direction_reverse:0
         },
         {
             dir : 0,
             en : 10,
             step : 5,
-            stepsPerMm : 100,
+            steps_per_mm : 100,
             direction_reverse:0
         }};
     hardware.buttons = {
@@ -80,7 +80,7 @@ void to_json(nlohmann::json &j, const stepper_config_t &p)
         {"step", p.step},
         {"dir", p.dir},
         {"en", p.en},
-        {"stepsPerMm", p.stepsPerMm}
+        {"steps_per_mm", p.steps_per_mm}
     };
 }
 
@@ -89,7 +89,9 @@ void from_json(const nlohmann::json &j, stepper_config_t &p)
     p.step = j.value("step", p.step);
     p.dir = j.value("dir", p.dir);
     p.en = j.value("en", p.en);
-    p.stepsPerMm = j.value("stepsPerMm", p.stepsPerMm);
+    p.steps_per_mm = j.value("steps_per_mm", p.steps_per_mm);
+    p.steps_per_mm = j.value("steps_per_m", p.steps_per_m())/1000.0;
+    if (p.steps_per_mm <= 1.0) throw std::invalid_argument("the steps_per_mm must be greater than 1.0");
 }
 
 std::ostream &operator<<(std::ostream &os, stepper_config_t const &value)

@@ -60,7 +60,7 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
     distance_t velocity(0,0,0,0); // current velocity in m/s
     distance_t force(0,0,0,0); // current force N
     distance_t force_from_motor(50,50,50,50); // maximal force for given motor
-    distance_t friction_coeff(0.0005,0.0005,0.0005,0.0005); // maximal force for given motor
+    distance_t friction_coeff(0.002,0.002,0.002,0.002); // maximal force for given motor
     distance_t mass(9,9,9,9); // current mass in kg
     distance_t break_distance(0.01,0.01,0.01,0.01); // 1mm 
 
@@ -79,7 +79,7 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
         for (auto i : {0,1,2,3}) dir[i] = c.b[i].step*(c.b[i].dir*2 - 1);
         for (int i:{0,1,2,3}) {
             steps_from_origin_[i] += dir[i];
-            target_position[i] = ((double)steps_from_origin_[i])/(conf.hardware.steppers[i].stepsPerMm*1000.0); // in meters
+            target_position[i] = ((double)steps_from_origin_[i])/(conf.hardware.steppers[i].steps_per_m()); // in meters
         }
 
         //std::cerr << "dir 0 " << (1.0/conf.hardware.steppers[0].stepsPerMm) << std::endl;
