@@ -20,6 +20,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <chrono>
 
 using namespace raspigcd;
 int steps_to_do(const steps_t &steps_, const steps_t &destination_steps_)
@@ -111,7 +112,7 @@ protected:
     std::vector<executor_command_t> _motion_plan;
     steps_t _steps;
 public:
-    std::vector<executor_command_t> get_motion_plan() const {return _motion_plan;};
+    const std::vector<executor_command_t> &get_motion_plan() const {return _motion_plan;};
     const steps_t &get_steps() const {return _steps;};
     const distance_t get_position(const distance_t &position_) const {return motor_layout_t::get().steps_to_cartesian(_steps);};
 
@@ -131,6 +132,7 @@ public:
         double T = length/velocity_mm_s_;
         double dt = cfg.tick_duration;
         double ds = velocity_mm_s_*dt;
+        _motion_plan.reserve(_motion_plan.size()+100000);
         for (int i = 0; (i*dt) < T; i++) {
             double t = dt*i;
             double s = ds*i;
@@ -146,6 +148,7 @@ public:
             _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
             _steps = end_position_;
         }
+        _motion_plan.shrink_to_fit();
         return *this;
     }
     motion_plan_t & gotoxy(const distance_t &end_position_, const double &velocity_mm_s_) {
@@ -159,7 +162,7 @@ public:
     std::vector < std::array<int, DEGREES_OF_FREEDOM> > get_accelerations(int tticks_count = 500)
     {
         static auto &cfg = configuration_t::get();
-        auto ticks_per_axis_left = [this](int i, int n, int dof) {
+/*        auto ticks_per_axis_left = [this](int i, int n, int dof) {
             int s = 0;
             int A = std::max((int)0, (int)(i - (int)(n >> 1)));
             for (int e = i-1; e >= A; e--)
@@ -177,15 +180,43 @@ public:
             }
             return s;
         };
-        
+  */      
         
         std::vector < std::array<int, DEGREES_OF_FREEDOM> > velocities(_motion_plan.size());
+        int ticks_l[DEGREES_OF_FREEDOM] = {0,0,0,0};
+        int ticks_r[DEGREES_OF_FREEDOM] = {0,0,0,0};
+        for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
+            for (int i = 1; i <= std::min((int)tticks_count>>1,(int)_motion_plan.size()-1); i++) {
+                ticks_r[dof] += ((int)_motion_plan[i].b[dof].step) * (((int)(_motion_plan[i].b[dof].dir << 1)) - 1);
+            }
+        }
         for (int i = 0; i < _motion_plan.size(); i++)
         {
             for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
-                if (_motion_plan[i].b[dof].step) velocities[i][dof] = ticks_per_axis_right(i,tticks_count,dof) - ticks_per_axis_left(i,tticks_count,dof);
+                //if (_motion_plan[i].b[dof].step) velocities[i][dof] = ticks_per_axis_right(i,tticks_count,dof) - ticks_per_axis_left(i,tticks_count,dof);
+                if (_motion_plan[i].b[dof].step) velocities[i][dof] = ticks_r[dof] - ticks_l[dof];
+                //if ((ticks_r[dof] != ticks_per_axis_right(i,tticks_count,dof)) || (ticks_l[dof] != ticks_per_axis_left(i,tticks_count,dof))) {
+                //    std::cerr << "i = " << i << std::endl;
+                //    std::cerr << "ticks_r[dof] " << ticks_r[dof] << " != "<<ticks_per_axis_right(i,tticks_count,dof) <<" ticks_per_axis_right(i,tticks_count,dof)" << std::endl;
+                //    std::cerr << "ticks_l[dof] " << ticks_l[dof] << " != "<<ticks_per_axis_left(i,tticks_count,dof) <<" ticks_per_axis_left(i,tticks_count,dof)" << std::endl;
+                //    throw "bla";
+                //}
             }
-            
+            for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
+                {
+                    auto ticks_r_i = (int)(i+1 + (tticks_count >> 1));
+                    if (ticks_r_i < _motion_plan.size()) 
+                        ticks_r[dof] += ((int)_motion_plan[ticks_r_i].b[dof].step) * (((int)(_motion_plan[ticks_r_i].b[dof].dir << 1)) - 1);
+                    if (i <  _motion_plan.size()) ticks_r[dof] -= ((int)_motion_plan[i+1].b[dof].step) * (((int)(_motion_plan[i+1].b[dof].dir << 1)) - 1);
+                }
+                {
+                    auto ticks_l_i = (int)(i - (tticks_count >> 1));
+                    if (ticks_l_i >= 0) 
+                        ticks_l[dof] -= ((int)_motion_plan[ticks_l_i].b[dof].step) * (((int)(_motion_plan[ticks_l_i].b[dof].dir << 1)) - 1);
+                    //if (i > 0 ) 
+                    ticks_l[dof] += ((int)_motion_plan[i].b[dof].step) * (((int)(_motion_plan[i].b[dof].dir << 1)) - 1);
+                }
+            }
 //            std::cout << "dof" << i;
 //            for (auto v : velocities[i]) std::cout << " " << v;
 //            std::cout  << std::endl;
@@ -247,10 +278,17 @@ int main(int argc, char **argv)
             .gotoxy(distance_t{5.0,-5.0,0.0,0.0},10.0)
             .gotoxy(distance_t{0.0,-5.0,0.0,0.0},10.0)
             .gotoxy(distance_t{0.0,0.0,0.0,0.0},10.0);
-        mp.fix_accelerations(500);
+
+        {
+            auto t0 = std::chrono::system_clock::now();
+                    mp.fix_accelerations(500);
+            auto t1 = std::chrono::system_clock::now();
+            double elaspedTimeMs = std::chrono::duration<double>(t1-t0).count();
+            std::cerr << "fix_accelerations time: " << elaspedTimeMs << " seconds"<< std::endl;
+        }
 
         auto acc = mp.get_accelerations();
-        // std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
+        std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
         // int i = 0;
         // for(auto e: acc) {
         //     std::cout << "dof" << i;

@@ -21,8 +21,6 @@
 #include <executor_pi_t.hpp>
 
 #include <chrono>
-
-#include <chrono>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
