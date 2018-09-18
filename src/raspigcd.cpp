@@ -250,14 +250,14 @@ int main(int argc, char **argv)
         mp.fix_accelerations(500);
 
         auto acc = mp.get_accelerations();
-        std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
-        int i = 0;
-        for(auto e: acc) {
-            std::cout << "dof" << i;
-            for (auto v : e) std::cout << " " << v;
-            std::cout  << std::endl;
-            i++;
-        }
+        // std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
+        // int i = 0;
+        // for(auto e: acc) {
+        //     std::cout << "dof" << i;
+        //     for (auto v : e) std::cout << " " << v;
+        //     std::cout  << std::endl;
+        //     i++;
+        // }
 
         executor.execute(mp.get_motion_plan());
     }
