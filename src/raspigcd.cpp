@@ -216,7 +216,14 @@ public:
                 }
             }
             new_motion_plan.shrink_to_fit();
-            _motion_plan = new_motion_plan;
+            _motion_plan.clear();
+            _motion_plan.reserve(new_motion_plan.size());
+            int empty_to_skip = 0;
+            for (auto &e : new_motion_plan) {
+                if (e.v != 0) break;
+                empty_to_skip++;
+            }
+            _motion_plan.insert(_motion_plan.end(), new_motion_plan.begin() + empty_to_skip, new_motion_plan.end());
             if (fixes == 0) break;
         }
         return *this;
@@ -245,12 +252,12 @@ int main(int argc, char **argv)
         auto acc = mp.get_accelerations();
         std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
         int i = 0;
-        //for(auto e: acc) {
-        //    std::cout << "dof" << i;
-        //    for (auto v : e) std::cout << " " << v;
-        //    std::cout  << std::endl;
-        //    i++;
-        //}
+        for(auto e: acc) {
+            std::cout << "dof" << i;
+            for (auto v : e) std::cout << " " << v;
+            std::cout  << std::endl;
+            i++;
+        }
 
         executor.execute(mp.get_motion_plan());
     }
