@@ -16,6 +16,9 @@ try to maintain stl style with custom types named wit _t as the postfix
 
 tests are in separate files
 
+# Units
+
+Most of units are in SI standard. The velocity and distance, when not marked differently, is presented in mm/s and mm.
 
 # General interpretation of Gcodes
 

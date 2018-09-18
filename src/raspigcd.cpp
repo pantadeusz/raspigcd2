@@ -15,6 +15,8 @@
 
 #include <executor_t.hpp>
 #include <configuration_t_json.hpp>
+#include <distance_t.hpp>
+#include <motor_layout_t.hpp>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -104,12 +106,29 @@ std::vector<executor_command_t> generate_sin_wave_for_test(double amplitude = 15
     return executor_commands;
 }
 
+class motion_plan_t {
+protected:
+    std::vector<executor_command_t> _motion_plan;
+    steps_t _steps;
+public:
+    std::vector<executor_command_t> get_motion_plan() const {return _motion_plan;};
+    const steps_t &get_steps() const {return _steps;};
+    const distance_t get_position(const distance_t &position_) const {return motor_layout_t::get().steps_to_cartesian(_steps);};
+
+    motion_plan_t &set_steps(const steps_t &steps_) {_steps = steps_;return *this;};
+    motion_plan_t &set_position(const distance_t &position_) {_steps = motor_layout_t::get().cartesian_to_steps(position_);return *this;};
+
+    motion_plan_t & gotoxy(const steps_t &end_position_, double velocity_mm_s_) {
+        // todo
+        return *this;
+    }
+};
 
 int main(int argc, char **argv)
 {
     std::vector<std::string> args(argv, argv + argc);
 
-    auto &cfg = configuration_t::get().load_defaults();
+    static auto &cfg = configuration_t::get().load_defaults();
     std::cout << cfg << std::endl;
     executor_t &executor = executor_t::get();
 
