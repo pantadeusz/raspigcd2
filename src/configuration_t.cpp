@@ -62,6 +62,7 @@ configuration_t &configuration_t::load_defaults() {
     hardware.buttons = {
         {pin : 21, pullup:true}, {pin : 20, pullup:true}, {pin : 16, pullup:true}, {pin : 12, pullup:true}};
 
+    //layout.name = "cartesian";
     layout.name = "corexy";
     layout.scale = {1.0,1.0,1.0,1.0};
     return *this;

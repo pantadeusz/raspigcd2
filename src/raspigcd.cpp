@@ -117,10 +117,39 @@ public:
 
     motion_plan_t &set_steps(const steps_t &steps_) {_steps = steps_;return *this;};
     motion_plan_t &set_position(const distance_t &position_) {_steps = motor_layout_t::get().cartesian_to_steps(position_);return *this;};
+    motion_plan_t &set_motion_plan(const std::vector<executor_command_t>& mp_) {_motion_plan = mp_; return *this;};
 
     motion_plan_t & gotoxy(const steps_t &end_position_, double velocity_mm_s_) {
-        // todo
+        static configuration_t &cfg = configuration_t::get();
+        auto A = motor_layout_t::get().steps_to_cartesian(_steps);
+        auto B = motor_layout_t::get().steps_to_cartesian(end_position_);
+        auto diff_vect = B-A;
+        double length2 = diff_vect.length2();
+        double length = std::sqrt(length2);
+        auto norm_vect = diff_vect/length;
+        //double ds = 1.0/std::max(std::max(cfg.hardware.steppers[0].steps_per_mm,cfg.hardware.steppers[1].steps_per_mm),cfg.hardware.steppers[2].steps_per_mm);
+        double T = length/velocity_mm_s_;
+        double dt = cfg.tick_duration;
+        double ds = velocity_mm_s_*dt;
+        for (int i = 0; (i*dt) < T; i++) {
+            double t = dt*i;
+            double s = ds*i;
+            auto p = A + norm_vect*s;
+            auto psteps = motor_layout_t::get().cartesian_to_steps(p);
+            
+            auto st = chase_steps(_steps, psteps);
+            _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
+            _steps = psteps;
+        }
+        {
+            auto st = chase_steps(_steps, end_position_);
+            _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
+            _steps = end_position_;
+        }
         return *this;
+    }
+    motion_plan_t & gotoxy(const distance_t &end_position_, const double &velocity_mm_s_) {
+        return gotoxy(motor_layout_t::get().cartesian_to_steps(end_position_),velocity_mm_s_);
     }
 };
 
@@ -134,7 +163,15 @@ int main(int argc, char **argv)
 
     executor.enable(true);
     //executor.execute(executor_commands);
-    executor.execute(generate_sin_wave_for_test());
+    //executor.execute(generate_sin_wave_for_test());
+    {
+        motion_plan_t mp;
+        mp.gotoxy(distance_t{5.0,0.0,0.0,0.0},5.0)
+            .gotoxy(distance_t{5.0,5.0,0.0,0.0},5.0)
+            .gotoxy(distance_t{0.0,5.0,0.0,0.0},5.0)
+            .gotoxy(distance_t{0.0,0.0,0.0,0.0},5.0);
+        executor.execute(mp.get_motion_plan());
+    }
     executor.enable(false);
 
     return 0;

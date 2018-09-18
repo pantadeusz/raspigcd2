@@ -27,12 +27,70 @@ public:
     double &c(){return this->operator[](2);};
     double &d(){return this->operator[](3);};
     distance_t() : std::array<double, 4>() {};
-    distance_t(double a_, double b_, double c_, double d_) : std::array<double, 4>() {
+    distance_t(const double a_, const double b_, const double c_, const double d_) : std::array<double, 4>() {
         a() = a_;
         b() = b_;
         c() = c_;
         d() = d_;
     };
+    inline double length2() const {
+        return 
+        this->operator[](0)*this->operator[](0)+
+        this->operator[](1)*this->operator[](1)+
+        this->operator[](2)*this->operator[](2)+
+        this->operator[](3)*this->operator[](3);
+   }
 };
+
+inline distance_t operator+(const distance_t &a, const distance_t &b) {
+    return distance_t(
+        a[0]+b[0],
+        a[1]+b[1],
+        a[2]+b[2],
+        a[3]+b[3]
+    );
+}
+inline distance_t operator-(const distance_t &a, const distance_t &b) {
+    return distance_t(
+        a[0]-b[0],
+        a[1]-b[1],
+        a[2]-b[2],
+        a[3]-b[3]
+    );
+}
+inline distance_t operator*(const distance_t &a, const distance_t &b) {
+    return distance_t(
+        a[0]*b[0],
+        a[1]*b[1],
+        a[2]*b[2],
+        a[3]*b[3]
+    );
+}
+inline distance_t operator/(const distance_t &a, const distance_t &b) {
+    return distance_t(
+        a[0]/b[0],
+        a[1]/b[1],
+        a[2]/b[2],
+        a[3]/b[3]
+    );
+}
+inline distance_t operator*(const distance_t &a, const double &b) {
+    return distance_t(
+        a[0]*b,
+        a[1]*b,
+        a[2]*b,
+        a[3]*b
+    );
+}
+inline distance_t operator/(const distance_t &a, const double &b) {
+    return distance_t(
+        a[0]/b,
+        a[1]/b,
+        a[2]/b,
+        a[3]/b
+    );
+}
+
+
 }
 #endif
