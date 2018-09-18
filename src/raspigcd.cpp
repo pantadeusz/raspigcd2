@@ -151,6 +151,76 @@ public:
     motion_plan_t & gotoxy(const distance_t &end_position_, const double &velocity_mm_s_) {
         return gotoxy(motor_layout_t::get().cartesian_to_steps(end_position_),velocity_mm_s_);
     }
+
+    /**
+     * @brief calculates maximal acceleration on plan in mm/s2
+     * 
+     */
+    std::vector < std::array<int, DEGREES_OF_FREEDOM> > get_accelerations(int tticks_count = 500)
+    {
+        static auto &cfg = configuration_t::get();
+        auto ticks_per_axis_left = [this](int i, int n, int dof) {
+            int s = 0;
+            int A = std::max((int)0, (int)(i - (int)(n >> 1)));
+            for (int e = i-1; e >= A; e--)
+            {
+                s += ((int)_motion_plan[e].b[dof].step) * (((int)(_motion_plan[e].b[dof].dir << 1)) - 1);
+            }
+            return s;
+        };
+        auto ticks_per_axis_right = [this](int i, int n, int dof) {
+            int s = 0;
+            int B = std::min((int)_motion_plan.size()-1, (int)(i + (n >> 1)));
+            for (int e = i+1; e <= B; e++)
+            {
+                s += ((int)_motion_plan[e].b[dof].step) * (((int)(_motion_plan[e].b[dof].dir << 1)) - 1);
+            }
+            return s;
+        };
+        
+        
+        std::vector < std::array<int, DEGREES_OF_FREEDOM> > velocities(_motion_plan.size());
+        for (int i = 0; i < _motion_plan.size(); i++)
+        {
+            for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
+                if (_motion_plan[i].b[dof].step) velocities[i][dof] = ticks_per_axis_right(i,tticks_count,dof) - ticks_per_axis_left(i,tticks_count,dof);
+            }
+            
+//            std::cout << "dof" << i;
+//            for (auto v : velocities[i]) std::cout << " " << v;
+//            std::cout  << std::endl;
+        }
+        return velocities;
+    }
+
+    motion_plan_t & fix_accelerations(const int iterations_max = 2, const std::array<int,DEGREES_OF_FREEDOM> &max_diff_to_fix = {4,4,4,4}, const int tticks_count = 500 ) {
+        static executor_command_t empty_command = {v:0};
+        for (int i = 0; i < iterations_max; i++) {
+            std::vector<executor_command_t> new_motion_plan;
+            int fixes = 0;
+            new_motion_plan.reserve(_motion_plan.size()*2);
+            std::vector < std::array<int, DEGREES_OF_FREEDOM> > accels = get_accelerations(tticks_count);
+            for (int i = 0; i < accels.size(); i++) {
+                for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
+                    if (accels[i][dof] < -max_diff_to_fix[dof]) {
+                        new_motion_plan.push_back(empty_command);
+                        fixes++;
+                    }
+                }
+                new_motion_plan.push_back(_motion_plan[i]);
+                for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
+                    if (accels[i][dof] > max_diff_to_fix[dof]) {
+                        new_motion_plan.push_back(empty_command);
+                        fixes++;
+                    }
+                }
+            }
+            new_motion_plan.shrink_to_fit();
+            _motion_plan = new_motion_plan;
+            if (fixes == 0) break;
+        }
+        return *this;
+    }    
 };
 
 int main(int argc, char **argv)
@@ -167,12 +237,25 @@ int main(int argc, char **argv)
     {
         motion_plan_t mp;
         mp.gotoxy(distance_t{5.0,0.0,0.0,0.0},5.0)
-            .gotoxy(distance_t{5.0,5.0,0.0,0.0},5.0)
-            .gotoxy(distance_t{0.0,5.0,0.0,0.0},5.0)
+            .gotoxy(distance_t{5.0,-5.0,0.0,0.0},5.0)
+            .gotoxy(distance_t{0.0,-5.0,0.0,0.0},5.0)
             .gotoxy(distance_t{0.0,0.0,0.0,0.0},5.0);
+        mp.fix_accelerations(500);
+
+        auto acc = mp.get_accelerations();
+        std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
+        int i = 0;
+        for(auto e: acc) {
+            std::cout << "dof" << i;
+            for (auto v : e) std::cout << " " << v;
+            std::cout  << std::endl;
+            i++;
+        }
+
         executor.execute(mp.get_motion_plan());
     }
     executor.enable(false);
 
     return 0;
 }
+
