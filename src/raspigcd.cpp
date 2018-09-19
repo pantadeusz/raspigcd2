@@ -119,23 +119,27 @@ protected:
     distance_t _current_position;
 public:
     const std::vector<executor_command_t> get_motion_plan() const {
-        steps_t _steps;
         std::vector<executor_command_t> _motion_plan;
 
-        auto gotoxy_steps = [&,this](const steps_t &end_position_, double velocity_mm_s_) {
+        auto gotoxy = [&,this](const motion_fragment_t & mfrag) {
             static configuration_t &cfg = configuration_t::get();
-            auto A = motor_layout_t::get().steps_to_cartesian(_steps);
-            auto B = motor_layout_t::get().steps_to_cartesian(end_position_);
-            auto diff_vect = B-A;
-            double length2 = diff_vect.length2();
-            double length = std::sqrt(length2);
-            auto norm_vect = diff_vect/length;
-            //double ds = 1.0/std::max(std::max(cfg.hardware.steppers[0].steps_per_mm,cfg.hardware.steppers[1].steps_per_mm),cfg.hardware.steppers[2].steps_per_mm);
-            double T = length/velocity_mm_s_;
-            double dt = cfg.tick_duration;
-            double ds = velocity_mm_s_*dt;
+            double velocity_mm_s_ = mfrag.max_velocity;
+
+            auto A = mfrag.source; // start position
+            auto B = mfrag.destination; // destination position
+            steps_t _steps = motor_layout_t::get().cartesian_to_steps(A); // current steps value
+            steps_t end_position_ = motor_layout_t::get().cartesian_to_steps(B); // where are we going
+
+            auto diff_vect = B-A; // difference
+            double length2 = diff_vect.length2(); // length of vector in mm squared
+            double length = std::sqrt(length2); // length of vector in mm
+            auto norm_vect = diff_vect/length; // direction with length 1mm
+            double T = length/velocity_mm_s_; // time to go without accelerations
+            double dt = cfg.tick_duration; // time step
+            double ds = velocity_mm_s_*dt; // TODO: distance step - this is going to be variable in futute
             _motion_plan.reserve(_motion_plan.size()+100000);
-            for (int i = 0; (i*dt) < T; i++) {
+
+            for (int i = 0; (i*ds) < length; i++) {
                 double t = dt*i;
                 double s = ds*i;
                 auto p = A + norm_vect*s;
@@ -152,12 +156,9 @@ public:
             }
             _motion_plan.shrink_to_fit();
         };
-        auto gotoxy = [&,this](const distance_t &end_position_, const double &velocity_mm_s_) {
-            gotoxy_steps(motor_layout_t::get().cartesian_to_steps(end_position_),velocity_mm_s_);
-        };
 
         for (auto &mfrag: _motion_fragments) {
-            gotoxy(mfrag.destination, mfrag.max_velocity);
+            gotoxy(mfrag);//.destination, mfrag.max_velocity);
         }
         return _motion_plan;
     };
