@@ -224,7 +224,7 @@ public:
         return velocities;
     }
 
-    motion_plan_t & fix_accelerations(const int iterations_max = 2, const std::array<int,DEGREES_OF_FREEDOM> &max_diff_to_fix = {4,4,4,4}, const int tticks_count = 500 ) {
+    motion_plan_t & fix_accelerations(const int iterations_max = 2, const std::array<int,DEGREES_OF_FREEDOM> &max_diff_to_fix = {4,4,2,4}, const int tticks_count = 250 ) {
         static executor_command_t empty_command = {v:0};
         for (int i = 0; i < iterations_max; i++) {
             std::vector<executor_command_t> new_motion_plan;
@@ -241,6 +241,7 @@ public:
                 new_motion_plan.push_back(_motion_plan[i]);
                 for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
                     if (accels[i][dof] > max_diff_to_fix[dof]) {
+                        
                         new_motion_plan.push_back(empty_command);
                         fixes++;
                     }
@@ -255,7 +256,10 @@ public:
                 empty_to_skip++;
             }
             _motion_plan.insert(_motion_plan.end(), new_motion_plan.begin() + empty_to_skip, new_motion_plan.end());
-            if (fixes == 0) break;
+            if (fixes == 0) {
+                std::cerr << "shorted acceleration fixes " << i << std::endl;
+                break;
+            }
         }
         return *this;
     }    
@@ -274,14 +278,17 @@ int main(int argc, char **argv)
     //executor.execute(generate_sin_wave_for_test());
     {
         motion_plan_t mp;
-        mp.gotoxy(distance_t{5.0,0.0,0.0,0.0},10.0)
-            .gotoxy(distance_t{5.0,-5.0,0.0,0.0},10.0)
-            .gotoxy(distance_t{0.0,-5.0,0.0,0.0},10.0)
+//        mp.gotoxy(distance_t{5.0,0.0,0.0,0.0},10.0)
+//            .gotoxy(distance_t{5.0,-5.0,0.0,0.0},10.0)
+//            .gotoxy(distance_t{0.0,-5.0,0.0,0.0},10.0)
+//            .gotoxy(distance_t{0.0,0.0,0.0,0.0},10.0);
+        mp.gotoxy(distance_t{0.0,0.0,5.0,0.0},10.0)
+            .gotoxy(distance_t{0.0,0.0,-5.0,0.0},10.0)
             .gotoxy(distance_t{0.0,0.0,0.0,0.0},10.0);
 
         {
             auto t0 = std::chrono::system_clock::now();
-                    mp.fix_accelerations(500);
+                    mp.fix_accelerations(300);
             auto t1 = std::chrono::system_clock::now();
             double elaspedTimeMs = std::chrono::duration<double>(t1-t0).count();
             std::cerr << "fix_accelerations time: " << elaspedTimeMs << " seconds"<< std::endl;
@@ -289,13 +296,13 @@ int main(int argc, char **argv)
 
         auto acc = mp.get_accelerations();
         std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
-        // int i = 0;
-        // for(auto e: acc) {
-        //     std::cout << "dof" << i;
-        //     for (auto v : e) std::cout << " " << v;
-        //     std::cout  << std::endl;
-        //     i++;
-        // }
+        int i = 0;
+        for(auto e: acc) {
+            std::cout << "dof" << i;
+            for (auto v : e) std::cout << " " << v;
+            std::cout  << std::endl;
+            i++;
+        }
 
         executor.execute(mp.get_motion_plan());
     }
