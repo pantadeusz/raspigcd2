@@ -40,5 +40,14 @@ public:
         d() = s_[3];
     };
 };
+
+inline bool operator==(const steps_t &l, const steps_t &r) {
+    for (unsigned i = 0; i < l.size(); i++ ) if (l[i] != r[i]) return false;
+    return true;
+}
+inline bool operator!=(const steps_t &l, const steps_t &r) {
+    return !(l == r);
+}
+
 }
 #endif

@@ -127,8 +127,6 @@ public:
 
             auto A = mfrag.source; // start position
             auto B = mfrag.destination; // destination position
-            steps_t _steps = motor_layout_t::get().cartesian_to_steps(A); // current steps value
-            steps_t end_position_ = motor_layout_t::get().cartesian_to_steps(B); // where are we going
 
             auto diff_vect = B-A; // difference
             double length2 = diff_vect.length2(); // length of vector in mm squared
@@ -139,21 +137,32 @@ public:
             double ds = velocity_mm_s_*dt; // TODO: distance step - this is going to be variable in futute
             _motion_plan.reserve(_motion_plan.size()+100000);
 
-            for (int i = 0; (i*ds) < length; i++) {
+            std::vector<steps_t> from_a_to_b; // series of steps from A to B (absolute positions)
+            std::vector<steps_t> from_b_to_a;
+            steps_t start_steps = motor_layout_t::get().cartesian_to_steps(A); // current steps value
+            steps_t end_steps = motor_layout_t::get().cartesian_to_steps(B); // where are we going
+
+            double s = 0; //ds;
+            for (int i = 1; s <= length; i++) {
                 double t = dt*i;
-                double s = ds*i;
                 auto p = A + norm_vect*s;
                 auto psteps = motor_layout_t::get().cartesian_to_steps(p);
-                
-                auto st = chase_steps(_steps, psteps);
-                _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
-                _steps = psteps;
+                from_a_to_b.push_back(psteps);
+                s += ds;
             }
-            {
-                auto st = chase_steps(_steps, end_position_);
-                _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
-                _steps = end_position_;
+
+            if (from_a_to_b.back() != end_steps) {
+                std::cerr << "wrong end steps " << std::endl;
+                from_a_to_b.push_back(end_steps);
             }
+
+            auto pos0 = start_steps;
+            for (auto &p: from_a_to_b) {
+                auto st = chase_steps(pos0, p);
+                _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
+                pos0=p;
+            }
+
             _motion_plan.shrink_to_fit();
         };
 
