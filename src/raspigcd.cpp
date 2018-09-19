@@ -262,7 +262,11 @@ public:
             }
         }
         return *this;
-    }    
+    }  
+
+    motion_plan_t(const distance_t &accelerations) {
+
+    }
 };
 
 int main(int argc, char **argv)
@@ -277,7 +281,7 @@ int main(int argc, char **argv)
     //executor.execute(executor_commands);
     //executor.execute(generate_sin_wave_for_test());
     {
-        motion_plan_t mp;
+        motion_plan_t mp({200,200,100,100});
 //        mp.gotoxy(distance_t{5.0,0.0,0.0,0.0},10.0)
 //            .gotoxy(distance_t{5.0,-5.0,0.0,0.0},10.0)
 //            .gotoxy(distance_t{0.0,-5.0,0.0,0.0},10.0)
@@ -286,23 +290,23 @@ int main(int argc, char **argv)
             .gotoxy(distance_t{0.0,0.0,-5.0,0.0},10.0)
             .gotoxy(distance_t{0.0,0.0,0.0,0.0},10.0);
 
-        {
-            auto t0 = std::chrono::system_clock::now();
-                    mp.fix_accelerations(300);
-            auto t1 = std::chrono::system_clock::now();
-            double elaspedTimeMs = std::chrono::duration<double>(t1-t0).count();
-            std::cerr << "fix_accelerations time: " << elaspedTimeMs << " seconds"<< std::endl;
-        }
-
-        auto acc = mp.get_accelerations();
-        std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
-        int i = 0;
-        for(auto e: acc) {
-            std::cout << "dof" << i;
-            for (auto v : e) std::cout << " " << v;
-            std::cout  << std::endl;
-            i++;
-        }
+        //{
+        //    auto t0 = std::chrono::system_clock::now();
+        //            mp.fix_accelerations(300);
+        //    auto t1 = std::chrono::system_clock::now();
+        //    double elaspedTimeMs = std::chrono::duration<double>(t1-t0).count();
+        //    std::cerr << "fix_accelerations time: " << elaspedTimeMs << " seconds"<< std::endl;
+        //}
+//
+        //auto acc = mp.get_accelerations();
+        //std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
+        //int i = 0;
+        //for(auto e: acc) {
+        //    std::cout << "dof" << i;
+        //    for (auto v : e) std::cout << " " << v;
+        //    std::cout  << std::endl;
+        //    i++;
+        //}
 
         executor.execute(mp.get_motion_plan());
     }
