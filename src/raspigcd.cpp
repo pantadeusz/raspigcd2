@@ -132,6 +132,7 @@ public:
         auto move_to_position_with_given_accel = [&,this](double dt, double v, double a, double length, distance_t norm_vect) -> std::vector<executor_command_t> {
             std::vector<executor_command_t> ret;
             ret.reserve(1000000);
+            
             steps_t steps(0,0,0,0);
             distance_t position(0,0,0,0);
             for (double s = 0; s < length; s+= v*dt) {
@@ -161,39 +162,41 @@ public:
             double ds = velocity_mm_s_*dt; // TODO: distance step - this is going to be variable in futute
             _motion_plan.reserve(_motion_plan.size()+100000);
 
-            std::vector<steps_t> from_a_to_b; // series of steps from A to B (absolute positions)
-            std::vector<steps_t> from_b_to_a;
-            steps_t start_steps = motor_layout->cartesian_to_steps(A); // current steps value
-            steps_t end_steps = motor_layout->cartesian_to_steps(B); // where are we going
 
-            /*
-            double s = ds;
-            for (int i = 1; s <= length; i++) {
-                auto p = A + norm_vect*s;
-                auto psteps = motor_layout->cartesian_to_steps(p);
-                from_a_to_b.push_back(psteps);
-                s += ds;
+            // calculate maximal acceleration
+            double average_max_accel = 0;
+            {
+            double average_max_accel_sum = 0;
+            for (int i = 0; i < 4; i++) {
+                average_max_accel += _cfg->layout.max_accelerations_mm_s2[i]*norm_vect[i];
+                average_max_accel_sum += norm_vect[i];
+            }
+            average_max_accel = average_max_accel / average_max_accel_sum;
             }
 
-            if (from_a_to_b.back() != end_steps) {
-                std::cerr << "wrong end steps " << std::endl;
-                from_a_to_b.push_back(end_steps);
+            double t_AM = (mfrag.max_velocity - mfrag.source_velocity_max)/average_max_accel;
+            double l_AM = std::abs(mfrag.source_velocity_max * t_AM + average_max_accel*t_AM*t_AM/2.0);
+
+            double t_MB = (mfrag.destination_velocity_max - mfrag.max_velocity)/average_max_accel;
+            double l_MB = std::abs(mfrag.source_velocity_max * t_AM + average_max_accel*t_AM*t_AM/2.0);
+            double l_M = length - (l_MB+l_AM);
+            if (l_M < 0) {
+                l_M = 0;
+                l_MB -= std::abs(l_MB-l_AM)/2;
+                l_AM -= std::abs(l_MB-l_AM)/2;
+                if ((l_MB < 0) || (l_AM < 0)) throw std::invalid_argument("impossible accelerations");
             }
 
-            auto pos0 = start_steps;
-            for (auto &p: from_a_to_b) {
-                auto st = chase_steps(pos0, p);
-                _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
-                pos0=p;
-            }
-            */
-           std::cerr << "move_to_position_with_given_accel("<<dt<<", "<<ds<<", " << 0<< ", "<< length<<", norm_vect)" << std::endl;
-           auto st = move_to_position_with_given_accel(dt, velocity_mm_s_, 0, length, norm_vect);
-           std::cerr << "move_to_position_with_given_accel("<<dt<<", "<<ds<<", " << 0<< ", "<< length<<", norm_vect) OK" << std::endl;
+            std::cerr << "t_AM = " << t_AM << "   l_AM = " << l_AM << std::endl;
+            std::cerr << "t_MB = " << t_MB << "   l_MB = " << l_MB << std::endl;
+            std::cerr << "l_M = " << l_M << std::endl;
+           std::cerr << "move_to_position_with_given_accel("<<dt<<", "<<ds<<", " << 0<< ", "<< l_M<<", norm_vect)" << std::endl;
+           auto st_const = move_to_position_with_given_accel(dt, velocity_mm_s_, 0, length, norm_vect);
+            _motion_plan.insert(_motion_plan.end(), st_const.begin(), st_const.end());
+           
 
-            _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
             _motion_plan.shrink_to_fit();
-            return executor_t::commands_to_steps(st);
+            return executor_t::commands_to_steps(st_const);
         };
 
         steps_t steps = motor_layout->cartesian_to_steps(_motion_fragments.front().source);
@@ -226,7 +229,7 @@ public:
      * @brief calculates maximal acceleration on plan in mm/s2
      * 
      */
-    std::vector < std::array<int, DEGREES_OF_FREEDOM> > get_accelerations(int tticks_count = 500)
+    std::vector < std::array<int, DEGREES_OF_FREEDOM> > get_AMerations(int tticks_count = 500)
     {
         auto _motion_plan = get_motion_plan();
 
@@ -297,7 +300,7 @@ int main(int argc, char **argv)
         //    std::cerr << "fix_accelerations time: " << elaspedTimeMs << " seconds"<< std::endl;
         //}
 //
-        //auto acc = mp.get_accelerations();
+        //auto acc = mp.get_AMerations();
         //std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
         //int i = 0;
         //for(auto e: acc) {

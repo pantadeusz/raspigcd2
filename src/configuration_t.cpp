@@ -31,16 +31,17 @@ configuration_t &configuration_t::load_defaults()
         {pin : 18}};
 
     hardware.steppers = {
-        stepper_config_t(27, 10, 22, 100.0, 100.0, 100.0),
-        stepper_config_t(4, 10, 17, 100.0, 100, 100),
-        stepper_config_t(9, 10, 11, 100.0, 100, 100),
-        stepper_config_t(0, 10, 5, 100.0)};
+        stepper_config_t(27, 10, 22, 100.0, 100.0),
+        stepper_config_t(4, 10, 17, 100.0, 100),
+        stepper_config_t(9, 10, 11, 100.0, 100),
+        stepper_config_t(0, 10, 5)};
     hardware.buttons = {
         {pin : 21, pullup : true}, {pin : 20, pullup : true}, {pin : 16, pullup : true}, {pin : 12, pullup : true}};
 
     //layout.name = "cartesian";
     layout.name = "corexy";
     layout.scale = {1.0, 1.0, 1.0, 1.0};
+    layout.max_accelerations_mm_s2 = {100.0,100.0,100.0,100.0};
     return *this;
 }
 /* **************************************************************************

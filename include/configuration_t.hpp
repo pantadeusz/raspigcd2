@@ -44,20 +44,17 @@ class stepper_config_t
     int step;                     // step pin
     double steps_per_mm;          // steps per mm linear movement that is on this motor. This can be negative
     double max_velocity;          // maximal velocity in mm/s
-    double max_acceleration_mms2; // maximal acceleration in mm/(s^2)
     inline double steps_per_m() const { return steps_per_mm * 1000.0; }
     inline stepper_config_t(
         const int &_dir = 0,
         const int &_en = 0,
         const int &_step = 0,
         const double &_steps_per_mm = 0.0,
-        const double &_max_velocity = 0.0,
-        const double &_max_acceleration_mms2 = 0.0) : dir(_dir),
+        const double &_max_velocity = 0.0) : dir(_dir),
                                                 en(_en),
                                                 step(_step),
                                                 steps_per_mm(_steps_per_mm),
-                                                max_velocity(_max_velocity),
-                                                max_acceleration_mms2(_max_acceleration_mms2)
+                                                max_velocity(_max_velocity)
     {
     }
 };
@@ -84,6 +81,8 @@ class layout_config_t
 {
   public:
     std::vector<double> scale; ///< scale along each axis (can be negative)
+    std::vector<double> max_accelerations_mm_s2; ///<maximal acceleration on given axis (x, y, z, a) in mm/s2
+    
     std::string name;          ///< name of layout selected: 'corexy' 'cartesian'
 };
 
