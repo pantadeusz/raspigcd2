@@ -33,8 +33,12 @@ namespace raspigcd
 {
 class executor_pi_t : public executor_t
 {
+
+protected:
+    configuration_t configuration;
+
     ~executor_pi_t();
-    executor_pi_t();
+    executor_pi_t(configuration_t &c_ = configuration_t::get());
     executor_pi_t(const executor_t& that) = delete;
     std::atomic<int> _position[8];
   public:
@@ -52,7 +56,7 @@ class executor_pi_t : public executor_t
     int execute(const std::vector<executor_command_t> &commands);
     void enable(bool en);
 
-    static executor_pi_t &get();
+    static executor_pi_t &get(configuration_t &c_ = configuration_t::get());
 };
 
 

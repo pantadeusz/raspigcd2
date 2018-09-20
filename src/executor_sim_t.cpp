@@ -34,8 +34,9 @@ namespace raspigcd
 
 std::mutex executor_sim_t::_mutex_steps_from_origin;
 
-executor_sim_t::executor_sim_t()
+executor_sim_t::executor_sim_t(configuration_t &cfg)
 {
+    _cfg = &cfg;
     for (auto &p : _steps_from_origin)
         p = 0;
     enable(false);
@@ -45,9 +46,9 @@ executor_sim_t::~executor_sim_t()
 {
 }
 
-executor_sim_t &executor_sim_t::get()
+executor_sim_t &executor_sim_t::get(configuration_t &c_)
 {
-    static executor_sim_t instance;
+    static executor_sim_t instance(c_);
     return instance;
 }
 
@@ -58,7 +59,6 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
 
     // using SI coordinates: m, m/s, kg, N
 
-    configuration_t conf = configuration_t::get();
     distance_t position(0, 0, 0, 0);                       // current position
     distance_t target_position(0, 0, 0, 0);                // calculated as simulation in meters
     distance_t velocity(0, 0, 0, 0);                       // current velocity in m/s
@@ -71,7 +71,7 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
     distance_t friction(0, 0, 0, 0); // current friction force
 
     double dtnn = 4;                       // simulation multiplier
-    double dt = conf.tick_duration / dtnn; // dt for simulation
+    double dt = _cfg->tick_duration / dtnn; // dt for simulation
     std::cerr << "commands count = " << commands.size() << std::endl;
     int tick_i = 0;
     for (auto c : commands)
@@ -83,10 +83,10 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
         for (int i : {0, 1, 2, 3})
         {
             _steps_from_origin[i] += dir[i];
-            target_position[i] = ((double)_steps_from_origin[i]) / (conf.hardware.steppers[i].steps_per_m()); // in meters
+            target_position[i] = ((double)_steps_from_origin[i]) / (_cfg->hardware.steppers[i].steps_per_m()); // in meters
         }
 
-        //std::cerr << "dir 0 " << (1.0/conf.hardware.steppers[0].stepsPerMm) << std::endl;
+        //std::cerr << "dir 0 " << (1.0/_cfg->hardware.steppers[0].stepsPerMm) << std::endl;
         for (int dtn = 0; dtn < dtnn; dtn++)
         {
             for (int i = 0; i < 4; i++)
@@ -109,12 +109,12 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
                 position[i] = position[i] + velocity[i] * dt;
             }
 
-            std::cout << "sim" << (((double)(tick_i)*conf.tick_duration) + dt * dtn) << " " << (target_position[0]) << " " << (target_position[1]) << " " << (target_position[2]) << " " << (target_position[3]) << " " << (position[0]) << " " << (position[1]) << " " << (position[2]) << " " << (position[3]) << " " << (velocity[0]) << " " << (velocity[1]) << " " << (velocity[2]) << " " << (velocity[3]) << " " << (force[0]) << " " << (force[1]) << " " << (force[2]) << " " << (force[3]) << " " << (friction[0]) << " " << (friction[1]) << " " << (friction[2]) << " " << (friction[3]) << "\n";
+            std::cout << "sim" << (((double)(tick_i)*_cfg->tick_duration) + dt * dtn) << " " << (target_position[0]) << " " << (target_position[1]) << " " << (target_position[2]) << " " << (target_position[3]) << " " << (position[0]) << " " << (position[1]) << " " << (position[2]) << " " << (position[3]) << " " << (velocity[0]) << " " << (velocity[1]) << " " << (velocity[2]) << " " << (velocity[3]) << " " << (force[0]) << " " << (force[1]) << " " << (force[2]) << " " << (force[3]) << " " << (friction[0]) << " " << (friction[1]) << " " << (friction[2]) << " " << (friction[3]) << "\n";
         }
         tick_i++;
     }
-    std::cerr << "tick duration = " << conf.tick_duration << std::endl;
-    std::cerr << "end time = " << (tick_i * conf.tick_duration) << std::endl;
+    std::cerr << "tick duration = " << _cfg->tick_duration << std::endl;
+    std::cerr << "end time = " << (tick_i * _cfg->tick_duration) << std::endl;
     return 0;
 }
 

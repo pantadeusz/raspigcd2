@@ -108,9 +108,9 @@ void unmap_peripheral(struct bcm2835_peripheral *p)
 namespace raspigcd
 {
 
-executor_pi_t::executor_pi_t()
+executor_pi_t::executor_pi_t(configuration_t &c_)
 {
-  configuration_t &configuration = configuration_t::get();
+  configuration = c_;
   if (map_peripheral(&gpio) == -1)
   {
     throw std::invalid_argument("Failed to map the physical GPIO registers "
@@ -131,9 +131,9 @@ executor_pi_t::executor_pi_t()
 
 executor_pi_t::~executor_pi_t() { unmap_peripheral(&gpio); }
 
-executor_pi_t &executor_pi_t::get()
+executor_pi_t &executor_pi_t::get(configuration_t &c_)
 {
-  static executor_pi_t instance;
+  static executor_pi_t instance(c_);
   return instance;
 }
 
@@ -200,7 +200,7 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
     }
   }
 
-  configuration_t conf = configuration_t::get();
+  configuration_t &conf = configuration;
   auto steppers = conf.hardware.steppers;
   // commands are in fomat step, dir
   unsigned int step_clear = (1 << steppers[0].step) | (1 << steppers[1].step) |
@@ -264,7 +264,6 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
 
 void executor_pi_t::enable(bool en)
 {
-  configuration_t &configuration = configuration_t::get();
   for (auto c : configuration.hardware.steppers)
   {
     if (en)

@@ -24,7 +24,6 @@ namespace raspigcd
 
 const int DEGREES_OF_FREEDOM = 4;
 
-
 /**
  * configuration of spindle - spindle is controlled by separate thread
  * */
@@ -40,11 +39,27 @@ class spindle_config_t
 class stepper_config_t
 {
   public:
-    int dir; // direction pin
-    int en; // enable pin
-    int step; // step pin
-    double steps_per_mm; // steps per mm linear movement that is on this motor. This can be negative
-    inline double steps_per_m() const {return steps_per_mm*1000.0;}
+    int dir;                      // direction pin
+    int en;                       // enable pin
+    int step;                     // step pin
+    double steps_per_mm;          // steps per mm linear movement that is on this motor. This can be negative
+    double max_velocity;          // maximal velocity in mm/s
+    double max_acceleration_mms2; // maximal acceleration in mm/(s^2)
+    inline double steps_per_m() const { return steps_per_mm * 1000.0; }
+    inline stepper_config_t(
+        const int &_dir = 0,
+        const int &_en = 0,
+        const int &_step = 0,
+        const double &_steps_per_mm = 0.0,
+        const double &_max_velocity = 0.0,
+        const double &_max_acceleration_mms2 = 0.0) : dir(_dir),
+                                                en(_en),
+                                                step(_step),
+                                                steps_per_mm(_steps_per_mm),
+                                                max_velocity(_max_velocity),
+                                                max_acceleration_mms2(_max_acceleration_mms2)
+    {
+    }
 };
 
 /**
@@ -59,7 +74,7 @@ class button_config_t
 
 class hardware_config_t
 {
-    public:
+  public:
     std::vector<spindle_config_t> spindles;
     std::vector<stepper_config_t> steppers;
     std::vector<button_config_t> buttons;
@@ -67,11 +82,10 @@ class hardware_config_t
 
 class layout_config_t
 {
-    public:
+  public:
     std::vector<double> scale; ///< scale along each axis (can be negative)
-    std::string name; ///< name of layout selected: 'corexy' 'cartesian'
+    std::string name;          ///< name of layout selected: 'corexy' 'cartesian'
 };
-
 
 class configuration_t
 {

@@ -44,22 +44,20 @@ list(REMOVE_ITEM lib_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/raspigcd.cpp)
 
 add_library(raspigcd2 SHARED ${lib_SOURCES})
 add_executable(gcd ${raspigcd2_SOURCES} ${lib_SOURCES})
-#add_executable(gcd_test EXCLUDE_FROM_ALL ${raspigcd2_TESTS} ) 
 
 install (TARGETS raspigcd2 DESTINATION lib)
 
 
-# enable_testing()
-# 
-# 
-# add_test( NAME raspigcd2_test 
-#           COMMAND "${CMAKE_BINARY_DIR}/raspigcd2_test"
-#           WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"  )
-# 
-# 
-# add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
-#                   DEPENDS raspigcd2_test)
-# 
+enable_testing()
+
+add_executable(executor_t_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/executor_t_test.cpp ${lib_SOURCES})
+target_link_libraries(executor_t_test LINK_INTERFACE_LIBRARIES raspigcd2)
+add_test(NAME executor_t_test COMMAND "${CMAKE_BINARY_DIR}/executor_t_test" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
+
+
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
+                  DEPENDS executor_t_test)
+
 
 SET(CPACK_PACKAGE_VERSION_MAJOR ${raspigcd2_VERSION_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${raspigcd2_VERSION_MINOR})

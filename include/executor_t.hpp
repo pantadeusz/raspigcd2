@@ -29,8 +29,9 @@
 namespace raspigcd
 {
 
-struct executor_motor_command_t {
-    unsigned char step: 1, dir: 1;
+struct executor_motor_command_t
+{
+    unsigned char step : 1, dir : 1;
 };
 
 union executor_command_t {
@@ -41,16 +42,13 @@ union executor_command_t {
 class executor_t
 {
   protected:
-    // ~executor_t();
-    // executor_t();
-    // executor_t(const executor_t& that) = delete; ///< singleton
 
   public:
     /**
      * @brief set the value of steps from origin (in steps, not in mm or other unit)
      * 
      */
-    virtual void set_position(const steps_t &steps)  = 0;
+    virtual void set_position(const steps_t &steps) = 0;
     virtual steps_t get_position() const = 0;
 
     /**
@@ -62,7 +60,12 @@ class executor_t
     virtual int execute(const std::vector<executor_command_t> &commands) = 0;
     virtual void enable(bool en) = 0;
     // get instance
-    static executor_t & get();
+    static executor_t &get(configuration_t &cfg_ = configuration_t::get());
+
+    /**
+     * @brief generates steps based on given commands vector
+     */
+    static steps_t commands_to_steps(const std::vector<executor_command_t> &commands);
 };
 
 } // namespace raspigcd

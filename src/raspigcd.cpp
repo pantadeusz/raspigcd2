@@ -50,7 +50,7 @@ std::vector<executor_command_t> chase_steps(const steps_t &steps_, steps_t desti
         executor_command.v = 0;
         for (unsigned int i = 0; i < steps.size(); i++)
         {
-            executor_command.b[i].dir = ((destination_steps_[i] > steps[i]) ? 1 : 0);// TODO: (not obviosu) * ((cfg.hardware.steppers[i].direction_reverse) ? -1 : 1);
+            executor_command.b[i].dir = ((destination_steps_[i] > steps[i]) ? 1 : 0);// TODO: (not obviosu) * ((_cfg->hardware.steppers[i].direction_reverse) ? -1 : 1);
             executor_command.b[i].step = (destination_steps_[i] - steps[i]) ? 1 : 0;
             if (destination_steps_[i] > steps[i])
                 steps[i]++;
@@ -71,10 +71,10 @@ std::vector<executor_command_t> generate_sin_wave_for_test(double amplitude = 15
                                            int axis = 2           //< axis to move
                                            )
 {
-    auto &cfg = configuration_t::get();
+    auto _cfg = &(configuration_t::get());
 
     std::vector<executor_command_t> executor_commands;
-    executor_commands.reserve((::size_t)(T/cfg.tick_duration));
+    executor_commands.reserve((::size_t)(T/_cfg->tick_duration));
     steps_t steps;
 
     for (int i = 0; i < 100; i++)
@@ -84,12 +84,12 @@ std::vector<executor_command_t> generate_sin_wave_for_test(double amplitude = 15
         executor_commands.push_back(e);
     }
 
-    //    steps[axis] = cfg.hardware.steppers[axis].stepsPerMm*std::cos(0)*amplitude;
+    //    steps[axis] = _cfg->hardware.steppers[axis].stepsPerMm*std::cos(0)*amplitude;
     int minimal_step_skip = 1000000000;
-    for (double t = 0.0; t < T; t += cfg.tick_duration)
+    for (double t = 0.0; t < T; t += _cfg->tick_duration)
     {
         steps_t new_steps;
-        new_steps[axis] = cfg.hardware.steppers[axis].steps_per_mm * std::cos(t * 3.141592653589793238462643 * 5) * amplitude * std::sin(3.141592653589793238462643 * t / T);
+        new_steps[axis] = _cfg->hardware.steppers[axis].steps_per_mm * std::cos(t * 3.141592653589793238462643 * 5) * amplitude * std::sin(3.141592653589793238462643 * t / T);
         auto st = chase_steps(steps, new_steps);
         if (st.size() == 1) {
             if (st.back().v != 0){
@@ -107,6 +107,10 @@ std::vector<executor_command_t> generate_sin_wave_for_test(double amplitude = 15
     std::cerr << "generated " << executor_commands.size() << "steps; minimal step skip: " << minimal_step_skip << std::endl;
     return executor_commands;
 }
+
+
+
+
 class motion_fragment_t {
 public:
     distance_t source, destination;
@@ -117,12 +121,19 @@ class motion_plan_t {
 protected:
     std::list<motion_fragment_t> _motion_fragments;
     distance_t _current_position;
+
+    configuration_t *_cfg;
+    motor_layout_t *motor_layout;
 public:
     const std::vector<executor_command_t> get_motion_plan() const {
         std::vector<executor_command_t> _motion_plan;
 
+        //auto move_to_position_with_given_accel = [&,this](double dt, double dv, double length, distance_t norm_vect) -> std::vector<executor_command_t> {
+        //    std::vector<executor_command_t> ret;
+        //    return ret;
+        //};
+
         auto gotoxy = [&,this](const motion_fragment_t & mfrag) {
-            static configuration_t &cfg = configuration_t::get();
             double velocity_mm_s_ = mfrag.max_velocity;
 
             auto A = mfrag.source; // start position
@@ -132,21 +143,20 @@ public:
             double length2 = diff_vect.length2(); // length of vector in mm squared
             double length = std::sqrt(length2); // length of vector in mm
             auto norm_vect = diff_vect/length; // direction with length 1mm
-            double T = length/velocity_mm_s_; // time to go without accelerations
-            double dt = cfg.tick_duration; // time step
+            //double T = length/velocity_mm_s_; // time to go without accelerations
+            double dt = _cfg->tick_duration; // time step
             double ds = velocity_mm_s_*dt; // TODO: distance step - this is going to be variable in futute
             _motion_plan.reserve(_motion_plan.size()+100000);
 
             std::vector<steps_t> from_a_to_b; // series of steps from A to B (absolute positions)
             std::vector<steps_t> from_b_to_a;
-            steps_t start_steps = motor_layout_t::get().cartesian_to_steps(A); // current steps value
-            steps_t end_steps = motor_layout_t::get().cartesian_to_steps(B); // where are we going
+            steps_t start_steps = motor_layout->cartesian_to_steps(A); // current steps value
+            steps_t end_steps = motor_layout->cartesian_to_steps(B); // where are we going
 
             double s = 0; //ds;
             for (int i = 1; s <= length; i++) {
-                double t = dt*i;
                 auto p = A + norm_vect*s;
-                auto psteps = motor_layout_t::get().cartesian_to_steps(p);
+                auto psteps = motor_layout->cartesian_to_steps(p);
                 from_a_to_b.push_back(psteps);
                 s += ds;
             }
@@ -171,10 +181,10 @@ public:
         }
         return _motion_plan;
     };
-    const steps_t &get_steps() const {return motor_layout_t::get().cartesian_to_steps(_current_position);};
-    const distance_t get_position(const distance_t &position_) const {return _current_position;};
+    const steps_t get_steps() const {return motor_layout->cartesian_to_steps(_current_position);};
+    const distance_t get_position() const {return _current_position;};
 
-    motion_plan_t &set_steps(const steps_t &steps_) {_current_position = motor_layout_t::get().steps_to_cartesian(steps_);return *this;};
+    motion_plan_t &set_steps(const steps_t &steps_) {_current_position = motor_layout->steps_to_cartesian(steps_);return *this;};
     motion_plan_t &set_position(const distance_t &position_) {_current_position = position_;return *this;};
     // motion_plan_t &set_motion_plan(const std::vector<executor_command_t>& mp_) {_motion_plan = mp_; return *this;};
 
@@ -196,8 +206,6 @@ public:
     {
         auto _motion_plan = get_motion_plan();
 
-        static auto &cfg = configuration_t::get();
-     
         std::vector < std::array<int, DEGREES_OF_FREEDOM> > velocities(_motion_plan.size());
         int ticks_l[DEGREES_OF_FREEDOM] = {0,0,0,0};
         int ticks_r[DEGREES_OF_FREEDOM] = {0,0,0,0};
@@ -206,7 +214,7 @@ public:
                 ticks_r[dof] += ((int)_motion_plan[i].b[dof].step) * (((int)(_motion_plan[i].b[dof].dir << 1)) - 1);
             }
         }
-        for (int i = 0; i < _motion_plan.size(); i++)
+        for (int i = 0; i < (int)_motion_plan.size(); i++)
         {
             for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
                 if (_motion_plan[i].b[dof].step) velocities[i][dof] = ticks_r[dof] - ticks_l[dof];
@@ -214,9 +222,9 @@ public:
             for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
                 {
                     auto ticks_r_i = (int)(i+1 + (tticks_count >> 1));
-                    if (ticks_r_i < _motion_plan.size()) 
+                    if (ticks_r_i < (int)_motion_plan.size()) 
                         ticks_r[dof] += ((int)_motion_plan[ticks_r_i].b[dof].step) * (((int)(_motion_plan[ticks_r_i].b[dof].dir << 1)) - 1);
-                    if (i <  _motion_plan.size()) ticks_r[dof] -= ((int)_motion_plan[i+1].b[dof].step) * (((int)(_motion_plan[i+1].b[dof].dir << 1)) - 1);
+                    if (i <  (int)_motion_plan.size()) ticks_r[dof] -= ((int)_motion_plan[i+1].b[dof].step) * (((int)(_motion_plan[i+1].b[dof].dir << 1)) - 1);
                 }
                 {
                     auto ticks_l_i = (int)(i - (tticks_count >> 1));
@@ -230,8 +238,9 @@ public:
         return velocities;
     }
 
-    motion_plan_t(const distance_t &accelerations) {
-
+    motion_plan_t(configuration_t &configuration = configuration_t::get()) {
+        motor_layout = motor_layout_t::get_and_update_instance(configuration);
+        _cfg = &configuration;
     }
 };
 
@@ -241,13 +250,13 @@ int main(int argc, char **argv)
 
     static auto &cfg = configuration_t::get().load_defaults();
     std::cout << cfg << std::endl;
-    executor_t &executor = executor_t::get();
+    executor_t &executor = executor_t::get(cfg);
 
     executor.enable(true);
     //executor.execute(executor_commands);
     //executor.execute(generate_sin_wave_for_test());
     {
-        motion_plan_t mp({200,200,100,100});
+        motion_plan_t mp(cfg);
         mp.gotoxy(distance_t{5.0,0.0,0.0,0.0},2.0)
             .gotoxy(distance_t{5.0,-5.0,0.0,0.0},2.0)
             .gotoxy(distance_t{0.0,-5.0,0.0,0.0},2.0)

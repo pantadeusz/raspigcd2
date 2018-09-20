@@ -3,6 +3,7 @@
 
 #include <distance_t.hpp>
 #include <steps_t.hpp>
+#include <configuration_t.hpp>
 
 namespace raspigcd
 {
@@ -10,10 +11,6 @@ namespace raspigcd
 class motor_layout_t
 {
   private:
-    /**
-     * @brief generates instance of this object according to configuration
-     */
-    static motor_layout_t *generate_instance();
 
   public:
     /**
@@ -26,9 +23,9 @@ class motor_layout_t
     virtual distance_t steps_to_cartesian(const steps_t &steps_) = 0;
 
     /**
-     * @brief returns instance of currently selected motor layout (from configuration)
+     * @brief generates instance of this object according to configuration
      */
-    static motor_layout_t &get();
+    static motor_layout_t *get_and_update_instance(configuration_t &conf = configuration_t::get());
 };
 
 } // namespace raspigcd

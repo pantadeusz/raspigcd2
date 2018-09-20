@@ -6,6 +6,7 @@ namespace raspigcd
 
 class corexy_layout_t : public motor_layout_t
 {
+    configuration_t *_cfg;
   public:
     std::array<double, 4> scales_; // scale along given axis
     std::array<double, 4> steps_per_milimeter_;
@@ -13,6 +14,7 @@ class corexy_layout_t : public motor_layout_t
     steps_t cartesian_to_steps(const distance_t &distances_);
     distance_t steps_to_cartesian(const steps_t &steps_);
     corexy_layout_t();
+    void set_configuration(configuration_t &conf);
 };
 
 steps_t corexy_layout_t::cartesian_to_steps(const distance_t &distances_)
@@ -35,15 +37,22 @@ distance_t corexy_layout_t::steps_to_cartesian(const steps_t &steps_)
 
 corexy_layout_t::corexy_layout_t()
 {
+    set_configuration(configuration_t::get());
+}
+
+void corexy_layout_t::set_configuration(configuration_t &conf)
+{
+    _cfg = &conf;
     for (int i = 0; i < DEGREES_OF_FREEDOM; i++) {
-        steps_per_milimeter_[i] = configuration_t::get().hardware.steppers.at(i).steps_per_mm;
-        scales_[i] = configuration_t::get().layout.scale[i];
+        steps_per_milimeter_[i] = _cfg->hardware.steppers.at(i).steps_per_mm;
+        scales_[i] = _cfg->layout.scale[i];
     }
 }
 
 
 class cartesian_layout_t : public motor_layout_t
 {
+    configuration_t *_cfg;
   public:
     std::array<double, 4> scales_; // scale along given axis
     std::array<double, 4> steps_per_milimeter_;
@@ -51,6 +60,7 @@ class cartesian_layout_t : public motor_layout_t
     steps_t cartesian_to_steps(const distance_t &distances_);
     distance_t steps_to_cartesian(const steps_t &steps_);
     cartesian_layout_t();
+    void set_configuration(configuration_t &conf);
 };
 
 steps_t cartesian_layout_t::cartesian_to_steps(const distance_t &distances_)
@@ -73,34 +83,33 @@ distance_t cartesian_layout_t::steps_to_cartesian(const steps_t &steps_)
 
 cartesian_layout_t::cartesian_layout_t()
 {
+    set_configuration(configuration_t::get());
+}
+void cartesian_layout_t::set_configuration(configuration_t &conf)
+{
+    _cfg = &conf;
     for (int i = 0; i < DEGREES_OF_FREEDOM; i++) {
-        steps_per_milimeter_[i] = configuration_t::get().hardware.steppers.at(i).steps_per_mm;
-        scales_[i] = configuration_t::get().layout.scale[i];
+        steps_per_milimeter_[i] = _cfg->hardware.steppers.at(i).steps_per_mm;
+        scales_[i] = _cfg->layout.scale[i];
     }
 }
 
 
 
-motor_layout_t *motor_layout_t::generate_instance()
+motor_layout_t *motor_layout_t::get_and_update_instance(configuration_t &conf)
 {
-    if (configuration_t::get().layout.name == "corexy") {
+    if (conf.layout.name == "corexy") {
         static corexy_layout_t instance_corexy;
+        instance_corexy.set_configuration(conf);
         return &instance_corexy;
-    } else if (configuration_t::get().layout.name == "cartesian") {
+    } else if (conf.layout.name == "cartesian") {
         static cartesian_layout_t instance_cartesian;
+        instance_cartesian.set_configuration(conf);
         return &instance_cartesian;
     } else {
         throw std::invalid_argument("Incorrect layout name. Only layouts allowed are: corexy euclidean");
     }
 }
-
-
-motor_layout_t &motor_layout_t::get()
-{
-    static motor_layout_t *instance = motor_layout_t::generate_instance();
-    return *instance;
-}
-
 
 
 } // namespace raspigcd

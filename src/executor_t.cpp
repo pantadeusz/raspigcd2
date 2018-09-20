@@ -23,17 +23,38 @@
 #include <executor_pi_t.hpp>
 #include <executor_sim_t.hpp>
 
-namespace raspigcd {
+namespace raspigcd
+{
 
-executor_t &executor_t::get() {
+executor_t &executor_t::get(configuration_t &cfg_)
+{
     static executor_t *instance;
-    try {
-        instance = &(executor_pi_t::get());
-    } catch (...) {
-        instance = &(executor_sim_t::get());
+    try
+    {
+        instance = &(executor_pi_t::get(cfg_));
+    }
+    catch (...)
+    {
+        instance = &(executor_sim_t::get(cfg_));
     }
     return *instance;
 }
 
+steps_t executor_t::commands_to_steps(const std::vector<executor_command_t> &commands)
+{
+    steps_t ret(0, 0, 0, 0);
+    for (const auto &c : commands)
+    {
+        int dir[4] = {0, 0, 0, 0};
+        // step direction
+        for (auto i : {0, 1, 2, 3})
+            dir[i] = c.b[i].step * (c.b[i].dir * 2 - 1);
+        for (int i : {0, 1, 2, 3})
+        {
+            ret[i] += dir[i];
+        }
+    }
+    return ret;
+}
 
 } // namespace raspigcd
