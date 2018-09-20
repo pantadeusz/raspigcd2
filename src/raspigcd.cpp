@@ -128,11 +128,21 @@ public:
     const std::vector<executor_command_t> get_motion_plan() const {
         std::vector<executor_command_t> _motion_plan;
 
-        auto move_to_position_with_given_accel = [&,this](double dt, double dv, double length, distance_t norm_vect) -> std::vector<executor_command_t> {
+
+        auto move_to_position_with_given_accel = [&,this](double dt, double v, double a, double length, distance_t norm_vect) -> std::vector<executor_command_t> {
             std::vector<executor_command_t> ret;
-
-
-
+            ret.reserve(1000000);
+            steps_t steps(0,0,0,0);
+            distance_t position(0,0,0,0);
+            for (double s = 0; s < length; s+= v*dt) {
+                v = v + a * dt;
+                position = position + (norm_vect*v * dt);
+                auto psteps = motor_layout->cartesian_to_steps(position);
+                auto st = chase_steps(steps, psteps);
+                steps = psteps;
+                ret.insert(ret.end(), st.begin(), st.end());
+            }
+            ret.shrink_to_fit();
             return ret;
         };
 
@@ -156,6 +166,7 @@ public:
             steps_t start_steps = motor_layout->cartesian_to_steps(A); // current steps value
             steps_t end_steps = motor_layout->cartesian_to_steps(B); // where are we going
 
+            /*
             double s = ds;
             for (int i = 1; s <= length; i++) {
                 auto p = A + norm_vect*s;
@@ -175,12 +186,22 @@ public:
                 _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
                 pos0=p;
             }
+            */
+           std::cerr << "move_to_position_with_given_accel("<<dt<<", "<<ds<<", " << 0<< ", "<< length<<", norm_vect)" << std::endl;
+           auto st = move_to_position_with_given_accel(dt, velocity_mm_s_, 0, length, norm_vect);
+           std::cerr << "move_to_position_with_given_accel("<<dt<<", "<<ds<<", " << 0<< ", "<< length<<", norm_vect) OK" << std::endl;
 
+            _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
             _motion_plan.shrink_to_fit();
+            return executor_t::commands_to_steps(st);
         };
 
+        steps_t steps = motor_layout->cartesian_to_steps(_motion_fragments.front().source);
         for (auto &mfrag: _motion_fragments) {
-            gotoxy(mfrag);//.destination, mfrag.max_velocity);
+            auto steps_diff = gotoxy(mfrag);//.destination, mfrag.max_velocity);
+            steps = steps + steps_diff;
+            auto st = chase_steps(steps, motor_layout->cartesian_to_steps(mfrag.destination));
+            _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
         }
         return _motion_plan;
     };
