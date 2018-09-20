@@ -128,10 +128,13 @@ public:
     const std::vector<executor_command_t> get_motion_plan() const {
         std::vector<executor_command_t> _motion_plan;
 
-        //auto move_to_position_with_given_accel = [&,this](double dt, double dv, double length, distance_t norm_vect) -> std::vector<executor_command_t> {
-        //    std::vector<executor_command_t> ret;
-        //    return ret;
-        //};
+        auto move_to_position_with_given_accel = [&,this](double dt, double dv, double length, distance_t norm_vect) -> std::vector<executor_command_t> {
+            std::vector<executor_command_t> ret;
+
+
+
+            return ret;
+        };
 
         auto gotoxy = [&,this](const motion_fragment_t & mfrag) {
             double velocity_mm_s_ = mfrag.max_velocity;
@@ -153,7 +156,7 @@ public:
             steps_t start_steps = motor_layout->cartesian_to_steps(A); // current steps value
             steps_t end_steps = motor_layout->cartesian_to_steps(B); // where are we going
 
-            double s = 0; //ds;
+            double s = ds;
             for (int i = 1; s <= length; i++) {
                 auto p = A + norm_vect*s;
                 auto psteps = motor_layout->cartesian_to_steps(p);
