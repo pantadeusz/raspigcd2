@@ -41,7 +41,7 @@ configuration_t &configuration_t::load_defaults()
     //layout.name = "cartesian";
     layout.name = "corexy";
     layout.scale = {1.0, 1.0, 1.0, 1.0};
-    layout.max_accelerations_mm_s2 = {100.0,100.0,100.0,100.0};
+    layout.max_accelerations_mm_s2 = {10.0,10.0,10.0,10.0};
     return *this;
 }
 /* **************************************************************************

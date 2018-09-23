@@ -22,6 +22,7 @@
 #include <string>
 #include <iostream>
 #include <chrono>
+#include <tuple>
 
 using namespace raspigcd;
 int steps_to_do(const steps_t &steps_, const steps_t &destination_steps_)
@@ -129,14 +130,19 @@ public:
         std::vector<executor_command_t> _motion_plan;
 
 
-        auto move_to_position_with_given_accel = [&,this](double dt, double v, double a, double length, distance_t norm_vect) -> std::vector<executor_command_t> {
+        auto move_to_position_with_given_accel = [&,this](double dt, double v, double a, double length, distance_t norm_vect) -> std::pair<std::vector<executor_command_t>,double> {
             std::vector<executor_command_t> ret;
             ret.reserve(1000000);
             
             steps_t steps(0,0,0,0);
             distance_t position(0,0,0,0);
             for (double s = 0; s < length; s+= v*dt) {
-                v = v + a * dt;
+                if ((v + a * dt) <= 0) {
+                    std::cerr << "err: v=" << v << " <= 0; " << s << " " << length << std::endl;
+                    break;
+                } else {
+                    v = v + a * dt;
+                }
                 position = position + (norm_vect*v * dt);
                 auto psteps = motor_layout->cartesian_to_steps(position);
                 auto st = chase_steps(steps, psteps);
@@ -144,7 +150,7 @@ public:
                 ret.insert(ret.end(), st.begin(), st.end());
             }
             ret.shrink_to_fit();
-            return ret;
+            return {ret,v};
         };
 
         auto gotoxy = [&,this](const motion_fragment_t & mfrag) {
@@ -159,8 +165,8 @@ public:
             auto norm_vect = diff_vect/length; // direction with length 1mm
             //double T = length/velocity_mm_s_; // time to go without accelerations
             double dt = _cfg->tick_duration; // time step
-            double ds = velocity_mm_s_*dt; // TODO: distance step - this is going to be variable in futute
-            _motion_plan.reserve(_motion_plan.size()+100000);
+            std::vector<executor_command_t> local_motion_plan;
+            local_motion_plan.reserve(100000);
 
 
             // calculate maximal acceleration
@@ -190,13 +196,39 @@ public:
             std::cerr << "t_AM = " << t_AM << "   l_AM = " << l_AM << std::endl;
             std::cerr << "t_MB = " << t_MB << "   l_MB = " << l_MB << std::endl;
             std::cerr << "l_M = " << l_M << std::endl;
-           std::cerr << "move_to_position_with_given_accel("<<dt<<", "<<ds<<", " << 0<< ", "<< l_M<<", norm_vect)" << std::endl;
-           auto st_const = move_to_position_with_given_accel(dt, velocity_mm_s_, 0, length, norm_vect);
-            _motion_plan.insert(_motion_plan.end(), st_const.begin(), st_const.end());
-           
-
-            _motion_plan.shrink_to_fit();
-            return executor_t::commands_to_steps(st_const);
+           double temporary_velocity = mfrag.source_velocity_max;
+           if (l_AM > 0) {
+           std::cerr << "move_to_position_with_given_accel("<<dt<<", "<<mfrag.source_velocity_max<<", " << average_max_accel<< ", "<< l_AM<<", norm_vect)" << std::endl;
+             auto st_accel = move_to_position_with_given_accel(dt, mfrag.source_velocity_max, average_max_accel, l_AM, norm_vect);
+             local_motion_plan.insert(local_motion_plan.end(), st_accel.first.begin(), st_accel.first.end());
+             temporary_velocity = st_accel.second;
+           }
+           if (l_M > 0) {
+           std::cerr << "move_to_position_with_given_accel("<<dt<<", "<<temporary_velocity<<", " << 0<< ", "<< l_M<<", norm_vect)" << std::endl;
+            auto st_const = move_to_position_with_given_accel(dt, temporary_velocity, 0, l_M, norm_vect);
+             local_motion_plan.insert(local_motion_plan.end(), st_const.first.begin(), st_const.first.end());
+             temporary_velocity = st_const.second;
+           }
+           if (l_MB > 0) {
+           std::cerr << "move_to_position_with_given_accel("<<dt<<", "<<temporary_velocity<<", " << (-average_max_accel) << ", "<< l_MB<<", norm_vect)" << std::endl;
+             auto st_decel = move_to_position_with_given_accel(dt, temporary_velocity, -average_max_accel, l_MB, norm_vect);
+             local_motion_plan.insert(local_motion_plan.end(), st_decel.first.begin(), st_decel.first.end());
+             temporary_velocity = st_decel.second;
+           }
+           auto end_position_actual = executor_t::commands_to_steps(local_motion_plan);
+           end_position_actual = end_position_actual + motor_layout->cartesian_to_steps(mfrag.source);
+           //auto end_position_wanted = motor_layout->cartesian_to_steps(mfrag.destination);
+            auto direction_to_do = mfrag.destination - motor_layout->steps_to_cartesian(end_position_actual);
+            auto direction_to_do_length = std::sqrt( direction_to_do.length2());
+            if (direction_to_do_length > 0) {
+                std::cerr << "move_to_position_with_given_accel("<<dt<<", "<< temporary_velocity <<", " << 0<< ", "<< direction_to_do_length <<", norm_vect)" << std::endl;
+                auto st_fix = move_to_position_with_given_accel(dt, temporary_velocity, 0, direction_to_do_length, direction_to_do/direction_to_do_length);
+                local_motion_plan.insert(local_motion_plan.end(), st_fix.first.begin(), st_fix.first.end());
+                temporary_velocity = st_fix.second;
+            }
+            local_motion_plan.shrink_to_fit();
+            _motion_plan.insert(_motion_plan.end(), local_motion_plan.begin(), local_motion_plan.end());
+            return executor_t::commands_to_steps(local_motion_plan);
         };
 
         steps_t steps = motor_layout->cartesian_to_steps(_motion_fragments.front().source);
@@ -219,7 +251,7 @@ public:
         _motion_fragments.push_back({
             _current_position, end_position_,
             max_velocity:velocity_mm_s_,
-            source_velocity_max:0.0, destination_velocity_max:0.0
+            source_velocity_max:0.001, destination_velocity_max:0.001
         });
         _current_position = end_position_;
         return *this;
