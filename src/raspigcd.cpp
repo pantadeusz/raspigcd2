@@ -326,10 +326,10 @@ int main(int argc, char** argv)
     //executor.execute(generate_sin_wave_for_test());
     {
         motion_plan_t mp(cfg);
-        mp.gotoxy(distance_t{5.0, 0.0, 0.0, 0.0}, 20.0)
-            .gotoxy(distance_t{5.0, -5.0, 0.0, 0.0}, 20.0)
-            .gotoxy(distance_t{0.0, -5.0, 0.0, 0.0}, 20.0)
-            .gotoxy(distance_t{0.0, 0.0, 0.0, 0.0}, 20.0);
+        mp.gotoxy(distance_t{5.0, 0.0, 0.0, 0.0}, 2.0)
+            .gotoxy(distance_t{5.0, -5.0, 0.0, 0.0}, 2.0)
+            .gotoxy(distance_t{0.0, -5.0, 0.0, 0.0}, 2.0)
+            .gotoxy(distance_t{0.0, 0.0, 0.0, 0.0}, 2.0);
         ///  mp.gotoxy(distance_t{0.0,0.0,5.0,0.0},10.0)
         ///      .gotoxy(distance_t{0.0,0.0,-5.0,0.0},10.0)
         ///      .gotoxy(distance_t{0.0,0.0,0.0,0.0},10.0);
