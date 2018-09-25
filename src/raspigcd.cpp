@@ -251,7 +251,7 @@ public:
             auto direction_to_do = mfrag.destination - motor_layout->steps_to_cartesian(end_position_actual);
             auto direction_to_do_length = std::sqrt(direction_to_do.length2());
             auto distance_accuracy = std::sqrt(motor_layout->steps_to_cartesian({1,1,1,1}).length2());
-            std::cerr << "2*distance_accuracy " << (2*distance_accuracy) << "";
+            std::cerr << "2*distance_accuracy " << (2*distance_accuracy) << std::endl;
             if (direction_to_do_length > 2.0*distance_accuracy) {
                 std::cerr << "FIX " << direction_to_do_length << " move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << 0 << ", " << direction_to_do_length << ", " << norm_vect << ")" << std::endl;
                 auto st_fix = move_to_position_with_given_accel(dt, temporary_velocity, 0, direction_to_do_length, direction_to_do / direction_to_do_length);
