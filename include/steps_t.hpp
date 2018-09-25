@@ -17,6 +17,7 @@
 #define __RASPIGCD_STEPS_T_HPP__
 
 #include <array>
+#include <iostream>
 
 namespace raspigcd {
 
@@ -64,6 +65,12 @@ inline steps_t operator-(const steps_t &l, const steps_t &r) {
         l[2]-r[2],
         l[3]-r[3],
         };
+}
+
+
+inline std::ostream &operator<<(std::ostream &os, steps_t const &value) {
+    os << "[" << value[0] << ", " << value[1] << ", " << value[2] << "," << value[3] << "]";
+    return os;
 }
 
 }

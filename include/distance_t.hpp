@@ -17,6 +17,7 @@
 #define __RASPIGCD_DISTANCE_T_HPP__
 
 #include <array>
+#include <iostream>
 
 namespace raspigcd {
 
@@ -93,6 +94,10 @@ inline distance_t operator/(const distance_t& a, const double& b)
         a[3] / b);
 }
 
+inline std::ostream &operator<<(std::ostream &os, distance_t const &value) {
+    os << "[" << value[0] << ", " << value[1] << ", " << value[2] << "," << value[3] << "]";
+    return os;
+}
 
 } // namespace raspigcd
 #endif

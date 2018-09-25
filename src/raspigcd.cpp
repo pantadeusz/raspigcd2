@@ -23,6 +23,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <memory>
 
 using namespace raspigcd;
 int steps_to_do(const steps_t& steps_, const steps_t& destination_steps_)
@@ -112,7 +113,8 @@ class motion_fragment_t
 public:
     distance_t source, destination;
     double max_velocity;
-    double source_velocity_max, destination_velocity_max;
+    std::shared_ptr<double> prev_speed;
+    std::shared_ptr<double> next_speed;
 };
 class motion_plan_t
 {
@@ -152,8 +154,27 @@ public:
             return {ret, v};
         };
 
-        auto gotoxy = [&, this](const motion_fragment_t& mfrag) {
-            double velocity_mm_s_ = mfrag.max_velocity;
+
+        auto accleration_length_calc = [](auto speed_0, auto speed_1, auto acceleration) {
+            double t_AM = (speed_1 - speed_0) / acceleration;
+            double l_AM = std::abs(speed_0 * t_AM + acceleration * t_AM * t_AM / 2.0);
+            return l_AM;
+        };
+
+        auto calculate_maximal_acceleration = [](auto max_accelerations_mm_s2, auto norm_vect ) {
+            double average_max_accel = 0;
+            {
+                double average_max_accel_sum = 0;
+                for (int i = 0; i < DEGREES_OF_FREEDOM; i++) {
+                    average_max_accel += max_accelerations_mm_s2[i] * norm_vect[i];
+                    average_max_accel_sum += norm_vect[i];
+                }
+                average_max_accel = average_max_accel / average_max_accel_sum;
+            }
+            return average_max_accel;
+        };
+
+        auto gotoxy = [&, this](double prev_speed, const motion_fragment_t& mfrag, double next_speed) {
 
             auto A = mfrag.source;      // start position
             auto B = mfrag.destination; // destination position
@@ -169,47 +190,57 @@ public:
 
 
             // calculate maximal acceleration
-            double average_max_accel = 0;
-            {
-                double average_max_accel_sum = 0;
-                for (int i = 0; i < 4; i++) {
-                    average_max_accel += _cfg->layout.max_accelerations_mm_s2[i] * norm_vect[i];
-                    average_max_accel_sum += norm_vect[i];
+            double average_max_accel = calculate_maximal_acceleration(_cfg->layout.max_accelerations_mm_s2, norm_vect);
+            
+            // binary search for best max velocity that fits
+            double l_AM = 0;
+            double l_MB = 0;
+            double l_M = 2*length;
+            double current_velocity_target = mfrag.max_velocity;
+            ;
+            for (double current_velocity_target_range = mfrag.max_velocity/2.0; current_velocity_target_range > 0.001; current_velocity_target_range /= 2.0) {
+                auto lAM = (prev_speed < current_velocity_target)?accleration_length_calc(prev_speed, current_velocity_target, average_max_accel):0.0;
+                auto lMB = (current_velocity_target > next_speed)?accleration_length_calc(current_velocity_target, next_speed, average_max_accel):0.0;
+                auto lM = length - (lMB + lAM);
+                
+                if (lM < 0.0) {
+                    current_velocity_target -= current_velocity_target_range;
+                } else if (lM > 0.0) {
+                    l_AM = lAM;
+                    l_MB = lMB;
+                    l_M = lM;                    
+                    current_velocity_target += current_velocity_target_range;
+                    if (current_velocity_target > mfrag.max_velocity) {
+                        current_velocity_target = mfrag.max_velocity;
+                        current_velocity_target_range = 0.0;
+                    }
+                } else {
+                    std::cerr << "WOW: Found exact max speed" << std::endl;
+                    l_AM = lAM;
+                    l_MB = lMB;
+                    l_M = lM;                    
+                    break;
                 }
-                average_max_accel = average_max_accel / average_max_accel_sum;
             }
-
-            double t_AM = (mfrag.max_velocity - mfrag.source_velocity_max) / average_max_accel;
-            double l_AM = std::abs(mfrag.source_velocity_max * t_AM + average_max_accel * t_AM * t_AM / 2.0);
-
-            double t_MB = (mfrag.destination_velocity_max - mfrag.max_velocity) / average_max_accel;
-            double l_MB = std::abs(mfrag.source_velocity_max * t_AM + average_max_accel * t_AM * t_AM / 2.0);
-            double l_M = length - (l_MB + l_AM);
-            if (l_M < 0) {
-                l_M = 0;
-                l_MB -= std::abs(l_MB - l_AM) / 2;
-                l_AM -= std::abs(l_MB - l_AM) / 2;
-                if ((l_MB < 0) || (l_AM < 0)) throw std::invalid_argument("impossible accelerations");
-            }
-
-            std::cerr << "t_AM = " << t_AM << "   l_AM = " << l_AM << std::endl;
-            std::cerr << "t_MB = " << t_MB << "   l_MB = " << l_MB << std::endl;
+            if (l_M > length) throw std::invalid_argument("impossible accelerations");
+            std::cerr << "t_AM = " << "   l_AM = " << l_AM << std::endl;
+            std::cerr << "t_MB = " << "   l_MB = " << l_MB << std::endl;
             std::cerr << "l_M = " << l_M << std::endl;
-            double temporary_velocity = mfrag.source_velocity_max;
+            double temporary_velocity = prev_speed;
             if (l_AM > 0) {
-                std::cerr << "move_to_position_with_given_accel(" << dt << ", " << mfrag.source_velocity_max << ", " << average_max_accel << ", " << l_AM << ", norm_vect)" << std::endl;
-                auto st_accel = move_to_position_with_given_accel(dt, mfrag.source_velocity_max, average_max_accel, l_AM, norm_vect);
+                std::cerr << "move_to_position_with_given_accel(" << dt << ", " << prev_speed << ", " << average_max_accel << ", " << l_AM << ", norm_vect)" << std::endl;
+                auto st_accel = move_to_position_with_given_accel(dt, prev_speed, average_max_accel, l_AM, norm_vect);
                 local_motion_plan.insert(local_motion_plan.end(), st_accel.first.begin(), st_accel.first.end());
                 temporary_velocity = st_accel.second;
             }
             if (l_M > 0) {
-                std::cerr << "move_to_position_with_given_accel(" << dt << "/*  */, " << temporary_velocity << ", " << 0 << ", " << l_M << ", norm_vect)" << std::endl;
+                std::cerr << "move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << 0 << ", " << l_M << ", norm_vect)" << std::endl;
                 auto st_const = move_to_position_with_given_accel(dt, temporary_velocity, 0, l_M, norm_vect);
                 local_motion_plan.insert(local_motion_plan.end(), st_const.first.begin(), st_const.first.end());
                 temporary_velocity = st_const.second;
             }
             if (l_MB > 0) {
-                std::cerr << "move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << (-average_max_accel) << ", " << l_MB << ", norm_vect)" << std::endl;
+                std::cerr << "move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << (-average_max_accel) << ", " << l_MB << ", " << norm_vect << ")" << std::endl;
                 auto st_decel = move_to_position_with_given_accel(dt, temporary_velocity, -average_max_accel, l_MB, norm_vect);
                 local_motion_plan.insert(local_motion_plan.end(), st_decel.first.begin(), st_decel.first.end());
                 temporary_velocity = st_decel.second;
@@ -219,8 +250,10 @@ public:
             //auto end_position_wanted = motor_layout->cartesian_to_steps(mfrag.destination);
             auto direction_to_do = mfrag.destination - motor_layout->steps_to_cartesian(end_position_actual);
             auto direction_to_do_length = std::sqrt(direction_to_do.length2());
-            if (direction_to_do_length > 0) {
-                std::cerr << "move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << 0 << ", " << direction_to_do_length << ", norm_vect)" << std::endl;
+            auto distance_accuracy = std::sqrt(motor_layout->steps_to_cartesian({1,1,1,1}).length2());
+            std::cerr << "2*distance_accuracy " << (2*distance_accuracy) << "";
+            if (direction_to_do_length > 2.0*distance_accuracy) {
+                std::cerr << "FIX " << direction_to_do_length << " move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << 0 << ", " << direction_to_do_length << ", " << norm_vect << ")" << std::endl;
                 auto st_fix = move_to_position_with_given_accel(dt, temporary_velocity, 0, direction_to_do_length, direction_to_do / direction_to_do_length);
                 local_motion_plan.insert(local_motion_plan.end(), st_fix.first.begin(), st_fix.first.end());
                 temporary_velocity = st_fix.second;
@@ -230,13 +263,23 @@ public:
             return executor_t::commands_to_steps(local_motion_plan);
         };
 
+        //     std::shared_ptr<double> prev_speed;    std::shared_ptr<double> next_speed;
+
         steps_t steps = motor_layout->cartesian_to_steps(_motion_fragments.front().source);
-        for (auto& mfrag : _motion_fragments) {
-            auto steps_diff = gotoxy(mfrag); //.destination, mfrag.max_velocity);
+        std::cerr << "steps: " << steps << std::endl;
+        for (auto& m : _motion_fragments) {
+            auto mfrag = m;
+            mfrag.source = motor_layout->steps_to_cartesian(steps);
+            std::cerr << "mfrag.source: " << mfrag.source << std::endl;
+            auto steps_diff = gotoxy(0.001, mfrag, 0.001); //.destination, mfrag.max_velocity);
             steps = steps + steps_diff;
-            auto st = chase_steps(steps, motor_layout->cartesian_to_steps(mfrag.destination));
+        }
+        // it must be always accurate
+        if (_motion_fragments.size() > 0) {
+            auto st = chase_steps(steps, motor_layout->cartesian_to_steps(_motion_fragments.back().destination));
             _motion_plan.insert(_motion_plan.end(), st.begin(), st.end());
         }
+        
         return _motion_plan;
     };
     const steps_t get_steps() const { return motor_layout->cartesian_to_steps(_current_position); };
@@ -256,56 +299,28 @@ public:
 
     motion_plan_t& gotoxy(const distance_t& end_position_, const double& velocity_mm_s_)
     {
-        _motion_fragments.push_back({
+        std::shared_ptr<double> prev_speed;
+        std::shared_ptr<double> next_speed(new double);
+        *(next_speed.get()) = 0.0;
+        if (_motion_fragments.size() == 0) {
+            prev_speed = std::shared_ptr<double>(new double);
+            *(prev_speed.get()) = 0.0;
+        } else {
+            prev_speed = _motion_fragments.back().prev_speed;
+        }
+        motion_fragment_t mf = {
             _current_position,
             end_position_,
             max_velocity : velocity_mm_s_,
-            source_velocity_max : 0.001,
-            destination_velocity_max : 0.001
-        });
+            prev_speed:prev_speed,
+            next_speed:next_speed
+        };
+        _motion_fragments.push_back(mf);
         _current_position = end_position_;
         return *this;
     }
 
-    /**
-     * @brief calculates maximal acceleration on plan in mm/s2
-     * 
-     */
-    std::vector<std::array<int, DEGREES_OF_FREEDOM>> get_AMerations(int tticks_count = 500)
-    {
-        auto _motion_plan = get_motion_plan();
-
-        std::vector<std::array<int, DEGREES_OF_FREEDOM>> velocities(_motion_plan.size());
-        int ticks_l[DEGREES_OF_FREEDOM] = {0, 0, 0, 0};
-        int ticks_r[DEGREES_OF_FREEDOM] = {0, 0, 0, 0};
-        for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
-            for (int i = 1; i <= std::min((int)tticks_count >> 1, (int)_motion_plan.size() - 1); i++) {
-                ticks_r[dof] += ((int)_motion_plan[i].b[dof].step) * (((int)(_motion_plan[i].b[dof].dir << 1)) - 1);
-            }
-        }
-        for (int i = 0; i < (int)_motion_plan.size(); i++) {
-            for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
-                if (_motion_plan[i].b[dof].step) velocities[i][dof] = ticks_r[dof] - ticks_l[dof];
-            }
-            for (int dof = 0; dof < DEGREES_OF_FREEDOM; dof++) {
-                {
-                    auto ticks_r_i = (int)(i + 1 + (tticks_count >> 1));
-                    if (ticks_r_i < (int)_motion_plan.size())
-                        ticks_r[dof] += ((int)_motion_plan[ticks_r_i].b[dof].step) * (((int)(_motion_plan[ticks_r_i].b[dof].dir << 1)) - 1);
-                    if (i < (int)_motion_plan.size()) ticks_r[dof] -= ((int)_motion_plan[i + 1].b[dof].step) * (((int)(_motion_plan[i + 1].b[dof].dir << 1)) - 1);
-                }
-                {
-                    auto ticks_l_i = (int)(i - (tticks_count >> 1));
-                    if (ticks_l_i >= 0)
-                        ticks_l[dof] -= ((int)_motion_plan[ticks_l_i].b[dof].step) * (((int)(_motion_plan[ticks_l_i].b[dof].dir << 1)) - 1);
-                    //if (i > 0 )
-                    ticks_l[dof] += ((int)_motion_plan[i].b[dof].step) * (((int)(_motion_plan[i].b[dof].dir << 1)) - 1);
-                }
-            }
-        }
-        return velocities;
-    }
-
+    
     motion_plan_t(configuration_t& configuration = configuration_t::get())
     {
         motor_layout = motor_layout_t::get_and_update_instance(configuration);
@@ -326,10 +341,10 @@ int main(int argc, char** argv)
     //executor.execute(generate_sin_wave_for_test());
     {
         motion_plan_t mp(cfg);
-        mp.gotoxy(distance_t{5.0, 0.0, 0.0, 0.0}, 2.0)
-            .gotoxy(distance_t{5.0, -5.0, 0.0, 0.0}, 2.0)
-            .gotoxy(distance_t{0.0, -5.0, 0.0, 0.0}, 2.0)
-            .gotoxy(distance_t{0.0, 0.0, 0.0, 0.0}, 2.0);
+        mp.gotoxy(distance_t{5.0, 0.0, 0.0, 0.0}, 20.0)
+            .gotoxy(distance_t{5.0, -5.0, 0.0, 0.0}, 20.0)
+            .gotoxy(distance_t{0.0, -5.0, 0.0, 0.0}, 20.0)
+            .gotoxy(distance_t{0.0, 0.0, 0.0, 0.0}, 20.0);
         ///  mp.gotoxy(distance_t{0.0,0.0,5.0,0.0},10.0)
         ///      .gotoxy(distance_t{0.0,0.0,-5.0,0.0},10.0)
         ///      .gotoxy(distance_t{0.0,0.0,0.0,0.0},10.0);
@@ -342,15 +357,6 @@ int main(int argc, char** argv)
         //    std::cerr << "fix_accelerations time: " << elaspedTimeMs << " seconds"<< std::endl;
         //}
         //
-        //auto acc = mp.get_AMerations();
-        //std::cerr << "accelerations fixed to " << mp.get_motion_plan().size() << std::endl;
-        //int i = 0;
-        //for(auto e: acc) {
-        //    std::cout << "dof" << i;
-        //    for (auto v : e) std::cout << " " << v;
-        //    std::cout  << std::endl;
-        //    i++;
-        //}
 
         executor.execute(mp.get_motion_plan());
     }
