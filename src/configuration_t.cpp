@@ -41,9 +41,9 @@ configuration_t &configuration_t::load_defaults()
     //layout.name = "cartesian";
     layout.name = "corexy";
     layout.scale = {1.0, 1.0, 1.0, 1.0};
-    layout.max_accelerations_mm_s2 = {10.0,10.0,10.0,10.0};
+    layout.max_accelerations_mm_s2 = {100.0,100.0,100.0,100.0};
     layout.max_velocity_mm_s = {100.0,100.0,100.0,100.0}; ///<maximal velocity on axis in mm/s
-    layout.max_no_accel_velocity_mm_s = 1.0; ///<maximal velocity on axis in mm/s
+    layout.max_no_accel_velocity_mm_s = 2.0; ///<maximal velocity on axis in mm/s
     simulate_execution = false;
 
     return *this;
