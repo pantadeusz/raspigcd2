@@ -74,6 +74,7 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
     double dt = _cfg->tick_duration / dtnn; // dt for simulation
     std::cerr << "commands count = " << commands.size() << std::endl;
     int tick_i = 0;
+    int num_empty_ticks = 0;
 
     auto prev_position_steps = _steps_from_origin;
     for (auto c : commands)
@@ -111,7 +112,10 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
                 position[i] = position[i] + velocity[i] * dt;
             }
             if (!(prev_position_steps == _steps_from_origin)) {
-                std::cout << "sim" << (((double)(tick_i)*_cfg->tick_duration) + dt * dtn) << " " << (target_position[0]) << " " << (target_position[1]) << " " << (target_position[2]) << " " << (target_position[3]) << " " << (position[0]) << " " << (position[1]) << " " << (position[2]) << " " << (position[3]) << " " << (velocity[0]) << " " << (velocity[1]) << " " << (velocity[2]) << " " << (velocity[3]) << " " << (force[0]) << " " << (force[1]) << " " << (force[2]) << " " << (force[3]) << " " << (friction[0]) << " " << (friction[1]) << " " << (friction[2]) << " " << (friction[3]) << "\n";
+                std::cout << "sim" << (((double)(tick_i)*_cfg->tick_duration) + dt * dtn) << " " << (target_position[0]) << " " << (target_position[1]) << " " << (target_position[2]) << " " << (target_position[3]) << " " << (position[0]) << " " << (position[1]) << " " << (position[2]) << " " << (position[3]) << " " << (velocity[0]) << " " << (velocity[1]) << " " << (velocity[2]) << " " << (velocity[3]) << " " << (force[0]) << " " << (force[1]) << " " << (force[2]) << " " << (force[3]) << " " << (friction[0]) << " " << (friction[1]) << " " << (friction[2]) << " " << (friction[3]) << " " << num_empty_ticks <<"\n";
+                num_empty_ticks = 0;
+            } else {
+                num_empty_ticks++;
             }
             prev_position_steps = _steps_from_origin;
         }
