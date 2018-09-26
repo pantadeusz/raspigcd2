@@ -208,7 +208,9 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
     }
     current_tick_n++;
     if (_terminate) {break;}
-    std::this_thread::sleep_until(nextT);
+//    std::this_thread::sleep_until(nextT);
+    for (; std::chrono::system_clock::now() < nextT;){}
+
   }
   _terminate = false;
   return 0;
