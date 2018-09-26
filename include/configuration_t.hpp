@@ -82,6 +82,8 @@ class layout_config_t
   public:
     std::vector<double> scale; ///< scale along each axis (can be negative)
     std::vector<double> max_accelerations_mm_s2; ///<maximal acceleration on given axis (x, y, z, a) in mm/s2
+    std::vector<double> max_velocity_mm_s; ///<maximal velocity on axis in mm/s
+    double max_no_accel_velocity_mm_s; ///<maximal velocity on axis in mm/s
     
     std::string name;          ///< name of layout selected: 'corexy' 'cartesian'
 };
@@ -94,6 +96,8 @@ class configuration_t
 
     hardware_config_t hardware;
     layout_config_t layout;
+
+    bool simulate_execution; // should I use simulator by default
 
     /// zwraca statyczna domy
     static configuration_t &get();

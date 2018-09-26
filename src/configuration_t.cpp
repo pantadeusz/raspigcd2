@@ -42,6 +42,10 @@ configuration_t &configuration_t::load_defaults()
     layout.name = "corexy";
     layout.scale = {1.0, 1.0, 1.0, 1.0};
     layout.max_accelerations_mm_s2 = {10.0,10.0,10.0,10.0};
+    layout.max_velocity_mm_s = {100.0,100.0,100.0,100.0}; ///<maximal velocity on axis in mm/s
+    layout.max_no_accel_velocity_mm_s = 1.0; ///<maximal velocity on axis in mm/s
+    simulate_execution = true;
+
     return *this;
 }
 /* **************************************************************************
@@ -70,13 +74,20 @@ void to_json(nlohmann::json &j, const layout_config_t &p)
 {
     j = nlohmann::json{
         {"name", p.name},
-        {"scale", p.scale}};
+        {"scale", p.scale},
+        {"max_accelerations_mm_s2",p.max_accelerations_mm_s2},
+        {"max_velocity_mm_s",p.max_velocity_mm_s},
+        {"max_no_accel_velocity_mm_s",p.max_no_accel_velocity_mm_s}
+        };
 }
 
 void from_json(const nlohmann::json &j, layout_config_t &p)
 {
     p.name = j.value("name", p.name);
     p.scale = j.value("scale", p.scale);
+    p.max_accelerations_mm_s2 = j.value("max_accelerations_mm_s2",p.max_accelerations_mm_s2);
+    p.max_velocity_mm_s = j.value("max_velocity_mm_s",p.max_velocity_mm_s);
+    p.max_no_accel_velocity_mm_s = j.value("max_no_accel_velocity_mm_s",p.max_no_accel_velocity_mm_s);
 }
 
 std::ostream &operator<<(std::ostream &os, layout_config_t const &value)
@@ -160,7 +171,8 @@ void to_json(nlohmann::json &j, const configuration_t &p)
     j = nlohmann::json{
         {"hardware", p.hardware},
         {"layout", p.layout},
-        {"tick_duration", p.tick_duration}};
+        {"tick_duration", p.tick_duration},
+        {"simulate_execution",p.simulate_execution}};
 }
 
 void from_json(const nlohmann::json &j, configuration_t &p)
@@ -168,6 +180,7 @@ void from_json(const nlohmann::json &j, configuration_t &p)
     p.hardware = j.value("hardware", p.hardware);
     p.layout = j.value("layout", p.layout);
     p.tick_duration = j.value("tick_duration", p.tick_duration);
+    p.simulate_execution = j.value("simulate_execution",p.simulate_execution);
 }
 
 std::ostream &operator<<(std::ostream &os, configuration_t const &value)

@@ -43,6 +43,13 @@ public:
                this->operator[](2) * this->operator[](2) +
                this->operator[](3) * this->operator[](3);
     }
+    inline double sumv() const
+    {
+        return this->operator[](0)+
+               this->operator[](1)+
+               this->operator[](2)+
+               this->operator[](3);
+    }
 };
 
 inline distance_t operator+(const distance_t& a, const distance_t& b)

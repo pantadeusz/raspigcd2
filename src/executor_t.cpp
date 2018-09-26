@@ -31,7 +31,13 @@ executor_t &executor_t::get(configuration_t &cfg_)
     static executor_t *instance;
     try
     {
-        instance = &(executor_pi_t::get(cfg_));
+        if (cfg_.simulate_execution) {
+            std::cerr << "simulate execution.." << std::endl;
+            instance = &(executor_sim_t::get(cfg_));
+        } else {
+            instance = &(executor_pi_t::get(cfg_));
+        }
+        
     }
     catch (...)
     {
