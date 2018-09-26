@@ -39,9 +39,9 @@ TEST_CASE( "Experiments for timer delays", "[timers]" ) {
         }
         auto t1 = std::chrono::system_clock::now();
         double elaspedTimeMs = std::chrono::duration<double, std::micro>(t1-t0).count();
-        std::cout << "time for tick: " << elaspedTimeMs << " microseconds"<< std::endl;
+//        std::cout << "time for tick: " << elaspedTimeMs << " microseconds"<< std::endl;
 
-        REQUIRE(1 == 1);
+        REQUIRE(elaspedTimeMs < 30);
     }
 
     SECTION( "test for microsecond delay" ) {
@@ -67,12 +67,12 @@ TEST_CASE( "Experiments for timer delays", "[timers]" ) {
             double elaspedTimeMs = std::chrono::duration<double, std::micro>(t1-t0).count();
             if (i > 100) if (max_delay_recorded < elaspedTimeMs) {
                 max_delay_recorded = elaspedTimeMs;
-                std::cout << "++++ for microseconds(3) busy sleep : " << max_delay_recorded << " microseconds; " << n << std::endl;
+                //std::cout << "++++ for microseconds(3) busy sleep : " << max_delay_recorded << " microseconds; " << n << std::endl;
             }
         }
-        std::cout << "time for microseconds(5): " << max_delay_recorded << " microseconds"<< std::endl;
+//        std::cout << "time for microseconds(5): " << max_delay_recorded << " microseconds"<< std::endl;
 
-        REQUIRE(1 == 1);
+        REQUIRE(max_delay_recorded < 300);
     }
 
 
@@ -91,7 +91,7 @@ TEST_CASE( "Experiments for timer delays", "[timers]" ) {
         using namespace std::chrono; // nanoseconds, system_clock, seconds
         double max_delay_recorded = 0.0;
         for (int i = 0; i < 100000; i++) {
-            int n = 0;
+            //int n = 0;
             auto dt = std::chrono::microseconds(3);
             auto t0 = std::chrono::system_clock::now();
             auto t0p = t0 + dt;
@@ -101,15 +101,15 @@ TEST_CASE( "Experiments for timer delays", "[timers]" ) {
             double elaspedTimeMs = std::chrono::duration<double, std::micro>(t1-t0).count();
             if (i > 100) if (max_delay_recorded < elaspedTimeMs) {
                 max_delay_recorded = elaspedTimeMs;
-                std::cout << "++++ for microseconds(3) busy wait until: " << max_delay_recorded << " microseconds; " << n << std::endl;
+                //std::cout << "++++ for microseconds(3) busy wait until: " << max_delay_recorded << " microseconds; " << n << std::endl;
             }
         }
-        std::cout << "time for microseconds(1): " << max_delay_recorded << " microseconds"<< std::endl;
+        //std::cout << "time for microseconds(1): " << max_delay_recorded << " microseconds"<< std::endl;
 
-        REQUIRE(1 == 1);
+        REQUIRE(max_delay_recorded < 600);
     }
 
-
+/*
     SECTION( "test for microsecond delay using sleep_for" ) {
         { // make this thread (if this is a thread) real time
             sched_param sch_params;
@@ -125,18 +125,16 @@ TEST_CASE( "Experiments for timer delays", "[timers]" ) {
         using namespace std::chrono; // nanoseconds, system_clock, seconds
         double max_delay_recorded = 0.0;
         for (int i = 0; i < 100000; i++) {
-            int n = 0;
+            //int n = 0;
             auto t0 = std::chrono::system_clock::now();
             sleep_for(std::chrono::microseconds(3));
             auto t1 = std::chrono::system_clock::now();
             double elaspedTimeMs = std::chrono::duration<double, std::micro>(t1-t0).count();
             if (i > 100) if (max_delay_recorded < elaspedTimeMs) {
                 max_delay_recorded = elaspedTimeMs;
-                std::cout << "++++ for microseconds(3) sleep_for: " << max_delay_recorded << " microseconds; " << n << std::endl;
             }
         }
-        std::cout << "time for microseconds(1): " << max_delay_recorded << " microseconds"<< std::endl;
 
-        REQUIRE(1 == 1);
-    }
+        REQUIRE(max_delay_recorded < 300);
+    } */
 }
