@@ -54,9 +54,12 @@ add_executable(executor_t_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/executor_t_test
 target_link_libraries(executor_t_test LINK_INTERFACE_LIBRARIES raspigcd2)
 add_test(NAME executor_t_test COMMAND "${CMAKE_BINARY_DIR}/executor_t_test" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 
+add_executable(motion_plan_t_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/motion_plan_t_test.cpp ${lib_SOURCES})
+target_link_libraries(motion_plan_t_test LINK_INTERFACE_LIBRARIES raspigcd2)
+add_test(NAME motion_plan_t_test COMMAND "${CMAKE_BINARY_DIR}/motion_plan_t_test" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
-                  DEPENDS executor_t_test)
+                  DEPENDS executor_t_test motion_plan_t_test)
 
 
 SET(CPACK_PACKAGE_VERSION_MAJOR ${raspigcd2_VERSION_MAJOR})

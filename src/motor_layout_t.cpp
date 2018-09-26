@@ -13,7 +13,7 @@ class corexy_layout_t : public motor_layout_t
 
     steps_t cartesian_to_steps(const distance_t &distances_);
     distance_t steps_to_cartesian(const steps_t &steps_);
-    corexy_layout_t();
+    corexy_layout_t(configuration_t &_cfg = configuration_t::get());
     void set_configuration(configuration_t &conf);
 };
 
@@ -35,9 +35,9 @@ distance_t corexy_layout_t::steps_to_cartesian(const steps_t &steps_)
         steps_[3] / (steps_per_milimeter_[3] * scales_[3]));
 }
 
-corexy_layout_t::corexy_layout_t()
+corexy_layout_t::corexy_layout_t(configuration_t &_cfg)
 {
-    set_configuration(configuration_t::get());
+    set_configuration(_cfg);
 }
 
 void corexy_layout_t::set_configuration(configuration_t &conf)
@@ -59,7 +59,7 @@ class cartesian_layout_t : public motor_layout_t
 
     steps_t cartesian_to_steps(const distance_t &distances_);
     distance_t steps_to_cartesian(const steps_t &steps_);
-    cartesian_layout_t();
+    cartesian_layout_t(configuration_t &_cfg = configuration_t::get());
     void set_configuration(configuration_t &conf);
 };
 
@@ -81,9 +81,9 @@ distance_t cartesian_layout_t::steps_to_cartesian(const steps_t &steps_)
         steps_[3] / (steps_per_milimeter_[3] * scales_[3]));
 }
 
-cartesian_layout_t::cartesian_layout_t()
+cartesian_layout_t::cartesian_layout_t(configuration_t &_cfg)
 {
-    set_configuration(configuration_t::get());
+    set_configuration(_cfg);
 }
 void cartesian_layout_t::set_configuration(configuration_t &conf)
 {
@@ -99,15 +99,15 @@ void cartesian_layout_t::set_configuration(configuration_t &conf)
 motor_layout_t *motor_layout_t::get_and_update_instance(configuration_t &conf)
 {
     if (conf.layout.name == "corexy") {
-        static corexy_layout_t instance_corexy;
+        static corexy_layout_t instance_corexy(conf);
         instance_corexy.set_configuration(conf);
         return &instance_corexy;
     } else if (conf.layout.name == "cartesian") {
-        static cartesian_layout_t instance_cartesian;
+        static cartesian_layout_t instance_cartesian(conf);
         instance_cartesian.set_configuration(conf);
         return &instance_cartesian;
     } else {
-        throw std::invalid_argument("Incorrect layout name. Only layouts allowed are: corexy euclidean");
+        throw std::invalid_argument("Incorrect layout name. Only layouts allowed are: corexy cartesian");
     }
 }
 
