@@ -58,7 +58,14 @@ class executor_t
    * */
 
     virtual int execute(const std::vector<executor_command_t> &commands) = 0;
+    /**
+     * @brief turns on or off motors
+     * 
+     * @param en true - enable stepper motors, false - disable stepper motors
+     */
     virtual void enable(bool en) = 0;
+
+    virtual void terminate() = 0;
     // get instance
     static executor_t &get(configuration_t &cfg_ = configuration_t::get());
 

@@ -137,59 +137,9 @@ executor_pi_t &executor_pi_t::get(configuration_t &c_)
   return instance;
 }
 
-/** from Gordon's Wiring Pi */
-/* void dmseconsHard (unsigned int howLong)
-{
-  *(timer + TIMER_LOAD)    = howLong ;
-  *(timer + TIMER_IRQ_CLR) = 0 ;
-
-  while (*timerIrqRaw == 0)
-    ;
-}
-
-void dmsecons (unsigned int howLong)
-{
-  struct timespec sleeper, dummy ;
-
-  if (howLong ==   0)
-    return ;
-  else if (howLong  < 100)
-    delayMicrosecondsHard (howLong) ;
-  else
-  {
-    sleeper.tv_sec  = 0 ;
-    sleeper.tv_nsec = (long)(howLong * 1000) ;
-    nanosleep (&sleeper, &dummy) ;
-  }
-}
-/ * end of copied code */
-
-void test_time_of_delays() {
-  auto t0 = std::chrono::system_clock::now();
-    {
-    volatile int delayloop = 50;
-    while (delayloop--)
-      ;
-  }
-  {
-    volatile int delayloop = 100;
-    while (delayloop--)
-      ;
-  }
-  // clear all steps
-  {
-    volatile int delayloop = 20;
-    while (delayloop--)
-      ;
-  }
-  auto t1 = std::chrono::system_clock::now();
-  double elaspedTimeMs = std::chrono::duration<double, std::micro>(t1-t0).count();
-  std::cerr << "time for tick: " << elaspedTimeMs << " microseconds"<< std::endl;
-}
-
 int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
 {
-  {
+  { // make this thread (if this is a thread) real time
     sched_param sch_params;
     sch_params.sched_priority = sched_get_priority_max(SCHED_RR);
 
@@ -257,8 +207,10 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
         ;
     }
     current_tick_n++;
+    if (_terminate) {break;}
     std::this_thread::sleep_until(nextT);
   }
+  _terminate = false;
   return 0;
 }
 
@@ -275,6 +227,10 @@ void executor_pi_t::enable(bool en)
       GPIO_SET = 1 << c.en;
     }
   }
+}
+
+void executor_pi_t::terminate(){
+  _terminate = true;
 }
 
 void executor_pi_t::set_position(const steps_t &steps)

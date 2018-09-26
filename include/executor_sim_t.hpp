@@ -44,7 +44,7 @@ class executor_sim_t : public executor_t
 
     void set_position(const steps_t &steps);
     steps_t get_position() const;
-
+    void terminate(){};
 
     /**
    * executes list of commands.

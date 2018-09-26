@@ -41,6 +41,8 @@ protected:
     executor_pi_t(configuration_t &c_ = configuration_t::get());
     executor_pi_t(const executor_t& that) = delete;
     std::atomic<int> _position[8];
+    std::atomic<bool> _terminate;
+    
   public:
 
 
@@ -55,6 +57,8 @@ protected:
 
     int execute(const std::vector<executor_command_t> &commands);
     void enable(bool en);
+    void terminate();
+
 
     static executor_pi_t &get(configuration_t &c_ = configuration_t::get());
 };
