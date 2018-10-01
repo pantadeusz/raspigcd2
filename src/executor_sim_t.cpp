@@ -74,6 +74,8 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
     int num_empty_ticks = 0;
 
     auto prev_position_steps = _steps_from_origin;
+    for (int i = 0; i < DEGREES_OF_FREEDOM; i++) 
+        position[i] = ((double)_steps_from_origin[i]) / (_cfg->hardware.steppers[i].steps_per_m()); // in meters
     for (auto c : commands)
     {
         int dir[4] = {0, 0, 0, 0};

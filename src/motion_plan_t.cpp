@@ -40,7 +40,7 @@ std::vector<executor_command_t> motion_plan_t::chase_steps(const steps_t& steps_
 const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
 {
     std::vector<executor_command_t> _motion_plan;
-
+    if (_motion_fragments.size() == 0) return _motion_plan;
     // calculate angle between two vectors
     auto vectors_angle = [](auto u, auto v) {
         auto dotprod = (u * v).sumv();
@@ -63,7 +63,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
             steps = psteps;
             ret.insert(ret.end(), st.begin(), st.end());
             if ((v + a * dt) <= 0) {
-                std::cerr << "err: v=" << v << " <= 0; " << s << " " << length << std::endl;
+                // std::cerr << "err: v=" << v << " <= 0; " << s << " " << length << std::endl;
                 break;
             } else {
                 v = v + a * dt;
@@ -158,11 +158,11 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
         std::tie(l_AM, l_M, l_MB) = calculate_velocity_target(length_remaining, prev_speed, next_speed, mfrag.max_velocity, average_max_accel);
 
         if (l_M < 0.0) throw std::invalid_argument("impossible accelerations");
-        std::cerr << "t_AM = "
-                  << "   l_AM = " << l_AM << std::endl;
-        std::cerr << "t_MB = "
-                  << "   l_MB = " << l_MB << std::endl;
-        std::cerr << "l_M = " << l_M << std::endl;
+        // std::cerr << "t_AM = "
+        //           << "   l_AM = " << l_AM << std::endl;
+        // std::cerr << "t_MB = "
+        //           << "   l_MB = " << l_MB << std::endl;
+        // std::cerr << "l_M = " << l_M << std::endl;
         double temporary_velocity = prev_speed;
         auto end_position_actual = motor_layout->cartesian_to_steps(mfrag.source);
         if (l_AM > 0) {
@@ -208,7 +208,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
 
 
     steps_t steps = motor_layout->cartesian_to_steps(_motion_fragments.front().source);
-    std::cerr << "steps: " << steps << std::endl;
+    // std::cerr << "steps: " << steps << std::endl;
     std::vector<motion_fragment_t> motion_fragments_vector(_motion_fragments.begin(), _motion_fragments.end());
 
     // make breakings as small as possible
@@ -242,7 +242,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
         auto mfrag = motion_fragments_vector[i];
 
         mfrag.source = motor_layout->steps_to_cartesian(steps);
-        std::cerr << "mfrag.source: " << mfrag.source << std::endl;
+        // std::cerr << "mfrag.source: " << mfrag.source << std::endl;
         auto steps_diff = gotoxy(*mfrag.prev_speed.get(), mfrag, *mfrag.next_speed.get()); //.destination, mfrag.max_velocity);
         steps = steps + steps_diff;
     }

@@ -10,6 +10,17 @@ using namespace raspigcd;
 
 TEST_CASE("Steps calculated by motion_plan_t", "[motion_plan_t]")
 {
+    SECTION("empty plan should work")
+    {
+        std::vector<executor_command_t> planA;
+        configuration_t cfg;
+        cfg.load_defaults();
+        motion_plan_t mp(cfg);
+
+        planA = mp.get_motion_plan();
+        REQUIRE(planA.size() == 0);
+    }
+
     SECTION("long compare two methods of path generation")
     {
         std::vector<executor_command_t> planA;
