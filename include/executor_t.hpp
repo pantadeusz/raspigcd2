@@ -38,8 +38,12 @@ struct executor_motor_command_t
 };
 
 union executor_command_t {
+    struct {
+        executor_motor_command_t b[DEGREES_OF_FREEDOM]; // duplicate of first b
+        int repeat; // number of times to repeat the command, it means that the command will be executed (repeat+1) times.
+    } cmnd;
     executor_motor_command_t b[DEGREES_OF_FREEDOM];
-    int v;
+    long int v;
 };
 
 class executor_t

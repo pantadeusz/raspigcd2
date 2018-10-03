@@ -51,8 +51,9 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
     // generates steps with dt as a time frame, with initial velocity v, and that accelerates with a mm/s2 along given vector.
     // returns vector of commands, and finishing velocity
     auto move_to_position_with_given_accel = [&, this](double dt, double v, double a, double length, distance_t norm_vect) -> std::pair<std::vector<executor_command_t>, double> {
-        std::vector<executor_command_t> ret;
-        ret.reserve(1000000);
+        std::vector<executor_command_t> ret2;
+        std::list<executor_command_t> ret;
+        //ret.reserve(1000000);
 
         steps_t steps(0, 0, 0, 0);
         distance_t position(0, 0, 0, 0);
@@ -69,8 +70,20 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
                 v = v + a * dt;
             }
         }
-        ret.shrink_to_fit();
-        return {ret, v};
+        ret2.reserve(ret.size());
+        for (auto &e : ret) {
+            if (ret2.size()>0) {
+                if (ret2.back().b == e.b) {
+                    ret2.back().cmnd.repeat++;
+                } else {
+                    ret2.push_back(e);
+                }
+            } else {
+                ret2.push_back(e);
+            }
+        }
+        ret2.shrink_to_fit();
+        return {ret2, v};
     };
 
 

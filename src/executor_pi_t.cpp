@@ -165,6 +165,8 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
   // this part is critical - I unwinded loops in order to reduce latencies
   for (auto c : commands)
   {
+    int rpt = c.cmnd.repeat; // 0 means that we execute it once
+    do {
     // step direction
     unsigned int dir_set =
         (c.b[0].dir << steppers[0].dir) | (c.b[1].dir << steppers[1].dir) |
@@ -207,12 +209,14 @@ int executor_pi_t::execute(const std::vector<executor_command_t> &commands)
         ;
     }
     current_tick_n++;
-    if (_terminate) {break;}
+    if (_terminate) {
+      _terminate = false;
+      return 1;
+    }
 //    std::this_thread::sleep_until(nextT);
     for (; std::chrono::system_clock::now() < nextT;){}
-
+    } while ((rpt--) > 0);
   }
-  _terminate = false;
   return 0;
 }
 

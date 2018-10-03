@@ -18,7 +18,7 @@
 #ifndef __RASPIGCD_EXECUTOR_SIM_T_HPP__
 #define __RASPIGCD_EXECUTOR_SIM_T_HPP__
 
-#include <executor_t.hpp>
+#include "executor_t.hpp"
 #include <steps_t.hpp>
 #include <configuration_t.hpp>
 

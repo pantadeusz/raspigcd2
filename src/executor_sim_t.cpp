@@ -15,26 +15,25 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <executor_sim_t.hpp>
 #include <distance_t.hpp>
+#include <executor_sim_t.hpp>
 
 #include <chrono>
 
 #include <chrono>
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 #include <thread>
-#include <cmath>
 
-namespace raspigcd
-{
+namespace raspigcd {
 
 std::mutex executor_sim_t::_mutex_steps_from_origin;
 
-executor_sim_t::executor_sim_t(configuration_t &cfg)
+executor_sim_t::executor_sim_t(configuration_t& cfg)
 {
     _cfg = &cfg;
-    for (auto &p : _steps_from_origin)
+    for (auto& p : _steps_from_origin)
         p = 0;
     enable(false);
 }
@@ -43,7 +42,7 @@ executor_sim_t::~executor_sim_t()
 {
 }
 
-executor_sim_t &executor_sim_t::get(configuration_t &c_)
+executor_sim_t& executor_sim_t::get(configuration_t& c_)
 {
     static executor_sim_t instance(c_);
     return instance;
@@ -51,9 +50,8 @@ executor_sim_t &executor_sim_t::get(configuration_t &c_)
 
 //plot 'file.txt' using 1:4 w lines, '' using 1:8 w lines
 
-int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
+int executor_sim_t::execute(const std::vector<executor_command_t>& commands)
 {
-
     // using SI coordinates: m, m/s, kg, N
 
     distance_t position(0, 0, 0, 0);                       // current position
@@ -67,58 +65,54 @@ int executor_sim_t::execute(const std::vector<executor_command_t> &commands)
 
     distance_t friction(0, 0, 0, 0); // current friction force
 
-    double dtnn = 4;                       // simulation multiplier
+    double dtnn = 4;                        // simulation multiplier
     double dt = _cfg->tick_duration / dtnn; // dt for simulation
     std::cerr << "commands count = " << commands.size() << std::endl;
     int tick_i = 0;
     int num_empty_ticks = 0;
 
     auto prev_position_steps = _steps_from_origin;
-    for (int i = 0; i < DEGREES_OF_FREEDOM; i++) 
+    for (int i = 0; i < DEGREES_OF_FREEDOM; i++)
         position[i] = ((double)_steps_from_origin[i]) / (_cfg->hardware.steppers[i].steps_per_m()); // in meters
-    for (auto c : commands)
-    {
-        int dir[4] = {0, 0, 0, 0};
-        // step direction
-        for (auto i : {0, 1, 2, 3})
-            dir[i] = c.b[i].step * (c.b[i].dir * 2 - 1);
-        for (int i : {0, 1, 2, 3})
-        {
-            _steps_from_origin[i] += dir[i];
-            target_position[i] = ((double)_steps_from_origin[i]) / (_cfg->hardware.steppers[i].steps_per_m()); // in meters
-        }
+    for (auto c : commands) {
+        int rpt = c.cmnd.repeat; // 0 means that we execute it once
+        do {
+            int dir[4] = {0, 0, 0, 0};
+            // step direction
+            for (auto i : {0, 1, 2, 3})
+                dir[i] = c.b[i].step * (c.b[i].dir * 2 - 1);
+            for (int i : {0, 1, 2, 3}) {
+                _steps_from_origin[i] += dir[i];
+                target_position[i] = ((double)_steps_from_origin[i]) / (_cfg->hardware.steppers[i].steps_per_m()); // in meters
+            }
 
-        //std::cerr << "dir 0 " << (1.0/_cfg->hardware.steppers[0].stepsPerMm) << std::endl;
-        for (int dtn = 0; dtn < dtnn; dtn++)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                double direction = target_position[i] - position[i];
-                if (std::abs(direction) > break_distance[i])
-                {
-                    position[i] = target_position[i]; // step lost - JITTER
-                    direction = target_position[i] - position[i];
+            //std::cerr << "dir 0 " << (1.0/_cfg->hardware.steppers[0].stepsPerMm) << std::endl;
+            for (int dtn = 0; dtn < dtnn; dtn++) {
+                for (int i = 0; i < 4; i++) {
+                    double direction = target_position[i] - position[i];
+                    if (std::abs(direction) > break_distance[i]) {
+                        position[i] = target_position[i]; // step lost - JITTER
+                        direction = target_position[i] - position[i];
+                    }
+                    if (std::abs(direction) > 0.0000001) {
+                        force[i] = force_from_motor[i] * direction / std::abs(direction) * (1.0 - std::pow(std::abs(direction) / break_distance[i], 2));
+                    } else
+                        force[i] = 0;
+                    friction[i] = -((velocity[i] > 0) ? 1.0 : -1.0) * std::abs(velocity[i]) * friction_coeff[i] / dt;
+                    force[i] += friction[i];
+                    velocity[i] = velocity[i] + (force[i] / mass[i]) * dt;
+                    position[i] = position[i] + velocity[i] * dt;
                 }
-                if (std::abs(direction) > 0.0000001)
-                {
-                    force[i] = force_from_motor[i] * direction / std::abs(direction) * (1.0 - std::pow(std::abs(direction) / break_distance[i], 2));
+                if (!(prev_position_steps == _steps_from_origin)) {
+                    std::cout << "sim" << (((double)(tick_i)*_cfg->tick_duration) + dt * dtn) << " " << (target_position[0]) << " " << (target_position[1]) << " " << (target_position[2]) << " " << (target_position[3]) << " " << (position[0]) << " " << (position[1]) << " " << (position[2]) << " " << (position[3]) << " " << (velocity[0]) << " " << (velocity[1]) << " " << (velocity[2]) << " " << (velocity[3]) << " " << (force[0]) << " " << (force[1]) << " " << (force[2]) << " " << (force[3]) << " " << (friction[0]) << " " << (friction[1]) << " " << (friction[2]) << " " << (friction[3]) << " " << num_empty_ticks << "\n";
+                    num_empty_ticks = 0;
+                } else {
+                    num_empty_ticks++;
                 }
-                else
-                    force[i] = 0;
-                friction[i] = -((velocity[i] > 0) ? 1.0 : -1.0) * std::abs(velocity[i]) * friction_coeff[i] / dt;
-                force[i] += friction[i];
-                velocity[i] = velocity[i] + (force[i] / mass[i]) * dt;
-                position[i] = position[i] + velocity[i] * dt;
+                prev_position_steps = _steps_from_origin;
             }
-            if (!(prev_position_steps == _steps_from_origin)) {
-                std::cout << "sim" << (((double)(tick_i)*_cfg->tick_duration) + dt * dtn) << " " << (target_position[0]) << " " << (target_position[1]) << " " << (target_position[2]) << " " << (target_position[3]) << " " << (position[0]) << " " << (position[1]) << " " << (position[2]) << " " << (position[3]) << " " << (velocity[0]) << " " << (velocity[1]) << " " << (velocity[2]) << " " << (velocity[3]) << " " << (force[0]) << " " << (force[1]) << " " << (force[2]) << " " << (force[3]) << " " << (friction[0]) << " " << (friction[1]) << " " << (friction[2]) << " " << (friction[3]) << " " << num_empty_ticks <<"\n";
-                num_empty_ticks = 0;
-            } else {
-                num_empty_ticks++;
-            }
-            prev_position_steps = _steps_from_origin;
-        }
-        tick_i++;
+            tick_i++;
+        } while ((rpt--) > 0);
     }
     std::cerr << "tick duration = " << _cfg->tick_duration << std::endl;
     std::cerr << "end time = " << (tick_i * _cfg->tick_duration) << std::endl;
@@ -129,7 +123,7 @@ void executor_sim_t::enable(bool)
 {
 }
 
-void executor_sim_t::set_position(const steps_t &steps)
+void executor_sim_t::set_position(const steps_t& steps)
 {
     std::lock_guard<std::mutex> lock(_mutex_steps_from_origin);
     _steps_from_origin = steps;

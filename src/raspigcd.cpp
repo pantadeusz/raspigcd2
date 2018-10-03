@@ -179,7 +179,7 @@ public:
                     std::cout << "  " << e.first << " " << e.second << std::endl;
                 }
                 if ((current_code.first != 'G') || (current_code.second > 1)) {
-                    std::cout << "break and execute code" << std::endl;
+                    //std::cout << "break and execute code" << std::endl;
                     auto mp = _motion_planner->get_motion_plan();
                     _executor->execute(mp);
                     if (mp.size() > 0) _motion_planner->clear_motion_fragments_buffer();
@@ -377,9 +377,9 @@ int main(int argc, char** argv)
 M17
 ; nowag
 G0Z5
-G0X10Y20
+G0X-10Y-20
 M114
-G1X0Y20
+G1X0Y-20
 G1X0Y0
 M114
 G0X0Y0Z0

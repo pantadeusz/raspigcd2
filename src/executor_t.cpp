@@ -48,6 +48,8 @@ steps_t executor_t::commands_to_steps(const std::vector<executor_command_t> &com
     steps_t ret(0, 0, 0, 0);
     for (const auto &c : commands)
     {
+        int r = c.cmnd.repeat;
+        do {
         int dir[4] = {0, 0, 0, 0};
         // step direction
         for (auto i : {0, 1, 2, 3})
@@ -56,6 +58,7 @@ steps_t executor_t::commands_to_steps(const std::vector<executor_command_t> &com
         {
             ret[i] += dir[i];
         }
+        } while ((r--)>0);
     }
     return ret;
 }
