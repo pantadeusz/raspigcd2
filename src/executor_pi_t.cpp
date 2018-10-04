@@ -158,7 +158,6 @@ int executor_pi_t::execute(const std::vector<executor_command_t>& commands)
     // this part is critical - I unwinded loops in order to reduce latencies
     for (auto c : commands) {
         int rpt = c.cmnd.repeat; // 0 means that we execute it once
-        std::cout << rpt << std::endl;
         do {
             // step direction
             unsigned int dir_set =
