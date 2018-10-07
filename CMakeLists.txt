@@ -59,12 +59,16 @@ add_executable(motion_plan_t_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/motion_plan_
 target_link_libraries(motion_plan_t_test LINK_INTERFACE_LIBRARIES raspigcd2)
 add_test(NAME motion_plan_t_test COMMAND "${CMAKE_BINARY_DIR}/motion_plan_t_test" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 
-add_executable(timers_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/timers_test.cpp ${lib_SOURCES})
-target_link_libraries(timers_test LINK_INTERFACE_LIBRARIES raspigcd2)
-add_test(NAME timers_test COMMAND "${CMAKE_BINARY_DIR}/timers_test" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
+# add_executable(timers_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/timers_test.cpp ${lib_SOURCES})
+# target_link_libraries(timers_test LINK_INTERFACE_LIBRARIES raspigcd2)
+# add_test(NAME timers_test COMMAND "${CMAKE_BINARY_DIR}/timers_test" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
-                  DEPENDS executor_t_test motion_plan_t_test timers_test)
+                  DEPENDS 
+                      executor_t_test 
+                      motion_plan_t_test 
+#                      timers_test
+)
 
 
 SET(CPACK_PACKAGE_VERSION_MAJOR ${raspigcd2_VERSION_MAJOR})
