@@ -1,4 +1,7 @@
 # raspigcd2
+
+[![Build Status](https://travis-ci.org/pantadeusz/raspigcd2.svg?branch=master)](https://travis-ci.org/pantadeusz/raspigcd2)
+
 The second attempt to raspberry pi gcode interpreter
 
 
