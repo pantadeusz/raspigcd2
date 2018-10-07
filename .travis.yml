@@ -1,6 +1,5 @@
-language: java
+language: cpp
 
-jobs:
-  include:
-    - stage: test
-      script: cd app1 && mvn test
+
+script: rm -rf build; mkdir -p build; cd build; cmake ..; make check -j 3
+
