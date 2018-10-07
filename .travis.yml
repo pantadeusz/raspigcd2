@@ -1,1 +1,6 @@
 language: java
+
+jobs:
+  include:
+    - stage: test
+      script: cd app1 && mvn test
