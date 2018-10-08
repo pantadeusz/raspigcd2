@@ -149,7 +149,7 @@ int executor_pi_t::execute(const std::vector<executor_command_t>& commands)
     unsigned int step_clear = (1 << steppers[0].step) | (1 << steppers[1].step) |
                               (1 << steppers[2].step) | (1 << steppers[3].step);
 
-    auto ttime =
+    std::chrono::microseconds ttime =
         std::chrono::microseconds((unsigned long)(conf.tick_duration / 0.000001));
     auto t = std::chrono::system_clock::now();
     auto nextT = ttime + t;
@@ -187,7 +187,8 @@ int executor_pi_t::execute(const std::vector<executor_command_t>& commands)
             }
             // set step to do
             GPIO_SET = step_set;
-            nextT = t + ttime * current_tick_n;
+            //nextT = t + ttime * current_tick_n;
+            nextT += ttime;
             {
                 volatile int delayloop = 100;
                 while (delayloop--)

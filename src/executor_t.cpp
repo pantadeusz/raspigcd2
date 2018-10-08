@@ -20,45 +20,49 @@
 #include <executor_pi_t.hpp>
 #include <executor_sim_t.hpp>
 
-namespace raspigcd
-{
+namespace raspigcd {
 
-executor_t &executor_t::get(configuration_t &cfg_)
+executor_t& executor_t::get(configuration_t& cfg_)
 {
-    static executor_t *instance;
-    try
-    {
+    static executor_t* instance;
+    try {
         if (cfg_.simulate_execution) {
             std::cerr << "simulate execution.." << std::endl;
-            instance = &(executor_sim_t::get(cfg_));
+            executor_sim_t* inst = &(executor_sim_t::get(cfg_));
+            instance = inst;
+            inst->debug_callback = [](double T,
+                                       distance_t target_position,
+                                       distance_t position,
+                                       distance_t velocity,
+                                       distance_t force,
+                                       distance_t friction,
+                                       int num_empty_ticks) {
+                std::cout << "sim" << T << " " << (target_position[0]) << " " << (target_position[1]) << " " << (target_position[2]) << " " << (target_position[3]) << " " << (position[0]) << " " << (position[1]) << " " << (position[2]) << " " << (position[3]) << " " << (velocity[0]) << " " << (velocity[1]) << " " << (velocity[2]) << " " << (velocity[3]) << " " << (force[0]) << " " << (force[1]) << " " << (force[2]) << " " << (force[3]) << " " << (friction[0]) << " " << (friction[1]) << " " << (friction[2]) << " " << (friction[3]) << " " << num_empty_ticks << "\n";
+            };
         } else {
             instance = &(executor_pi_t::get(cfg_));
         }
-        
-    }
-    catch (...)
-    {
+
+    } catch (...) {
         instance = &(executor_sim_t::get(cfg_));
     }
     return *instance;
 }
 
-steps_t executor_t::commands_to_steps(const std::vector<executor_command_t> &commands)
+steps_t executor_t::commands_to_steps(const std::vector<executor_command_t>& commands)
 {
     steps_t ret(0, 0, 0, 0);
-    for (const auto &c : commands)
-    {
+    for (const auto& c : commands) {
         int r = c.cmnd.repeat;
         do {
-        int dir[4] = {0, 0, 0, 0};
-        // step direction
-        for (auto i : {0, 1, 2, 3})
-            dir[i] = c.b[i].step * (c.b[i].dir * 2 - 1);
-        for (int i : {0, 1, 2, 3})
-        {
-            ret[i] += dir[i];
-        }
-        } while ((r--)>0);
+            int dir[4] = {0, 0, 0, 0};
+            // step direction
+            for (auto i : {0, 1, 2, 3})
+                dir[i] = c.b[i].step * (c.b[i].dir * 2 - 1);
+            for (int i : {0, 1, 2, 3}) {
+                ret[i] += dir[i];
+            }
+        } while ((r--) > 0);
     }
     return ret;
 }

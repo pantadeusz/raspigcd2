@@ -33,6 +33,15 @@ std::mutex executor_sim_t::_mutex_steps_from_origin;
 executor_sim_t::executor_sim_t(configuration_t& cfg)
 {
     _cfg = &cfg;
+    debug_callback = []( double , // T,
+                         distance_t , // target_position,
+                         distance_t , // position,
+                         distance_t , // velocity,
+                         distance_t , // force,
+                         distance_t , // friction,
+                         int  // num_empty_ticks
+                         ) {
+        };
     for (auto& p : _steps_from_origin)
         p = 0;
     enable(false);
@@ -53,6 +62,7 @@ executor_sim_t& executor_sim_t::get(configuration_t& c_)
 int executor_sim_t::execute(const std::vector<executor_command_t>& commands)
 {
     // using SI coordinates: m, m/s, kg, N
+
 
     distance_t position(0, 0, 0, 0);                       // current position
     distance_t target_position(0, 0, 0, 0);                // calculated as simulation in meters
@@ -104,7 +114,13 @@ int executor_sim_t::execute(const std::vector<executor_command_t>& commands)
                     position[i] = position[i] + velocity[i] * dt;
                 }
                 if (!(prev_position_steps == _steps_from_origin)) {
-                    std::cout << "sim" << (((double)(tick_i)*_cfg->tick_duration) + dt * dtn) << " " << (target_position[0]) << " " << (target_position[1]) << " " << (target_position[2]) << " " << (target_position[3]) << " " << (position[0]) << " " << (position[1]) << " " << (position[2]) << " " << (position[3]) << " " << (velocity[0]) << " " << (velocity[1]) << " " << (velocity[2]) << " " << (velocity[3]) << " " << (force[0]) << " " << (force[1]) << " " << (force[2]) << " " << (force[3]) << " " << (friction[0]) << " " << (friction[1]) << " " << (friction[2]) << " " << (friction[3]) << " " << num_empty_ticks << "\n";
+                    debug_callback((((double)(tick_i)*_cfg->tick_duration) + dt * dtn),
+                        target_position,
+                        position,
+                        velocity,
+                        force,
+                        friction,
+                        num_empty_ticks);
                     num_empty_ticks = 0;
                 } else {
                     num_empty_ticks++;

@@ -119,7 +119,9 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
         double l_MB = 0;
 
         double current_velocity_target = max_velocity;
-        for (double current_velocity_target_range = max_velocity / 2.0; current_velocity_target_range > 0.001; current_velocity_target_range /= 2.0) {
+        for (double current_velocity_target_range = max_velocity / 2.0; 
+            current_velocity_target_range > 0.001; 
+            current_velocity_target_range /= 2.0) {
             auto lAM = (prev_speed < current_velocity_target) ? accleration_length_calc(prev_speed, current_velocity_target, average_max_accel) : 0.0;
             auto lMB = (current_velocity_target > next_speed) ? accleration_length_calc(current_velocity_target, next_speed, average_max_accel) : 0.0;
             auto lM = length - (lMB + lAM);
@@ -170,7 +172,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
         double l_AM, l_M, l_MB;
         std::tie(l_AM, l_M, l_MB) = calculate_velocity_target(length_remaining, prev_speed, next_speed, mfrag.max_velocity, average_max_accel);
 
-        if (l_M < 0.0) throw std::invalid_argument("impossible accelerations");
+        if (l_M < 0.0) throw std::invalid_argument("impossible accelerations" + std::to_string(l_M));
         // std::cerr << "t_AM = "
         //           << "   l_AM = " << l_AM << std::endl;
         // std::cerr << "t_MB = "
@@ -247,15 +249,15 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
 
 
     // TODO: check if breaks are possible
-    for (unsigned int i = ((int)motion_fragments_vector.size()) - 2; i > 0; i--) {
-    }
+    // for (unsigned int i = ((int)motion_fragments_vector.size()) - 2; i > 0; i--) {
+    // }
 
     // perform action
     for (unsigned int i = 0; i < motion_fragments_vector.size(); i++) {
         auto mfrag = motion_fragments_vector[i];
 
         mfrag.source = motor_layout->steps_to_cartesian(steps);
-        // std::cerr << "mfrag.source: " << mfrag.source << std::endl;
+        std::cerr << "mfrag.source: " << mfrag.source << std::endl;
         auto steps_diff = gotoxy(*mfrag.prev_speed.get(), mfrag, *mfrag.next_speed.get()); //.destination, mfrag.max_velocity);
         steps = steps + steps_diff;
     }

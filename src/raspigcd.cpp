@@ -330,7 +330,7 @@ int main(int argc, char** argv)
     std::vector<std::string> args(argv, argv + argc);
 
 //    static auto& cfg = configuration_t::get().load_defaults();
-    static auto& cfg = configuration_t().load_defaults();
+    auto cfg = configuration_t().load_defaults();
     std::cout << cfg << std::endl;
     executor_t& executor = executor_t::get(cfg);
 

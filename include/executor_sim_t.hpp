@@ -21,7 +21,8 @@
 #include "executor_t.hpp"
 #include <steps_t.hpp>
 #include <configuration_t.hpp>
-
+#include <distance_t.hpp>
+#include <functional>
 #include <mutex>
 
 /*
@@ -42,6 +43,16 @@ class executor_sim_t : public executor_t
     steps_t _steps_from_origin;
     static std::mutex _mutex_steps_from_origin;
   public:
+
+    std::function < void (double T,
+                    distance_t target_position,
+                    distance_t position,
+                    distance_t velocity,
+                    distance_t force,
+                    distance_t friction,
+                    int num_empty_ticks
+                    ) > debug_callback;
+
     executor_sim_t(configuration_t &c_);
 
     void set_position(const steps_t &steps);
