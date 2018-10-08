@@ -47,29 +47,20 @@ add_library(raspigcd2 SHARED ${lib_SOURCES})
 add_executable(gcd ${raspigcd2_SOURCES} ${lib_SOURCES})
 
 install (TARGETS raspigcd2 DESTINATION lib)
+install (TARGETS gcd DESTINATION bin)
+
+
+file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/tests/*_test.cpp")
+foreach(file ${files})
+  get_filename_component(fn_target ${file}
+                       NAME)
+  add_executable(${fn_target} ${file})
+  target_link_libraries(${fn_target} raspigcd2)
+  add_test(NAME ${fn_target} COMMAND "${CMAKE_BINARY_DIR}/${fn_target}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
+endforeach()
 
 
 enable_testing()
-
-add_executable(executor_t_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/executor_t_test.cpp ${lib_SOURCES})
-target_link_libraries(executor_t_test LINK_INTERFACE_LIBRARIES raspigcd2)
-add_test(NAME executor_t_test COMMAND "${CMAKE_BINARY_DIR}/executor_t_test" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
-
-add_executable(motion_plan_t_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/motion_plan_t_test.cpp ${lib_SOURCES})
-target_link_libraries(motion_plan_t_test LINK_INTERFACE_LIBRARIES raspigcd2)
-add_test(NAME motion_plan_t_test COMMAND "${CMAKE_BINARY_DIR}/motion_plan_t_test" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
-
-# add_executable(timers_test ${CMAKE_CURRENT_SOURCE_DIR}/tests/timers_test.cpp ${lib_SOURCES})
-# target_link_libraries(timers_test LINK_INTERFACE_LIBRARIES raspigcd2)
-# add_test(NAME timers_test COMMAND "${CMAKE_BINARY_DIR}/timers_test" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
-
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
-                  DEPENDS 
-                      executor_t_test 
-                      motion_plan_t_test 
-#                      timers_test
-)
-
 
 SET(CPACK_PACKAGE_VERSION_MAJOR ${raspigcd2_VERSION_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${raspigcd2_VERSION_MINOR})
@@ -79,8 +70,6 @@ SET(CPACK_GENERATOR "DEB" "TGZ")
 
 SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Tadeusz Puźniakowski")
 INCLUDE(CPack)
-
-
  
 # To use this:
 # make package
