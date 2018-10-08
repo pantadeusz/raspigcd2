@@ -42,13 +42,13 @@ using namespace raspigcd;
  * @brief generates sinusoidal wave with given maximal amplitude in milimeters and given time in seconds
  * 
  */
-std::vector<executor_command_t> generate_sin_wave_for_test(double amplitude = 15, //< in milimeters
+std::vector<executor_command_t> generate_sin_wave_for_test(
+    configuration_t *_cfg,
+    double amplitude = 15, //< in milimeters
     double T = 10,                                                                //< in seconds
     int axis = 2                                                                  //< axis to move
     )
 {
-    auto _cfg = &(configuration_t::get());
-
     std::vector<executor_command_t> executor_commands;
     executor_commands.reserve((::size_t)(T / _cfg->tick_duration));
     steps_t steps;
@@ -279,7 +279,6 @@ public:
         executors['M'] = [this](const std::map<char, double>& m) -> std::string {
             distance_t p;
             //std::array<unsigned char, 4> endstops;
-            int t = 0;
             switch ((int)m.at('M')) {
             /* case 3:
                 machine_.get()->spindleEnabled(true);
@@ -330,7 +329,8 @@ int main(int argc, char** argv)
 {
     std::vector<std::string> args(argv, argv + argc);
 
-    static auto& cfg = configuration_t::get().load_defaults();
+//    static auto& cfg = configuration_t::get().load_defaults();
+    static auto& cfg = configuration_t().load_defaults();
     std::cout << cfg << std::endl;
     executor_t& executor = executor_t::get(cfg);
 

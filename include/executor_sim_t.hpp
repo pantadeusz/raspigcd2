@@ -42,7 +42,7 @@ class executor_sim_t : public executor_t
     steps_t _steps_from_origin;
     static std::mutex _mutex_steps_from_origin;
   public:
-    executor_sim_t(configuration_t &c_ = configuration_t::get());
+    executor_sim_t(configuration_t &c_);
 
     void set_position(const steps_t &steps);
     steps_t get_position() const;
@@ -57,7 +57,7 @@ class executor_sim_t : public executor_t
     int execute(const std::vector<executor_command_t> &commands);
     void enable(bool en);
 
-    static executor_sim_t &get(configuration_t &c_ = configuration_t::get());
+    static executor_sim_t &get(configuration_t &c_);
 };
 
 

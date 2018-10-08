@@ -79,7 +79,7 @@ static  std::vector<executor_command_t> chase_steps(const steps_t& steps_, steps
 
     motion_plan_t& gotoxy(const distance_t& end_position_, const double& velocity_mm_s_);
     
-    motion_plan_t(configuration_t& configuration = configuration_t::get());
+    motion_plan_t(configuration_t& configuration);
 };
 
 }

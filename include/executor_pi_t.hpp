@@ -40,7 +40,7 @@ protected:
     configuration_t configuration;
 
     ~executor_pi_t();
-    executor_pi_t(configuration_t &c_ = configuration_t::get());
+    executor_pi_t(configuration_t &c_);
     executor_pi_t(const executor_t& that) = delete;
     std::atomic<int> _position[8];
     std::atomic<bool> _terminate;
@@ -62,7 +62,7 @@ protected:
     void terminate();
 
 
-    static executor_pi_t &get(configuration_t &c_ = configuration_t::get());
+    static executor_pi_t &get(configuration_t &c_);
 };
 
 

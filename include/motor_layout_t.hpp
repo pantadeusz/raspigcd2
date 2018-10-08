@@ -42,7 +42,7 @@ class motor_layout_t
     /**
      * @brief generates instance of this object according to configuration
      */
-    static motor_layout_t *get_and_update_instance(configuration_t &conf = configuration_t::get());
+    static motor_layout_t *get_and_update_instance(configuration_t &conf);
 };
 
 } // namespace raspigcd

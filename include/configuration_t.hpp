@@ -102,8 +102,7 @@ class configuration_t
 
     bool simulate_execution; // should I use simulator by default
 
-    /// zwraca statyczna domy
-    static configuration_t &get();
+    ///static configuration_t &get();
 
     configuration_t &load_defaults();
 };

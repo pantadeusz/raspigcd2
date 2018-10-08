@@ -31,7 +31,7 @@ class corexy_layout_t : public motor_layout_t
 
     steps_t cartesian_to_steps(const distance_t &distances_);
     distance_t steps_to_cartesian(const steps_t &steps_);
-    corexy_layout_t(configuration_t &_cfg = configuration_t::get());
+    corexy_layout_t(configuration_t &_cfg);
     void set_configuration(configuration_t &conf);
 };
 
@@ -77,7 +77,7 @@ class cartesian_layout_t : public motor_layout_t
 
     steps_t cartesian_to_steps(const distance_t &distances_);
     distance_t steps_to_cartesian(const steps_t &steps_);
-    cartesian_layout_t(configuration_t &_cfg = configuration_t::get());
+    cartesian_layout_t(configuration_t &_cfg);
     void set_configuration(configuration_t &conf);
 };
 

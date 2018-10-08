@@ -74,7 +74,7 @@ class executor_t
 
     virtual void terminate() = 0;
     // get instance
-    static executor_t &get(configuration_t &cfg_ = configuration_t::get());
+    static executor_t &get(configuration_t &cfg_);
 
     /**
      * @brief generates steps based on given commands vector

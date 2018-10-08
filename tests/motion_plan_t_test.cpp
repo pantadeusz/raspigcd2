@@ -1,7 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_FAST_COMPILE
+#define CATCH_CONFIG_DISABLE_MATCHERS
 #include <catch2/catch.hpp>
-
 
 #include <configuration_t_json.hpp>
 #include <motion_plan_t.hpp>

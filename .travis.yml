@@ -38,5 +38,5 @@ matrix:
 before_install:
     - eval "${MATRIX_EVAL}"
 
-script: rm -rf build; mkdir -p build; cd build; cmake ..; make -j 4; make check
+script: rm -rf build; mkdir -p build; cd build; cmake -DCMAKE_BUILD_TYPE=Debug .. ; make -j 4; make check
 

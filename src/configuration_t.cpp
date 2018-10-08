@@ -20,11 +20,11 @@
 namespace raspigcd
 {
 
-configuration_t &configuration_t::get()
+/*configuration_t &configuration_t::get()
 {
     static configuration_t instance;
     return instance;
-}
+}*/
 
 configuration_t &configuration_t::load_defaults()
 {
