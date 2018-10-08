@@ -15,6 +15,7 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <g_code_interpreter_t.hpp>
 
 #include <chrono>
 #include <configuration_t_json.hpp>
