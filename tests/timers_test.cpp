@@ -17,7 +17,7 @@
 
 // using namespace raspigcd;
 
-TEST_CASE( "Experiments for timer delays", "[timers]" ) {
+TEST_CASE( "Experiments for timer delays", "[.][timers]" ) {
 
 
     SECTION( "test for busy delay" ) {
