@@ -15,16 +15,16 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <executor_t.hpp>
+#include <step_sequence_executor_t.hpp>
 
 #include <executor_pi_t.hpp>
 #include <executor_sim_t.hpp>
 
 namespace raspigcd {
 
-executor_t& executor_t::get(configuration_t& cfg_)
+step_sequence_executor_t& step_sequence_executor_t::get(configuration_t& cfg_)
 {
-    static executor_t* instance;
+    static step_sequence_executor_t* instance;
     try {
         if (cfg_.simulate_execution) {
             std::cerr << "simulate execution.." << std::endl;
@@ -49,7 +49,7 @@ executor_t& executor_t::get(configuration_t& cfg_)
     return *instance;
 }
 
-steps_t executor_t::commands_to_steps(const std::vector<executor_command_t>& commands)
+steps_t step_sequence_executor_t::commands_to_steps(const std::vector<executor_command_t>& commands)
 {
     steps_t ret(0, 0, 0, 0);
     for (const auto& c : commands) {

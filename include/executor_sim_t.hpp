@@ -18,7 +18,7 @@
 #ifndef __RASPIGCD_EXECUTOR_SIM_T_HPP__
 #define __RASPIGCD_EXECUTOR_SIM_T_HPP__
 
-#include "executor_t.hpp"
+#include "step_sequence_executor_t.hpp"
 #include <steps_t.hpp>
 #include <configuration_t.hpp>
 #include <distance_t.hpp>
@@ -34,11 +34,11 @@
  */
 namespace raspigcd
 {
-class executor_sim_t : public executor_t
+class executor_sim_t : public step_sequence_executor_t
 {
     configuration_t *_cfg;
     ~executor_sim_t();
-    executor_sim_t(executor_t& that) = delete;
+    executor_sim_t(step_sequence_executor_t& that) = delete;
 
     steps_t _steps_from_origin;
     static std::mutex _mutex_steps_from_origin;

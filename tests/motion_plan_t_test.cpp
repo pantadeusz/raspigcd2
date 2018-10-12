@@ -65,8 +65,8 @@ TEST_CASE("Steps calculated by motion_plan_t", "[motion_plan_t]")
             planB.insert(planB.end(), fragment.begin(), fragment.end());
         }
 
-        steps_t planAsteps = executor_t::commands_to_steps(planA);
-        steps_t planBsteps = executor_t::commands_to_steps(planB);
+        steps_t planAsteps = step_sequence_executor_t::commands_to_steps(planA);
+        steps_t planBsteps = step_sequence_executor_t::commands_to_steps(planB);
 
         REQUIRE(planAsteps == planBsteps);
     }
@@ -103,8 +103,8 @@ TEST_CASE("Steps calculated by motion_plan_t", "[motion_plan_t]")
             mp.clear_motion_fragments_buffer();
         }
 
-        steps_t planAsteps = executor_t::commands_to_steps(planA);
-        steps_t planBsteps = executor_t::commands_to_steps(planB);
+        steps_t planAsteps = step_sequence_executor_t::commands_to_steps(planA);
+        steps_t planBsteps = step_sequence_executor_t::commands_to_steps(planB);
 
         REQUIRE(planAsteps == planBsteps);
     }
@@ -153,8 +153,8 @@ TEST_CASE("Steps calculated by motion_plan_t", "[motion_plan_t]")
         }
 
 
-        steps_t planAsteps = executor_t::commands_to_steps(planA);
-        steps_t planBsteps = executor_t::commands_to_steps(planB);
+        steps_t planAsteps = step_sequence_executor_t::commands_to_steps(planA);
+        steps_t planBsteps = step_sequence_executor_t::commands_to_steps(planB);
 
         REQUIRE(planAsteps == planBsteps);
     }
@@ -204,8 +204,8 @@ TEST_CASE("Steps calculated by motion_plan_t", "[motion_plan_t]")
         }
 
 
-        steps_t planAsteps = executor_t::commands_to_steps(planA);
-        steps_t planBsteps = executor_t::commands_to_steps(planB);
+        steps_t planAsteps = step_sequence_executor_t::commands_to_steps(planA);
+        steps_t planBsteps = step_sequence_executor_t::commands_to_steps(planB);
 
         REQUIRE(planAsteps == planBsteps);
     }

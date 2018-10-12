@@ -186,7 +186,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
             local_motion_plan.insert(local_motion_plan.end(), st_accel.first.begin(), st_accel.first.end());
             temporary_velocity = st_accel.second;
 
-            end_position_actual = end_position_actual + executor_t::commands_to_steps(st_accel.first);
+            end_position_actual = end_position_actual + step_sequence_executor_t::commands_to_steps(st_accel.first);
             std::tie(norm_vect, length_remaining) = mfrag_to_normalvect_and_length(motor_layout->steps_to_cartesian(end_position_actual), mfrag.destination);
         }
         if (l_M > 0) {
@@ -196,7 +196,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
             temporary_velocity = st_const.second;
 
 
-            end_position_actual = end_position_actual + executor_t::commands_to_steps(st_const.first);
+            end_position_actual = end_position_actual + step_sequence_executor_t::commands_to_steps(st_const.first);
             std::tie(norm_vect, length_remaining) = mfrag_to_normalvect_and_length(motor_layout->steps_to_cartesian(end_position_actual), mfrag.destination);
         }
         if (l_MB > 0) {
@@ -205,7 +205,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
             local_motion_plan.insert(local_motion_plan.end(), st_decel.first.begin(), st_decel.first.end());
             temporary_velocity = st_decel.second;
 
-            end_position_actual = end_position_actual + executor_t::commands_to_steps(st_decel.first);
+            end_position_actual = end_position_actual + step_sequence_executor_t::commands_to_steps(st_decel.first);
             std::tie(norm_vect, length_remaining) = mfrag_to_normalvect_and_length(motor_layout->steps_to_cartesian(end_position_actual), mfrag.destination);
         }
         auto distance_accuracy = std::sqrt(motor_layout->steps_to_cartesian({1, 1, 1, 1}).length2());
@@ -218,7 +218,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
         }
         local_motion_plan.shrink_to_fit();
         _motion_plan.insert(_motion_plan.end(), local_motion_plan.begin(), local_motion_plan.end());
-        return executor_t::commands_to_steps(local_motion_plan);
+        return step_sequence_executor_t::commands_to_steps(local_motion_plan);
     };
 
 

@@ -16,8 +16,8 @@
 */
 
 
-#ifndef __RASPIGCD_EXECUTOR_T_HPP__
-#define __RASPIGCD_EXECUTOR_T_HPP__
+#ifndef __RASPIGCD_STEP_SEQUENCE_EXECUTOR_T_HPP__
+#define __RASPIGCD_STEP_SEQUENCE_EXECUTOR_T_HPP__
 
 #include <configuration_t.hpp>
 #include <array>
@@ -46,7 +46,7 @@ union executor_command_t {
     int64_t v;
 };
 
-class executor_t
+class step_sequence_executor_t
 {
   protected:
 
@@ -74,7 +74,7 @@ class executor_t
 
     virtual void terminate() = 0;
     // get instance
-    static executor_t &get(configuration_t &cfg_);
+    static step_sequence_executor_t &get(configuration_t &cfg_);
 
     /**
      * @brief generates steps based on given commands vector

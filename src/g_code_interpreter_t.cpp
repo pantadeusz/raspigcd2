@@ -1,7 +1,10 @@
 #include "g_code_interpreter_t.hpp"
-
+#include "step_sequence_executor_t.hpp"
 
 namespace raspigcd {
+
+
+    
 // executes gcode command
 std::string g_code_interpreter_t::g(const std::string& gcd, std::function<std::string(const char, const std::map<char, double>&)> callback_)
 {
@@ -107,7 +110,7 @@ std::list<std::string> g_code_interpreter_t::execute_gcode_string(const std::str
     }
     return execute_gcode_lines(lines);
 }
-g_code_interpreter_t::g_code_interpreter_t(configuration_t* cfg, executor_t* executor, motion_plan_t* motion_planner_)
+g_code_interpreter_t::g_code_interpreter_t(configuration_t* cfg, step_sequence_executor_t* executor, motion_plan_t* motion_planner_)
 {
     _cfg = cfg;
     _executor = executor;

@@ -19,7 +19,7 @@
 #ifndef __RASPIGCD_EXECUTOR_PI_T_HPP__
 #define __RASPIGCD_EXECUTOR_PI_T_HPP__
 
-#include <executor_t.hpp>
+#include <step_sequence_executor_t.hpp>
 #include <configuration_t.hpp>
 #include <steps_t.hpp>
 
@@ -33,7 +33,7 @@
  */
 namespace raspigcd
 {
-class executor_pi_t : public executor_t
+class executor_pi_t : public step_sequence_executor_t
 {
 
 protected:
@@ -41,7 +41,7 @@ protected:
 
     ~executor_pi_t();
     executor_pi_t(configuration_t &c_);
-    executor_pi_t(const executor_t& that) = delete;
+    executor_pi_t(const step_sequence_executor_t& that) = delete;
     std::atomic<int> _position[8];
     std::atomic<bool> _terminate;
     

@@ -20,7 +20,7 @@
 #include <chrono>
 #include <configuration_t_json.hpp>
 #include <distance_t.hpp>
-#include <executor_t.hpp>
+#include <step_sequence_executor_t.hpp>
 #include <iostream>
 #include <list>
 #include <memory>
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
 //    static auto& cfg = configuration_t::get().load_defaults();
     auto cfg = configuration_t().load_defaults();
     std::cout << cfg << std::endl;
-    executor_t& executor = executor_t::get(cfg);
+    step_sequence_executor_t& executor = step_sequence_executor_t::get(cfg);
 
     executor.enable(true);
     //executor.execute(generate_sin_wave_for_test());
