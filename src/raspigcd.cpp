@@ -136,6 +136,7 @@ int main(int argc, char** argv)
         g_code_interpreter_t gcdinterpert(&cfg, &executor, spindles, &mp);
         gcdinterpert.execute_gcode_string(R"GCODE(
 ; jan
+M3P1000
 M17
 ; nowag
 G0Z5
@@ -145,6 +146,7 @@ G1X0Y-20
 G1X0Y0
 M114
 G0X0Y0Z0
+M5
 M18
 )GCODE");
     }

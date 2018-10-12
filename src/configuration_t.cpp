@@ -60,7 +60,7 @@ configuration_t& configuration_t::load_defaults()
 void to_json(nlohmann::json& j, const spindle_config_t& p)
 {
     j = nlohmann::json{
-        {"pin", p.pin}
+        {"pin", p.pin},
         {"cycle_time_seconds",p.cycle_time_seconds}, // 20ms
         {"duty_min",p.duty_min},
         {"duty_max",p.duty_max}
