@@ -34,6 +34,9 @@ class spindle_config_t
 {
   public:
     int pin;
+    double cycle_time_seconds;
+    double duty_min;
+    double duty_max;
 };
 
 /**

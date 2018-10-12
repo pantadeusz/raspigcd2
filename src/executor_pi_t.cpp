@@ -18,6 +18,7 @@
 
 */
 
+#include "raspi_pwm_spindle_t.hpp"
 #include <executor_pi_t.hpp>
 
 #include <chrono>
@@ -104,13 +105,29 @@ void unmap_peripheral(struct bcm2835_peripheral* p)
 
 namespace raspigcd {
 
+class raspi_hardware_setup_t {
+    public:
+        raspi_hardware_setup_t() {
+            if (map_peripheral(&gpio) == -1) {
+                throw std::invalid_argument("Failed to map the physical GPIO registers "
+                                            "into the virtual memory space.");
+            }
+        }
+        ~raspi_hardware_setup_t() {
+            unmap_peripheral(&gpio);
+        }
+        static raspi_hardware_setup_t &get();
+};
+
+raspi_hardware_setup_t &raspi_hardware_setup_t::get() {
+            static raspi_hardware_setup_t instance;
+            return instance;
+}
+
 executor_pi_t::executor_pi_t(configuration_t& c_)
 {
     configuration = c_;
-    if (map_peripheral(&gpio) == -1) {
-        throw std::invalid_argument("Failed to map the physical GPIO registers "
-                                    "into the virtual memory space.");
-    }
+    raspi_hardware_setup_t::get();
     // Define pin 7 as output
     for (auto c : configuration.hardware.steppers) {
         INP_GPIO(c.step);
@@ -243,5 +260,62 @@ steps_t executor_pi_t::get_position() const
         steps_from_origin[i] = _position[i];
     return steps_from_origin;
 }
+
+
+
+
+raspi_pwm_spindle_t::raspi_pwm_spindle_t(const spindle_config_t &cfg_)
+{
+    raspi_hardware_setup_t::get();
+
+    _pwm_pin = cfg_.pin;
+    _cycle_time_seconds = cfg_.cycle_time_seconds;
+    _duty_min = cfg_.duty_min;
+    _duty_max = cfg_.duty_max;
+
+
+
+    INP_GPIO(_pwm_pin);
+    OUT_GPIO(_pwm_pin);
+
+    _alive = true;
+    _duty = 0.0;
+    std::thread t([this]() {
+        {
+            sched_param sch_params;
+            sch_params.sched_priority = sched_get_priority_max(SCHED_RR);
+
+            if (pthread_setschedparam(pthread_self(), SCHED_RR, &sch_params)) {
+                std::cerr << "Warning: spindle_pi::configure - set realtime thread failed" << std::endl;
+            }
+        }
+        auto prevTime = std::chrono::steady_clock::now();
+        while (_alive) {
+            // 1
+            if (_duty > 0.0) {
+                GPIO_SET = 1 << _pwm_pin;
+                std::this_thread::sleep_until(prevTime + std::chrono::microseconds((int)(_duty * 1000.0 * 1000.0)));
+            }
+            if (_duty < _cycle_time_seconds) {
+                GPIO_CLR = 1 << _pwm_pin;
+                // 0
+                prevTime = prevTime + std::chrono::microseconds((int)(_cycle_time_seconds*1000*1000));
+                std::this_thread::sleep_until(prevTime);
+            }
+        }
+    });
+    t.detach();
+    set_power(0.0);
+
+    std::this_thread::sleep_until(std::chrono::steady_clock::now() + std::chrono::seconds(3));
+}
+
+void raspi_pwm_spindle_t::set_power(const double& pwr)
+{
+    if (pwr < 0) throw std::invalid_argument("spindle power should be 0 or more");
+    if (pwr > 1.0) throw std::invalid_argument("spindle power should be less or equal 1");
+    _duty = (_duty_max - _duty_min) * pwr + _duty_min;
+}
+
 
 } // namespace raspigcd

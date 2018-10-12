@@ -17,10 +17,19 @@
 
 #include <generic_spindle_t.hpp>
 
+
+#include <raspi_pwm_spindle_t.hpp>
+
 namespace raspigcd {
 std::vector<std::shared_ptr<generic_spindle_t>> generic_spindle_t::get(configuration_t& cfg)
 {
     std::vector<std::shared_ptr<generic_spindle_t>> ret;
+    for (auto &spindle_cfg_: cfg.hardware.spindles) {
+        std::shared_ptr<generic_spindle_t> raspi_pwm_spindle ( new raspi_pwm_spindle_t(spindle_cfg_), []( raspi_pwm_spindle_t * ptr ) {
+	    	delete ptr;
+	    } );
+        ret.push_back(raspi_pwm_spindle);
+    }
     return ret;
 }
 

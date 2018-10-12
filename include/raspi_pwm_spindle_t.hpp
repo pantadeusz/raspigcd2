@@ -16,24 +16,33 @@
 */
 
 
-#ifndef __GENERIC_SPINDLE_T_HPP__
-#define __GENERIC_SPINDLE_T_HPP__
+#ifndef __raspi_pwm_spindle_t_HPP__
+#define __raspi_pwm_spindle_t_HPP__
 
 #include <configuration_t.hpp>
+#include "generic_spindle_t.hpp"
+#include <atomic>
 #include <array>
 #include <vector>
 #include <memory>
 
 
 namespace raspigcd {
-/*
-  there is possibility that there are multiple spindles.
-*/
-class generic_spindle_t
-{
-  protected:
 
-  public:
+class raspi_pwm_spindle_t : public generic_spindle_t
+{
+protected:
+    int _pwm_pin;
+
+    double _cycle_time_seconds; // cycle time
+    double _duty_min;           // minimal signal time - represents 0 speed
+    double _duty_max;           // maximal signal time - represents 1 speed (maximal)
+
+    std::atomic<double> _duty; // current signal value
+
+    bool _alive;
+
+public:
     /**
      * @brief set the power fraction on spindle. The values are <-1,1>. 0 means the spindle is disabled. 1 means maximal power or speed of spindle. Some spindles can support negative values that mean reverse rotation. Not all can support that.\
      * 
@@ -41,13 +50,16 @@ class generic_spindle_t
      * 
      * @param spindle power. -1 to 1 with 0 meaning spindle stopped.
      */
-    virtual void set_power(const double &pwr) = 0;
-
-    // creates spindle object based on configuration
-    static std::vector<std::shared_ptr<generic_spindle_t > > get(configuration_t &cfg);
-
-    virtual ~generic_spindle_t(){};
+    void set_power(const double& pwr);
+    raspi_pwm_spindle_t(const spindle_config_t &cfg_);
+    // _alive
+    virtual ~raspi_pwm_spindle_t()
+    {
+        _alive = false;
+        //prevTime = prevTime + std::chrono::microseconds(200000);
+    }
 };
+
 
 } // namespace raspigcd
 
