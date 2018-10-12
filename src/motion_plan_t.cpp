@@ -155,11 +155,11 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
         auto norm_vect = diff_vect / length;   // direction with length 1mm
         return std::make_tuple(norm_vect, length);
     };
+
     auto gotoxy = [&, this](double prev_speed, const motion_fragment_t& mfrag, double next_speed) {
         double length_remaining; // length of vector in mm
         distance_t norm_vect;    // direction with length 1mm
         std::tie(norm_vect, length_remaining) = mfrag_to_normalvect_and_length(mfrag.source, mfrag.destination);
-        //double T = length/velocity_mm_s_; // time to go without accelerations
         double dt = _cfg->tick_duration; // time step
         std::vector<executor_command_t> local_motion_plan;
         local_motion_plan.reserve(100000);
@@ -173,41 +173,33 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
         std::tie(l_AM, l_M, l_MB) = calculate_velocity_target(length_remaining, prev_speed, next_speed, mfrag.max_velocity, average_max_accel);
 
         if (l_M < 0.0) throw std::invalid_argument("impossible accelerations" + std::to_string(l_M));
-        // std::cerr << "t_AM = "
-        //           << "   l_AM = " << l_AM << std::endl;
-        // std::cerr << "t_MB = "
-        //           << "   l_MB = " << l_MB << std::endl;
-        // std::cerr << "l_M = " << l_M << std::endl;
         double temporary_velocity = prev_speed;
         auto end_position_actual = motor_layout->cartesian_to_steps(mfrag.source);
-        if (l_AM > 0) {
+        if (l_AM > 0) { /// acceleration sequence
             std::cerr << "move_to_position_with_given_accel(" << dt << ", " << prev_speed << ", " << average_max_accel << ", " << l_AM << ", norm_vect)" << std::endl;
             auto st_accel = move_to_position_with_given_accel(dt, prev_speed, average_max_accel, l_AM, norm_vect);
             local_motion_plan.insert(local_motion_plan.end(), st_accel.first.begin(), st_accel.first.end());
             temporary_velocity = st_accel.second;
-
             end_position_actual = end_position_actual + step_sequence_executor_t::commands_to_steps(st_accel.first);
             std::tie(norm_vect, length_remaining) = mfrag_to_normalvect_and_length(motor_layout->steps_to_cartesian(end_position_actual), mfrag.destination);
         }
-        if (l_M > 0) {
+        if (l_M > 0) { /// constant speed sequence
             std::cerr << "move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << 0 << ", " << l_M << ", norm_vect)" << std::endl;
             auto st_const = move_to_position_with_given_accel(dt, temporary_velocity, 0, l_M, norm_vect);
             local_motion_plan.insert(local_motion_plan.end(), st_const.first.begin(), st_const.first.end());
             temporary_velocity = st_const.second;
-
-
             end_position_actual = end_position_actual + step_sequence_executor_t::commands_to_steps(st_const.first);
             std::tie(norm_vect, length_remaining) = mfrag_to_normalvect_and_length(motor_layout->steps_to_cartesian(end_position_actual), mfrag.destination);
         }
-        if (l_MB > 0) {
+        if (l_MB > 0) { /// break sequence
             std::cerr << "move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << (-average_max_accel) << ", " << l_MB << ", " << norm_vect << ")" << std::endl;
             auto st_decel = move_to_position_with_given_accel(dt, temporary_velocity, -average_max_accel, l_MB, norm_vect);
             local_motion_plan.insert(local_motion_plan.end(), st_decel.first.begin(), st_decel.first.end());
             temporary_velocity = st_decel.second;
-
             end_position_actual = end_position_actual + step_sequence_executor_t::commands_to_steps(st_decel.first);
             std::tie(norm_vect, length_remaining) = mfrag_to_normalvect_and_length(motor_layout->steps_to_cartesian(end_position_actual), mfrag.destination);
         }
+        /// fix steps count (probably 1 step in some direction to correct errors)
         auto distance_accuracy = std::sqrt(motor_layout->steps_to_cartesian({1, 1, 1, 1}).length2());
         std::cerr << "2*distance_accuracy " << (2 * distance_accuracy) << " " << length_remaining << std::endl;
         if (length_remaining * length_remaining > 1.5 * distance_accuracy) {

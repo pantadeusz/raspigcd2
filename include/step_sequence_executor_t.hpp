@@ -73,13 +73,14 @@ class step_sequence_executor_t
     virtual void enable(bool en) = 0;
 
     virtual void terminate() = 0;
-    // get instance
-    static step_sequence_executor_t &get(configuration_t &cfg_);
 
     /**
      * @brief generates steps based on given commands vector
      */
     static steps_t commands_to_steps(const std::vector<executor_command_t> &commands);
+
+    // get instance
+    static step_sequence_executor_t &get(configuration_t &cfg_);
 };
 
 } // namespace raspigcd

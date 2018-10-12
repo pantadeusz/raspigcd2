@@ -38,7 +38,7 @@
 #ifndef __RASPIGCD_GCODE_INTERPRETER_HPP__
 #define __RASPIGCD_GCODE_INTERPRETER_HPP__
 
-
+#include <generic_spindle_t.hpp>
 
 
 namespace raspigcd {
@@ -51,6 +51,7 @@ protected:
 
     configuration_t* _cfg; // configuraion
     step_sequence_executor_t* _executor; // the executor - the class that executes steps on motors
+    std::vector < std::shared_ptr < generic_spindle_t > > _spindles;
     std::mutex _execution_of_gcode_m;
     std::map<char, std::function<std::string(const std::map<char, double>&)>> _gcode_commands; // functions handling different gcode commands 
 
@@ -64,7 +65,7 @@ public:
     // exececute whole gcode program written as string
     std::list<std::string> execute_gcode_string(const std::string gcode_text_);
     // the interpreter
-    g_code_interpreter_t(configuration_t* cfg, step_sequence_executor_t* executor, motion_plan_t* motion_planner_);
+    g_code_interpreter_t(configuration_t* cfg, step_sequence_executor_t* executor, std::vector < std::shared_ptr < generic_spindle_t > > spindles, motion_plan_t* motion_planner_);
 };
 
 

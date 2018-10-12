@@ -1,6 +1,11 @@
 #include "g_code_interpreter_t.hpp"
 #include "step_sequence_executor_t.hpp"
 
+
+#include <chrono>
+#include <thread>
+
+
 namespace raspigcd {
 
 
@@ -83,11 +88,14 @@ std::list<std::string> g_code_interpreter_t::execute_gcode_lines(std::list<std::
             for (auto e : params_) {
                 std::cout << "  " << e.first << " " << e.second << std::endl;
             }
+            // if the code is not G0 or G1, then we should execute gcode movements fragment.
             if ((current_code.first != 'G') || (current_code.second > 1)) {
                 //std::cout << "break and execute code" << std::endl;
                 auto mp = _motion_planner->get_motion_plan();
                 _executor->execute(mp);
                 if (mp.size() > 0) _motion_planner->clear_motion_fragments_buffer();
+
+                std::cout << "current position is " << _executor->get_position() << std::endl;
             }
             //now execute code..
             _gcode_commands[code_](params_);
@@ -110,11 +118,14 @@ std::list<std::string> g_code_interpreter_t::execute_gcode_string(const std::str
     }
     return execute_gcode_lines(lines);
 }
-g_code_interpreter_t::g_code_interpreter_t(configuration_t* cfg, step_sequence_executor_t* executor, motion_plan_t* motion_planner_)
+
+
+g_code_interpreter_t::g_code_interpreter_t(configuration_t* cfg, step_sequence_executor_t* executor, std::vector < std::shared_ptr < generic_spindle_t > > spindles, motion_plan_t* motion_planner_)
 {
     _cfg = cfg;
     _executor = executor;
     _motion_planner = motion_planner_;
+    _spindles = spindles;
 
     _fr_multiplier = 1;                             // 1 - mm/s   60 - mm/m
     _gspeed[0] = _cfg->layout.max_velocity_mm_s[0]; //
@@ -159,13 +170,14 @@ g_code_interpreter_t::g_code_interpreter_t(configuration_t* cfg, step_sequence_e
         } else if ((int)m.at('G') == 92) {
             // G92 -- reset coordinates
             p[0] = (m.count('X') == 0) ? 0.0 : m.at('X');
-            p[0] = (m.count('Y') == 0) ? 0.0 : m.at('Y');
-            p[0] = (m.count('Z') == 0) ? 0.0 : m.at('Z');
+            p[1] = (m.count('Y') == 0) ? 0.0 : m.at('Y');
+            p[2] = (m.count('Z') == 0) ? 0.0 : m.at('Z');
+            p[3] = (m.count('A') == 0) ? 0.0 : m.at('A');
 
             _motion_planner->set_position(p);
             _executor->set_position(_motion_planner->get_steps());
             //                machine_.get()->setPosition(Position(m.at('X'), m.at('Y'), m.at('Z')));
-            return "ok reset position to X:" + std::to_string(p[0]) + " Y:" + std::to_string(p[1]) + " Z:" + std::to_string(p[2]) + "";
+            return "ok reset position to X:" + std::to_string(p[0]) + " Y:" + std::to_string(p[1]) + " Z:" + std::to_string(p[2]) + " A:" + std::to_string(p[3]) + "";
 
             /*} else if ((int)m.at('G') == 28) {
                 finish();
@@ -174,16 +186,17 @@ g_code_interpreter_t::g_code_interpreter_t(configuration_t* cfg, step_sequence_e
                 p = _motion_planner->get_position();
                 return "ok origin X:" + std::to_string(p[0]) + " Y:" + std::to_string(p[1]) + " Z:" + std::to_string(p[2]) + "";
 
-                // G92 -- reset coordinates */
+                 */
         } else
             return "!! unsupported G code number";
     };
     _gcode_commands['M'] = [this](const std::map<char, double>& m) -> std::string {
         distance_t p;
+        double t;
         //std::array<unsigned char, 4> endstops;
         switch ((int)m.at('M')) {
-        /* case 3:
-                machine_.get()->spindleEnabled(true);
+        case 3:
+                _spindles.at(0).get()->set_power(1.0);
                 t = 7000;
                 if (m.count('P') == 1) {
                     t = m.at('P');
@@ -191,11 +204,10 @@ g_code_interpreter_t::g_code_interpreter_t(configuration_t* cfg, step_sequence_e
                     t = 1000 * m.at('X');
                 }
                 if (t > 0)
-                    machine_.get()->pause(t);
-
+                    std::this_thread::sleep_for(std::chrono::milliseconds((int)t));
                 return "ok spindle on CW";
-            case 5:
-                machine_.get()->spindleEnabled(false);
+        case 5:
+                _spindles.at(0).get()->set_power(0.0);
                 t = 0;
                 if (m.count('P') == 1) {
                     t = m.at('P');
@@ -203,8 +215,8 @@ g_code_interpreter_t::g_code_interpreter_t(configuration_t* cfg, step_sequence_e
                     t = 1000 * m.at('X');
                 }
                 if (t > 0)
-                    machine_.get()->pause(t);
-                return "ok spindle off"; */
+                    std::this_thread::sleep_for(std::chrono::milliseconds((int)t));
+                return "ok spindle off";
         case 17:
             _executor->enable(true);
             return "ok steppers on";

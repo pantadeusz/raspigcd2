@@ -132,8 +132,8 @@ int main(int argc, char** argv)
 */
     {
         motion_plan_t mp(cfg);
-
-        g_code_interpreter_t gcdinterpert(&cfg, &executor, &mp);
+        auto spindles = generic_spindle_t::get(cfg);
+        g_code_interpreter_t gcdinterpert(&cfg, &executor, spindles, &mp);
         gcdinterpert.execute_gcode_string(R"GCODE(
 ; jan
 M17
