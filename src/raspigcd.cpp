@@ -138,6 +138,7 @@ int main(int argc, char** argv)
 ; jan
 M3P1000
 M17
+M3
 ; nowag
 G0Z5
 G0X-10Y-20

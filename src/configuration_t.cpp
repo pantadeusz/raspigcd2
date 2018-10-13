@@ -38,10 +38,18 @@ configuration_t& configuration_t::load_defaults()
     hardware.spindles = {
         {
             pin : 18,
+            cycle_time_seconds : 0.1, // 20ms
+            duty_min : 0.0,
+            duty_max : 0.1
+        }
+/*,        {
+            pin : 18,
             cycle_time_seconds : 0.02, // 20ms
             duty_min : 0.001,
             duty_max : 0.002
-        }};
+        }
+*/
+};
 
     //layout.name = "cartesian";
     layout.name = "corexy";
