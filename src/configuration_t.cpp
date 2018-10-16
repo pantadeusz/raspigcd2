@@ -17,6 +17,10 @@
 
 #include "configuration_t_json.hpp"
 
+#include <string>
+#include <fstream>
+#include <streambuf>
+
 namespace raspigcd {
 
 /*configuration_t &configuration_t::get()
@@ -49,7 +53,7 @@ configuration_t& configuration_t::load_defaults()
             duty_max : 0.002
         }
 */
-};
+    };
 
     //layout.name = "cartesian";
     layout.name = "corexy";
@@ -61,6 +65,22 @@ configuration_t& configuration_t::load_defaults()
 
     return *this;
 }
+
+
+configuration_t &configuration_t::load(const std::string &filename) {
+        std::ifstream ifs(filename);
+        nlohmann::json j;
+        ifs >> j;
+        (*this) = j;
+        return *this;
+}
+configuration_t &configuration_t::save(const std::string &filename) {
+    std::ofstream file(filename);
+    file << (*this);
+    return *this;
+}
+
+
 /* **************************************************************************
  * CONVERSIONS
  * ************************************************************************** */

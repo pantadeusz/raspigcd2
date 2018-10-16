@@ -108,6 +108,8 @@ class configuration_t
     ///static configuration_t &get();
 
     configuration_t &load_defaults();
+    configuration_t &load(const std::string &filename);
+    configuration_t &save(const std::string &filename);
 };
 
 } // namespace raspigcd

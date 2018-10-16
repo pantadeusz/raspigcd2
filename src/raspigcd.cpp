@@ -20,9 +20,10 @@
 #include <chrono>
 #include <configuration_t_json.hpp>
 #include <distance_t.hpp>
-#include <step_sequence_executor_t.hpp>
+#include <fstream>
 #include <iostream>
 #include <list>
+#include <map>
 #include <memory>
 #include <motion_plan_t.hpp>
 #include <motor_layout_t.hpp>
@@ -30,11 +31,12 @@
 #include <regex>
 #include <set>
 #include <sstream>
+#include <step_sequence_executor_t.hpp>
+#include <streambuf>
 #include <string>
+#include <thread>
 #include <tuple>
 #include <vector>
-#include <chrono>
-#include <thread>
 
 
 using namespace raspigcd;
@@ -44,11 +46,11 @@ using namespace raspigcd;
  * 
  */
 std::vector<executor_command_t> generate_sin_wave_for_test(
-    configuration_t *_cfg,
+    configuration_t* _cfg,
     double amplitude = 15, //< in milimeters
-    double T = 10,                                                                //< in seconds
-    int axis = 2                                                                  //< axis to move
-    )
+    double T = 10,         //< in seconds
+    int axis = 2           //< axis to move
+)
 {
     std::vector<executor_command_t> executor_commands;
     executor_commands.reserve((::size_t)(T / _cfg->tick_duration));
@@ -85,20 +87,43 @@ std::vector<executor_command_t> generate_sin_wave_for_test(
     return executor_commands;
 }
 
-
+void help_screen(const std::vector<std::string>& args)
+{
+    std::cout << "raspigcd2 - tool for executing gcode on Raspberry Pi" << std::endl;
+    std::cout << "Usage:" << std::endl;
+    std::cout << " $ " << args[0] << "[arguments1] [argument2] ..." << std::endl;
+    std::cout << R"(Arguments can be:
+    -f [filename]   - opens given file with gcode text
+    -c [conffile]   - reads configuration from given file. Configuration should be in json format
+    -C [conffile]   - saves configuration to given file
+    )" << std::endl;
+}
 
 int main(int argc, char** argv)
 {
     std::vector<std::string> args(argv, argv + argc);
+    std::map<std::string, std::string> args_p;
+    if (args.size() == 1) {
+        help_screen(args);
+        return -1;
+    }
+    for (unsigned int i = 1; i < args.size() - 1; i++) {
+        if ((args[i].size() > 0) && (args[i][0] == '-')) {
+            args_p[args[i]] = args[i + 1];
+        }
+    }
 
-//    static auto& cfg = configuration_t::get().load_defaults();
+    //    static auto& cfg = configuration_t::get().load_defaults();
     auto cfg = configuration_t().load_defaults();
-    std::cout << cfg << std::endl;
-    step_sequence_executor_t& executor = step_sequence_executor_t::get(cfg);
+    //std::cout << cfg << std::endl;
+    if (args_p.count("-c")) cfg.load(args_p["-c"]);
+    if (args_p.count("-C")) cfg.save(args_p["-C"]);
+    if (args_p.count("-f")) {
+        step_sequence_executor_t& executor = step_sequence_executor_t::get(cfg);
 
-    executor.enable(true);
-    //executor.execute(generate_sin_wave_for_test());
-    /*    {
+        executor.enable(true);
+        //executor.execute(generate_sin_wave_for_test());
+        /*    {
         motion_plan_t mp(cfg);
         mp.gotoxy(distance_t{15.0, 0.0, 0.0, 0.0}, 160.0)
             .gotoxy(distance_t{15.0, -2.0, 0.0, 0.0}, 20.0)
@@ -130,11 +155,17 @@ int main(int argc, char** argv)
         executor.execute(mp.get_motion_plan());
     }
 */
-    {
-        motion_plan_t mp(cfg);
-        auto spindles = generic_spindle_t::get(cfg);
-        g_code_interpreter_t gcdinterpert(&cfg, &executor, spindles, &mp);
-        gcdinterpert.execute_gcode_string(R"GCODE(
+
+        {
+            motion_plan_t mp(cfg);
+            auto spindles = generic_spindle_t::get(cfg);
+            g_code_interpreter_t gcdinterpert(&cfg, &executor, spindles, &mp);
+
+            std::ifstream gcode_file_stream(args_p["-f"]);
+            std::string gcode_string((std::istreambuf_iterator<char>(gcode_file_stream)),
+                std::istreambuf_iterator<char>());
+            gcdinterpert.execute_gcode_string(gcode_string);
+            /*        gcdinterpert.execute_gcode_string(R"GCODE(
 ; jan
 M3P1000
 M17
@@ -150,9 +181,10 @@ G0X0Y0Z0
 M5
 M18
 )GCODE");
+*/
+        }
+
+        executor.enable(false);
     }
-
-    executor.enable(false);
-
     return 0;
 }
