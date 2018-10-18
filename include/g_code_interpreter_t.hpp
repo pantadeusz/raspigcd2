@@ -20,6 +20,7 @@
 #include <configuration_t_json.hpp>
 #include <distance_t.hpp>
 #include <step_sequence_executor_t.hpp>
+#include <buttons_t.hpp>
 #include <iostream>
 #include <list>
 #include <memory>
