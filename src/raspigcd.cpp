@@ -28,6 +28,7 @@
 #include <motion_plan_t.hpp>
 #include <motor_layout_t.hpp>
 #include <mutex>
+#include <future>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -164,7 +165,14 @@ int main(int argc, char** argv)
             std::ifstream gcode_file_stream(args_p["-f"]);
             std::string gcode_string((std::istreambuf_iterator<char>(gcode_file_stream)),
                 std::istreambuf_iterator<char>());
-            gcdinterpert.execute_gcode_string(gcode_string);
+            
+            auto job_task = std::async(std::launch::async,
+                             [&gcode_string,&gcdinterpert](){
+                                 return gcdinterpert.execute_gcode_string(gcode_string);
+                             });
+            std::list<std::string> ret_lines = job_task.get();
+
+            
             /*        gcdinterpert.execute_gcode_string(R"GCODE(
 ; jan
 M3P1000
