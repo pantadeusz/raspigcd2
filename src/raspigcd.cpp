@@ -21,6 +21,7 @@
 #include <configuration_t_json.hpp>
 #include <distance_t.hpp>
 #include <fstream>
+#include <future>
 #include <iostream>
 #include <list>
 #include <map>
@@ -28,7 +29,6 @@
 #include <motion_plan_t.hpp>
 #include <motor_layout_t.hpp>
 #include <mutex>
-#include <future>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -51,7 +51,7 @@ std::vector<executor_command_t> generate_sin_wave_for_test(
     double amplitude = 15, //< in milimeters
     double T = 10,         //< in seconds
     int axis = 2           //< axis to move
-)
+    )
 {
     std::vector<executor_command_t> executor_commands;
     executor_commands.reserve((::size_t)(T / _cfg->tick_duration));
@@ -165,14 +165,18 @@ int main(int argc, char** argv)
             std::ifstream gcode_file_stream(args_p["-f"]);
             std::string gcode_string((std::istreambuf_iterator<char>(gcode_file_stream)),
                 std::istreambuf_iterator<char>());
-            
+
             auto job_task = std::async(std::launch::async,
-                             [&gcode_string,&gcdinterpert](){
-                                 return gcdinterpert.execute_gcode_string(gcode_string);
-                             });
+                [&gcode_string, &gcdinterpert]() {
+                    return gcdinterpert.execute_gcode_string(gcode_string);
+                });
+            while (job_task.wait_for(std::chrono::milliseconds(1000)) != std::future_status::ready) {
+                std::cout << "working and waiting..." << std::endl;
+            }
+
             std::list<std::string> ret_lines = job_task.get();
 
-            
+
             /*        gcdinterpert.execute_gcode_string(R"GCODE(
 ; jan
 M3P1000
