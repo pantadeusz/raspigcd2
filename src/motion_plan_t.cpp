@@ -176,7 +176,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
         double temporary_velocity = prev_speed;
         auto end_position_actual = motor_layout->cartesian_to_steps(mfrag.source);
         if (l_AM > 0) { /// acceleration sequence
-            std::cerr << "move_to_position_with_given_accel(" << dt << ", " << prev_speed << ", " << average_max_accel << ", " << l_AM << ", norm_vect)" << std::endl;
+//            std::cerr << "move_to_position_with_given_accel(" << dt << ", " << prev_speed << ", " << average_max_accel << ", " << l_AM << ", norm_vect)" << std::endl;
             auto st_accel = move_to_position_with_given_accel(dt, prev_speed, average_max_accel, l_AM, norm_vect);
             local_motion_plan.insert(local_motion_plan.end(), st_accel.first.begin(), st_accel.first.end());
             temporary_velocity = st_accel.second;
@@ -184,7 +184,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
             std::tie(norm_vect, length_remaining) = mfrag_to_normalvect_and_length(motor_layout->steps_to_cartesian(end_position_actual), mfrag.destination);
         }
         if (l_M > 0) { /// constant speed sequence
-            std::cerr << "move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << 0 << ", " << l_M << ", norm_vect)" << std::endl;
+//            std::cerr << "move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << 0 << ", " << l_M << ", norm_vect)" << std::endl;
             auto st_const = move_to_position_with_given_accel(dt, temporary_velocity, 0, l_M, norm_vect);
             local_motion_plan.insert(local_motion_plan.end(), st_const.first.begin(), st_const.first.end());
             temporary_velocity = st_const.second;
@@ -192,7 +192,7 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
             std::tie(norm_vect, length_remaining) = mfrag_to_normalvect_and_length(motor_layout->steps_to_cartesian(end_position_actual), mfrag.destination);
         }
         if (l_MB > 0) { /// break sequence
-            std::cerr << "move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << (-average_max_accel) << ", " << l_MB << ", " << norm_vect << ")" << std::endl;
+//            std::cerr << "move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << (-average_max_accel) << ", " << l_MB << ", " << norm_vect << ")" << std::endl;
             auto st_decel = move_to_position_with_given_accel(dt, temporary_velocity, -average_max_accel, l_MB, norm_vect);
             local_motion_plan.insert(local_motion_plan.end(), st_decel.first.begin(), st_decel.first.end());
             temporary_velocity = st_decel.second;
@@ -201,9 +201,9 @@ const std::vector<executor_command_t> motion_plan_t::get_motion_plan() const
         }
         /// fix steps count (probably 1 step in some direction to correct errors)
         auto distance_accuracy = std::sqrt(motor_layout->steps_to_cartesian({1, 1, 1, 1}).length2());
-        std::cerr << "2*distance_accuracy " << (2 * distance_accuracy) << " " << length_remaining << std::endl;
+//        std::cerr << "2*distance_accuracy " << (2 * distance_accuracy) << " " << length_remaining << std::endl;
         if (length_remaining * length_remaining > 1.5 * distance_accuracy) {
-            std::cerr << "FIX " << length_remaining << " move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << 0 << ", " << length_remaining << ", " << norm_vect << ")" << std::endl;
+//            std::cerr << "FIX " << length_remaining << " move_to_position_with_given_accel(" << dt << ", " << temporary_velocity << ", " << 0 << ", " << length_remaining << ", " << norm_vect << ")" << std::endl;
             auto st_fix = move_to_position_with_given_accel(dt, temporary_velocity, 0, length_remaining, norm_vect);
             local_motion_plan.insert(local_motion_plan.end(), st_fix.first.begin(), st_fix.first.end());
             temporary_velocity = st_fix.second;

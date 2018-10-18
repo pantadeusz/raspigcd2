@@ -84,10 +84,6 @@ std::list<std::string> g_code_interpreter_t::execute_gcode_lines(std::list<std::
     for (auto& line : lines) {
         g(line, [&, this](const char code_, const std::map<char, double>& params_) {
             std::pair<char, double> current_code = {code_, params_.at(code_)};
-            std::cout << "kod: " << code_ << std::endl;
-            for (auto e : params_) {
-                std::cout << "  " << e.first << " " << e.second << std::endl;
-            }
             // if the code is not G0 or G1, then we should execute gcode movements fragment.
             if ((current_code.first != 'G') || (current_code.second > 1)) {
                 //std::cout << "break and execute code" << std::endl;
