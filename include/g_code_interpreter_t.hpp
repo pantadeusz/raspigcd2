@@ -65,6 +65,11 @@ public:
     std::list<std::string> execute_gcode_lines(std::list<std::string> lines);
     // exececute whole gcode program written as string
     std::list<std::string> execute_gcode_string(const std::string gcode_text_);
+    // terminate the execution of currently running gcode
+//     void terminate();
+//     // terminate the execution of currently running gcode in a way, that it will break in few steps (less then 0.5mm - this way it will not loose steps)
+//     void safe_stop();
+    
     // the interpreter
     g_code_interpreter_t(configuration_t* cfg, step_sequence_executor_t* executor, std::vector < std::shared_ptr < generic_spindle_t > > spindles, motion_plan_t* motion_planner_);
 };

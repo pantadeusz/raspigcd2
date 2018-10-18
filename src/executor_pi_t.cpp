@@ -148,34 +148,10 @@ executor_pi_t& executor_pi_t::get(configuration_t& c_)
     return instance;
 }
 
-int executor_pi_t::execute(const std::vector<executor_command_t>& commands)
-{
-    { // make this thread (if this is a thread) real time
-        sched_param sch_params;
-        sch_params.sched_priority = sched_get_priority_max(SCHED_RR);
-
-        if (pthread_setschedparam(pthread_self(), SCHED_RR, &sch_params)) {
-            std::cerr << "Warning: Failed to set Thread scheduling : "
-                      << std::strerror(errno) << std::endl;
-        }
-    }
-
-    configuration_t& conf = configuration;
-    auto steppers = conf.hardware.steppers;
-    // commands are in fomat step, dir
-    unsigned int step_clear = (1 << steppers[0].step) | (1 << steppers[1].step) |
-                              (1 << steppers[2].step) | (1 << steppers[3].step);
-
-    std::chrono::microseconds ttime =
-        std::chrono::microseconds((unsigned long)(conf.tick_duration / 0.000001));
-    auto t = std::chrono::system_clock::now();
-    auto nextT = ttime + t;
-    int current_tick_n = 0;
-
-    // this part is critical - I unwinded loops in order to reduce latencies
-    for (auto c : commands) {
-        int rpt = c.cmnd.repeat; // 0 means that we execute it once
-        do {
+inline void execute_single_tick(    const executor_command_t&c,
+    const std::vector<stepper_config_t>  &steppers,
+    std::atomic<int> (&_position)[8],
+    unsigned int &step_clear) {
             // step direction
             unsigned int dir_set =
                 (c.b[0].dir << steppers[0].dir) | (c.b[1].dir << steppers[1].dir) |
@@ -204,8 +180,6 @@ int executor_pi_t::execute(const std::vector<executor_command_t>& commands)
             }
             // set step to do
             GPIO_SET = step_set;
-            //nextT = t + ttime * current_tick_n;
-            nextT += ttime;
             {
                 volatile int delayloop = 100;
                 while (delayloop--)
@@ -218,15 +192,51 @@ int executor_pi_t::execute(const std::vector<executor_command_t>& commands)
                 while (delayloop--)
                     ;
             }
+
+}
+
+
+int executor_pi_t::execute(const std::vector<executor_command_t>& commands)
+{
+    { // make this thread (if this is a thread) real time
+        sched_param sch_params;
+        sch_params.sched_priority = sched_get_priority_max(SCHED_RR);
+
+        if (pthread_setschedparam(pthread_self(), SCHED_RR, &sch_params)) {
+            std::cerr << "Warning: Failed to set Thread scheduling : "
+                      << std::strerror(errno) << std::endl;
+        }
+    }
+
+    configuration_t& conf = configuration;
+    auto steppers = conf.hardware.steppers;
+    // commands are in fomat step, dir
+    unsigned int step_clear = (1 << steppers[0].step) | (1 << steppers[1].step) |
+                              (1 << steppers[2].step) | (1 << steppers[3].step);
+
+    std::chrono::microseconds ttime =
+        std::chrono::microseconds((unsigned long)(conf.tick_duration / 0.000001));
+    auto t = std::chrono::system_clock::now();
+    auto nextT = ttime + t;
+    int current_tick_n = 0;
+
+    // this part is critical - I unwinded loops in order to reduce latencies
+    for (auto c : commands) {
+        int rpt = c.cmnd.repeat; // 0 means that we execute it once
+        do {
+            execute_single_tick(c,steppers,_position, step_clear);
+            //nextT = t + ttime * current_tick_n;
+            nextT += ttime;
             current_tick_n++;
-            if (_terminate) {
-                _terminate = false;
-                return 1;
-            }
-            //    std::this_thread::sleep_until(nextT);
+            // std::this_thread::sleep_until(nextT);
+            // always busy wait - better timing, but more resource consuming
             for (; std::chrono::system_clock::now() < nextT;) {
             }
         } while ((rpt--) > 0);
+        if (_terminate) {
+            _terminate = false;
+            return 1;
+        }
     }
     return 0;
 }
