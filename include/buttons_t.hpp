@@ -16,8 +16,8 @@
 */
 
 
-#ifndef __RASPIGCD_STEP_SEQUENCE_EXECUTOR_T_HPP__
-#define __RASPIGCD_STEP_SEQUENCE_EXECUTOR_T_HPP__
+#ifndef __RASPIGCD_BUTTONS_T_EXECUTOR_T_HPP__
+#define __RASPIGCD_BUTTONS_T_EXECUTOR_T_HPP__
 
 #include <configuration_t.hpp>
 #include <array>
