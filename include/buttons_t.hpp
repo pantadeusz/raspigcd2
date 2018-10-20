@@ -24,6 +24,8 @@
 #include <steps_t.hpp>
 
 #include <functional>
+#include <thread>
+#include <iostream>
 /*
 
  This is the lowest level executor. It generates signals to pins
@@ -37,9 +39,24 @@ class buttons_t
 {
   protected:
     configuration_t *_cfg;
+    std::thread _btn_thread;
+    bool _running;
+    std::map<int,std::function<void(buttons_t &buttons, int button)> > _button_callbacks;
   public:
     buttons_t (configuration_t *cfg_) {
         _cfg = cfg_;
+        _running = true;
+        _btn_thread = std::thread([this](){
+            while (_running) {
+                using namespace std::chrono_literals;
+                if (false) {
+                    try {
+                        _button_callbacks.at(0)(*this,0);
+                    } catch (...) {}
+                }
+                std::this_thread::sleep_for(1ms);
+            }
+        });
     }
 
     buttons_t &on_down(std::function<void(buttons_t &buttons, int button)> callback_f) {
@@ -50,6 +67,12 @@ class buttons_t
     static buttons_t &get(configuration_t &cfg_) {
         static buttons_t buttons(&cfg_);
         return buttons;
+    }
+    
+    virtual ~buttons_t () {
+        using namespace std::chrono_literals;
+        _running = false;
+        _btn_thread.join();
     }
 };
 

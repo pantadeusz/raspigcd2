@@ -158,6 +158,7 @@ int main(int argc, char** argv)
 */
 
         {
+            buttons_t btns(&cfg);
             motion_plan_t mp(cfg);
             auto spindles = generic_spindle_t::get(cfg);
             g_code_interpreter_t gcdinterpert(&cfg, &executor, spindles, &mp);
