@@ -42,7 +42,7 @@ class buttons_t
         _cfg = cfg_;
     }
 
-    buttons_t &on_down(std::function<void(buttons_t &buttons, int button)) {
+    buttons_t &on_down(std::function<void(buttons_t &buttons, int button)> callback_f) {
         return *this;
     }
 
