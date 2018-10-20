@@ -18,8 +18,8 @@
 
 */
 
-#include "raspi_pwm_spindle_t.hpp"
 #include "raspi_buttons_t.hpp"
+#include "raspi_pwm_spindle_t.hpp"
 #include <executor_pi_t.hpp>
 
 #include <chrono>
@@ -69,7 +69,7 @@ int map_peripheral(struct bcm2835_peripheral* p)
         p->mem_fd, // File descriptor to physical memory virtual file '/dev/mem'
         p->addr_p  // Address in physical map that we want this memory block to
                    // expose
-    );
+        );
 
     if (p->map == MAP_FAILED) {
         throw std::runtime_error("map_peripheral failed");
@@ -106,23 +106,27 @@ void unmap_peripheral(struct bcm2835_peripheral* p)
 
 namespace raspigcd {
 
-class raspi_hardware_setup_t {
-    public:
-        raspi_hardware_setup_t() {
-            if (map_peripheral(&gpio) == -1) {
-                throw std::invalid_argument("Failed to map the physical GPIO registers "
-                                            "into the virtual memory space.");
-            }
+class raspi_hardware_setup_t
+{
+public:
+    raspi_hardware_setup_t()
+    {
+        if (map_peripheral(&gpio) == -1) {
+            throw std::invalid_argument("Failed to map the physical GPIO registers "
+                                        "into the virtual memory space.");
         }
-        ~raspi_hardware_setup_t() {
-            unmap_peripheral(&gpio);
-        }
-        static raspi_hardware_setup_t &get();
+    }
+    ~raspi_hardware_setup_t()
+    {
+        unmap_peripheral(&gpio);
+    }
+    static raspi_hardware_setup_t& get();
 };
 
-raspi_hardware_setup_t &raspi_hardware_setup_t::get() {
-            static raspi_hardware_setup_t instance;
-            return instance;
+raspi_hardware_setup_t& raspi_hardware_setup_t::get()
+{
+    static raspi_hardware_setup_t instance;
+    return instance;
 }
 
 executor_pi_t::executor_pi_t(configuration_t& c_)
@@ -142,58 +146,57 @@ executor_pi_t::executor_pi_t(configuration_t& c_)
 }
 
 executor_pi_t::~executor_pi_t() { unmap_peripheral(&gpio); }
-
 executor_pi_t& executor_pi_t::get(configuration_t& c_)
 {
     static executor_pi_t instance(c_);
     return instance;
 }
 
-inline void execute_single_tick(    const executor_command_t&c,
-    const std::vector<stepper_config_t>  &steppers,
+inline void execute_single_tick(const executor_command_t& c,
+    const std::vector<stepper_config_t>& steppers,
     std::atomic<int> (&_position)[8],
-    unsigned int &step_clear) {
-            // step direction
-            unsigned int dir_set =
-                (c.b[0].dir << steppers[0].dir) | (c.b[1].dir << steppers[1].dir) |
-                (c.b[2].dir << steppers[2].dir) | (c.b[3].dir << steppers[3].dir);
-            unsigned int dir_clear = ((1 - c.b[0].dir) << steppers[0].dir) |
-                                     ((1 - c.b[1].dir) << steppers[1].dir) |
-                                     ((1 - c.b[2].dir) << steppers[2].dir) |
-                                     ((1 - c.b[3].dir) << steppers[3].dir);
-            // shoud do step?
-            unsigned int step_set =
-                (c.b[0].step << steppers[0].step) | (c.b[1].step << steppers[1].step) |
-                (c.b[2].step << steppers[2].step) | (c.b[3].step << steppers[3].step);
+    unsigned int& step_clear)
+{
+    // step direction
+    unsigned int dir_set =
+        (c.b[0].dir << steppers[0].dir) | (c.b[1].dir << steppers[1].dir) |
+        (c.b[2].dir << steppers[2].dir) | (c.b[3].dir << steppers[3].dir);
+    unsigned int dir_clear = ((1 - c.b[0].dir) << steppers[0].dir) |
+                             ((1 - c.b[1].dir) << steppers[1].dir) |
+                             ((1 - c.b[2].dir) << steppers[2].dir) |
+                             ((1 - c.b[3].dir) << steppers[3].dir);
+    // shoud do step?
+    unsigned int step_set =
+        (c.b[0].step << steppers[0].step) | (c.b[1].step << steppers[1].step) |
+        (c.b[2].step << steppers[2].step) | (c.b[3].step << steppers[3].step);
 
-            _position[0] = _position[0] + (int)((signed char)c.b[0].step * ((signed char)c.b[0].dir * 2 - 1));
-            _position[1] = _position[1] + (int)((signed char)c.b[1].step * ((signed char)c.b[1].dir * 2 - 1));
-            _position[2] = _position[2] + (int)((signed char)c.b[2].step * ((signed char)c.b[2].dir * 2 - 1));
-            _position[3] = _position[3] + (int)((signed char)c.b[3].step * ((signed char)c.b[3].dir * 2 - 1));
+    _position[0] = _position[0] + (int)((signed char)c.b[0].step * ((signed char)c.b[0].dir * 2 - 1));
+    _position[1] = _position[1] + (int)((signed char)c.b[1].step * ((signed char)c.b[1].dir * 2 - 1));
+    _position[2] = _position[2] + (int)((signed char)c.b[2].step * ((signed char)c.b[2].dir * 2 - 1));
+    _position[3] = _position[3] + (int)((signed char)c.b[3].step * ((signed char)c.b[3].dir * 2 - 1));
 
-            // first set directions
-            GPIO_SET = dir_set;
-            GPIO_CLR = dir_clear;
-            {
-                volatile int delayloop = 50;
-                while (delayloop--)
-                    ;
-            }
-            // set step to do
-            GPIO_SET = step_set;
-            {
-                volatile int delayloop = 100;
-                while (delayloop--)
-                    ;
-            }
-            // clear all steps
-            GPIO_CLR = step_clear;
-            {
-                volatile int delayloop = 20;
-                while (delayloop--)
-                    ;
-            }
-
+    // first set directions
+    GPIO_SET = dir_set;
+    GPIO_CLR = dir_clear;
+    {
+        volatile int delayloop = 50;
+        while (delayloop--)
+            ;
+    }
+    // set step to do
+    GPIO_SET = step_set;
+    {
+        volatile int delayloop = 100;
+        while (delayloop--)
+            ;
+    }
+    // clear all steps
+    GPIO_CLR = step_clear;
+    {
+        volatile int delayloop = 20;
+        while (delayloop--)
+            ;
+    }
 }
 
 
@@ -225,7 +228,7 @@ int executor_pi_t::execute(const std::vector<executor_command_t>& commands)
     for (auto c : commands) {
         int rpt = c.cmnd.repeat; // 0 means that we execute it once
         do {
-            execute_single_tick(c,steppers,_position, step_clear);
+            execute_single_tick(c, steppers, _position, step_clear);
             //nextT = t + ttime * current_tick_n;
             nextT += ttime;
             current_tick_n++;
@@ -273,9 +276,7 @@ steps_t executor_pi_t::get_position() const
 }
 
 
-
-
-raspi_pwm_spindle_t::raspi_pwm_spindle_t(const spindle_config_t &cfg_)
+raspi_pwm_spindle_t::raspi_pwm_spindle_t(const spindle_config_t& cfg_)
 {
     raspi_hardware_setup_t::get();
 
@@ -283,7 +284,6 @@ raspi_pwm_spindle_t::raspi_pwm_spindle_t(const spindle_config_t &cfg_)
     _cycle_time_seconds = cfg_.cycle_time_seconds;
     _duty_min = cfg_.duty_min;
     _duty_max = cfg_.duty_max;
-
 
 
     INP_GPIO(_pwm_pin);
@@ -310,7 +310,7 @@ raspi_pwm_spindle_t::raspi_pwm_spindle_t(const spindle_config_t &cfg_)
             if (_duty < _cycle_time_seconds) {
                 GPIO_CLR = 1 << _pwm_pin;
                 // 0
-                prevTime = prevTime + std::chrono::microseconds((int)(_cycle_time_seconds*1000*1000));
+                prevTime = prevTime + std::chrono::microseconds((int)(_cycle_time_seconds * 1000 * 1000));
                 std::this_thread::sleep_until(prevTime);
             }
         }
@@ -329,39 +329,73 @@ void raspi_pwm_spindle_t::set_power(const double& pwr)
 }
 
 
+raspi_buttons_t::raspi_buttons_t(configuration_t* cfg_)
+{
+    using namespace std::chrono_literals;
+    raspi_hardware_setup_t::get();
+
+    _cfg = cfg_;
+
+    unsigned int pull_value = 0;
+    for (auto& e : _cfg->hardware.buttons) {
+        INP_GPIO(e.pin);
+        if (e.pullup) pull_value |= 1 << e.pin;
+    }
+
+    // tricky stuff on pullups
+
+    // enable pull-up on selected gpios
+    GPIO_PULL = 2;
+    std::this_thread::sleep_for(10us);
+
+    GPIO_PULLCLK0 = pull_value;
+    std::this_thread::sleep_for(10us);
+
+    GPIO_PULL = 0;
+    GPIO_PULLCLK0 = 0;
 
 
-    raspi_buttons_t::raspi_buttons_t (configuration_t *cfg_) {
-        _cfg = cfg_;
-        _running = true;
-        _btn_thread = std::thread([this](){
-            while (_running) {
-                using namespace std::chrono_literals;
-                if (false) {
-                    try {
-                        _button_callbacks.at(0)(*this,0);
-                    } catch (...) {}
-                }
-                std::this_thread::sleep_for(1ms);
+    _running = true;
+    _btn_thread = std::thread([this]() {
+        while (_running) {
+            using namespace std::chrono_literals;
+            for (auto kv : _button_callbacks) {
+                auto e = _cfg->hardware.buttons[kv.first];
+                int v =  (unsigned char)(1 - ((GPIO_READ(e.pin)) >> (e.pin)));
+                if (v) kv.second (*this, kv.first);
             }
-        });
-    }
+//            for (auto& e : _cfg->hardware.buttons[k]) {
+//                int v =  (unsigned char)(1 - ((GPIO_READ(e.pin)) >> (e.pin)));
+//                //if (v == 0) {
+//                //    try {
+//                //        _button_callbacks.at(0)(*this, 0);
+//                //    } catch (...) {
+//                //    }
+//                //}
+//                std::cout << "key " << v << std::endl;
+//            }
+            std::this_thread::sleep_for(500ms);
+        }
+    });
+}
 
-    buttons_t &raspi_buttons_t::on_down(std::function<void(buttons_t &buttons, int button)> callback_f) {
-        return *this;
-    }
+buttons_t& raspi_buttons_t::on_down(std::function<void(buttons_t& buttons, int button)> callback_f)
+{
+    return *this;
+}
 
 //    // get static instance
 //    static buttons_t &get(configuration_t &cfg_) {
 //        static buttons_t buttons(&cfg_);
 //        return buttons;
 //    }
-    
-    raspi_buttons_t::~raspi_buttons_t () {
-        using namespace std::chrono_literals;
-        _running = false;
-        _btn_thread.join();
-    }
+
+raspi_buttons_t::~raspi_buttons_t()
+{
+    using namespace std::chrono_literals;
+    _running = false;
+    _btn_thread.join();
+}
 
 
 } // namespace raspigcd
