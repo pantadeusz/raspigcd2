@@ -18,29 +18,40 @@
 /*
  buttons support for machine
 */
-#ifndef __RASPIGCD_BUTTONS_T_EXECUTOR_T_HPP__
-#define __RASPIGCD_BUTTONS_T_EXECUTOR_T_HPP__
+#ifndef __RASPIGCD_RASPI_BUTTONS_T_EXECUTOR_T_HPP__
+#define __RASPIGCD_RASPI_BUTTONS_T_EXECUTOR_T_HPP__
 
 #include <configuration_t.hpp>
+#include <buttons_t.hpp>
 #include <array>
 #include <steps_t.hpp>
 
 #include <functional>
 #include <thread>
+#include <map>
 #include <iostream>
 namespace raspigcd
 {
 
-class buttons_t
+class raspi_buttons_t: public buttons_t
 {
   protected:
+    configuration_t *_cfg;
+    std::thread _btn_thread;
+    bool _running;
+    std::map<int,std::function<void(buttons_t &buttons, int button)> > _button_callbacks;
   public:
-    virtual buttons_t &on_down(std::function<void(buttons_t &buttons, int button)> callback_f) = 0;
+    raspi_buttons_t (configuration_t *cfg_);
 
-    //// get static instance
-    static buttons_t &get(configuration_t &cfg_);
+    buttons_t &on_down(std::function<void(buttons_t &buttons, int button)> callback_f);
+
+//    // get static instance
+//    static buttons_t &get(configuration_t &cfg_) {
+//        static buttons_t buttons(&cfg_);
+//        return buttons;
+//    }
     
-    virtual ~buttons_t () {}
+    virtual ~raspi_buttons_t ();
 };
 
 } // namespace raspigcd

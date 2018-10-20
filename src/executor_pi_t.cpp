@@ -19,6 +19,7 @@
 */
 
 #include "raspi_pwm_spindle_t.hpp"
+#include "raspi_buttons_t.hpp"
 #include <executor_pi_t.hpp>
 
 #include <chrono>
@@ -326,6 +327,41 @@ void raspi_pwm_spindle_t::set_power(const double& pwr)
     if (pwr > 1.0) throw std::invalid_argument("spindle power should be less or equal 1");
     _duty = (_duty_max - _duty_min) * pwr + _duty_min;
 }
+
+
+
+
+    raspi_buttons_t::raspi_buttons_t (configuration_t *cfg_) {
+        _cfg = cfg_;
+        _running = true;
+        _btn_thread = std::thread([this](){
+            while (_running) {
+                using namespace std::chrono_literals;
+                if (false) {
+                    try {
+                        _button_callbacks.at(0)(*this,0);
+                    } catch (...) {}
+                }
+                std::this_thread::sleep_for(1ms);
+            }
+        });
+    }
+
+    buttons_t &raspi_buttons_t::on_down(std::function<void(buttons_t &buttons, int button)> callback_f) {
+        return *this;
+    }
+
+//    // get static instance
+//    static buttons_t &get(configuration_t &cfg_) {
+//        static buttons_t buttons(&cfg_);
+//        return buttons;
+//    }
+    
+    raspi_buttons_t::~raspi_buttons_t () {
+        using namespace std::chrono_literals;
+        _running = false;
+        _btn_thread.join();
+    }
 
 
 } // namespace raspigcd
