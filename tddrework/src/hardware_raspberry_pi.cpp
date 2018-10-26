@@ -237,7 +237,7 @@ void raspberry_pi_3::do_step(const single_step_command *b) {
     }
 }
 
-raspberry_pi_3 &raspberry_pi_3::enable_steppers(const std::vector<bool> en)
+void raspberry_pi_3::enable_steppers(const std::vector<bool> en)
 {
     for (unsigned i = 0; i < en.size();i++) {
         auto c = steppers.at(i);
@@ -247,15 +247,13 @@ raspberry_pi_3 &raspberry_pi_3::enable_steppers(const std::vector<bool> en)
             GPIO_SET = 1 << c.en;
         }
     }
-    return *this;
 }
 
-raspberry_pi_3 & raspberry_pi_3::spindle_pwm_power(const int i, const double pwr)
+void raspberry_pi_3::spindle_pwm_power(const int i, const double pwr)
 {
     if (pwr < 0) throw std::invalid_argument("spindle power should be 0 or more");
     if (pwr > 1.0) throw std::invalid_argument("spindle power should be less or equal 1");
     _spindle_duties[i] = (spindles[i].duty_max - spindles[i].duty_min) * pwr + spindles[i].duty_min;
-    return *this;
 }
 
 }

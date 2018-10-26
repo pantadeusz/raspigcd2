@@ -20,59 +20,61 @@
 
 #include <configuration.hpp>
 #include <distance_t.hpp>
+#include <hardware_stepping_commands.hpp>
+#include <hardware_low_steppers.hpp>
 #include <steps_t.hpp>
-//
-#include <memory>
 #include <functional>
+#include <memory>
 
 namespace raspigcd {
 namespace hardware {
 
-struct single_step_command {
-    unsigned char step : 1, dir : 1;
-};
-
-union multistep_command {
-    struct {
-        single_step_command b[RASPIGCD_HARDWARE_DOF]; // duplicate of first b
-        int repeat;               // number of times to repeat the command, it means that the command will be executed (repeat+1) times.
-    } cmnd;
-    int64_t v;
-};
-
-
-class stepping
-{
+class stepping {
 public:
-/**
- * @brief Executes multistep commands list. On each step it calls on_step_ function with current position as an argument. The return value is the final steps value
- * 
- * @param start_steps the initial position of motors in steps
- * @param commands_to_do array of commands to execute
- * @param on_step_ function to execute on each step. This function can throw exceptions to break execution of steps
- * @return steps_t final position of the machine in steps
- */
-    virtual steps_t exec(const steps_t &start_steps, const std::vector<multistep_command> &commands_to_do, std::function<void(const steps_t &)> on_step_ = [](const steps_t &){}) = 0;
+	/**
+	* @brief Executes multistep commands list. On each step it calls on_step_ function with current position as an argument. The return value is the final steps value
+	*
+	* @param start_steps the initial position of motors in steps
+	* @param commands_to_do array of commands to execute
+	* @param on_step_ function to execute on each step. This function can throw exceptions to break execution of steps
+	* @return steps_t final position of the machine in steps
+	*/
+	virtual steps_t exec( const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void( const steps_t& )> on_step_ = []( const steps_t& ) {} ) = 0;
 };
 
-class stepping_sim: public stepping
-{
+class stepping_sim : public stepping {
 public:
-    steps_t exec(const steps_t &start_steps, const std::vector<multistep_command> &commands_to_do, std::function<void(const steps_t &)> on_step_) {
-        steps_t _steps = start_steps;
-        for (const auto & s: commands_to_do) {
-            for (int i = 0; i < s.cmnd.repeat; i++) {
-                _steps[0] = _steps[0] + (int)((signed char)s.cmnd.b[0].step * ((signed char)s.cmnd.b[0].dir * 2 - 1));
-                _steps[1] = _steps[1] + (int)((signed char)s.cmnd.b[1].step * ((signed char)s.cmnd.b[1].dir * 2 - 1));
-                _steps[2] = _steps[2] + (int)((signed char)s.cmnd.b[2].step * ((signed char)s.cmnd.b[2].dir * 2 - 1));
-                _steps[3] = _steps[3] + (int)((signed char)s.cmnd.b[3].step * ((signed char)s.cmnd.b[3].dir * 2 - 1));
-                on_step_(_steps);
-            }
-        }
-        return _steps;
+	steps_t exec( const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void( const steps_t& )> on_step_ );
+};
+
+
+class stepping_simple_timer : public stepping {
+public:
+    int _delay_microseconds;
+    std::shared_ptr<low_steppers> _steppers_driver_shr;
+    low_steppers *_steppers_driver;
+
+    /**
+     * @brief Set the delay in microseconds
+     * 
+     * @param delay_ms the intended minimal step delay
+     */
+    void set_delay_microseconds(int delay_ms);
+
+    /**
+     * @brief Set the low level steppers driver
+     * 
+     * @param steppers_driver pointer to the steppers driver. This can be faked or true
+     */
+    void set_low_level_steppers_driver(std::shared_ptr<low_steppers> steppers_driver);
+
+	steps_t exec( const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void( const steps_t& )> on_step_ );
+
+    stepping_simple_timer(int delay_ms, std::shared_ptr<low_steppers> steppers_driver) {
+        set_delay_microseconds(delay_ms);
+        set_low_level_steppers_driver(steppers_driver);
     }
 };
-
 
 } // namespace hardware
 } // namespace raspigcd

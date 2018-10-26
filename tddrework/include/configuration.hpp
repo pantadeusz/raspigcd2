@@ -22,9 +22,6 @@
 #include <string>
 #include <vector>
 
-#ifndef RASPIGCD_HARDWARE_DOF 
-#define RASPIGCD_HARDWARE_DOF 4
-#endif
 
 namespace raspigcd {
 
@@ -32,14 +29,15 @@ namespace configuration {
 
 
 enum motion_layouts {
-    COREXY, CARTESIAN
+    COREXY,
+    CARTESIAN
 };
 /**
  * button pin and pullup setting
  * */
 class button
 {
-  public:
+public:
     int pin;
     bool pullup;
 };
@@ -49,7 +47,7 @@ class button
  * */
 class spindle_pwm
 {
-  public:
+public:
     int pin;
     double cycle_time_seconds;
     double duty_min;
@@ -61,20 +59,20 @@ class spindle_pwm
  * */
 class stepper
 {
-  public:
-    int dir;                      // direction pin
-    int en;                       // enable pin
-    int step;                     // step pin
-    double steps_per_mm;          // steps per mm linear movement that is on this motor. This can be negative
+public:
+    int dir;             // direction pin
+    int en;              // enable pin
+    int step;            // step pin
+    double steps_per_mm; // steps per mm linear movement that is on this motor. This can be negative
     inline double steps_per_m() const { return steps_per_mm * 1000.0; }
     inline stepper(
-        const int &_dir = 0,
-        const int &_en = 0,
-        const int &_step = 0,
-        const double &_steps_per_mm = 0.0) : dir(_dir),
-                                                en(_en),
-                                                step(_step),
-                                                steps_per_mm(_steps_per_mm)
+        const int& _dir = 0,
+        const int& _en = 0,
+        const int& _step = 0,
+        const double& _steps_per_mm = 0.0) : dir(_dir),
+                                             en(_en),
+                                             step(_step),
+                                             steps_per_mm(_steps_per_mm)
     {
     }
 };
@@ -86,11 +84,11 @@ public:
     int tick_duration_us;         // microseconds tick time
     bool simulate_execution;      // should I use simulator by default
 
-    std::vector<double> scale;                   ///< scale along each axis (can be negative)
-    std::vector<double> max_accelerations_mm_s2; ///<maximal acceleration on given axis (x, y, z, a) in mm/s2
-    std::vector<double> max_velocity_mm_s;       ///<maximal velocity on axis in mm/s
-    std::vector<double> max_no_accel_velocity_mm_s;           ///<maximal velocity on axis in mm/s
-    motion_layouts motion_layout;                            ///< name of layout selected: 'corexy' 'cartesian'
+    std::vector<double> scale;                      ///< scale along each axis (can be negative)
+    std::vector<double> max_accelerations_mm_s2;    ///<maximal acceleration on given axis (x, y, z, a) in mm/s2
+    std::vector<double> max_velocity_mm_s;          ///<maximal velocity on axis in mm/s
+    std::vector<double> max_no_accel_velocity_mm_s; ///<maximal velocity on axis in mm/s
+    motion_layouts motion_layout;                   ///< name of layout selected: 'corexy' 'cartesian'
 
     std::vector<spindle_pwm> spindles;
     std::vector<stepper> steppers;
