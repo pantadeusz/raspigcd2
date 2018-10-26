@@ -5,6 +5,7 @@ int main() {
     using namespace std::chrono_literals;
 
     configuration::global cfg;
+    cfg.load_defaults();
     hardware::raspberry_pi_3 raspi3(cfg);
     raspi3.enable_steppers({true});
     std::this_thread::sleep_for(5s);
