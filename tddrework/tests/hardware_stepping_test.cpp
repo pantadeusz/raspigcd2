@@ -167,5 +167,5 @@ TEST_CASE( "Hardware stepping_simple_timer", "[hardware_stepping][stepping_simpl
             REQUIRE(((low_steppers_fake*)lsfake.get())->counters[i] == -1);
         }
     }
-
 }
+

@@ -25,6 +25,7 @@
 #include <steps_t.hpp>
 #include <functional>
 #include <memory>
+#include <atomic>
 
 namespace raspigcd {
 namespace hardware {
@@ -50,16 +51,16 @@ public:
 
 class stepping_simple_timer : public stepping {
 public:
-    int _delay_microseconds;
+    std::atomic<int> _delay_microseconds;
     std::shared_ptr<low_steppers> _steppers_driver_shr;
     low_steppers *_steppers_driver;
 
     /**
      * @brief Set the delay in microseconds
      * 
-     * @param delay_ms the intended minimal step delay
+     * @param delay_us the intended minimal step delay
      */
-    void set_delay_microseconds(int delay_ms);
+    void set_delay_microseconds(int delay_us);
 
     /**
      * @brief Set the low level steppers driver
@@ -70,8 +71,13 @@ public:
 
 	steps_t exec( const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void( const steps_t& )> on_step_ );
 
-    stepping_simple_timer(int delay_ms, std::shared_ptr<low_steppers> steppers_driver) {
-        set_delay_microseconds(delay_ms);
+    stepping_simple_timer(int delay_us, std::shared_ptr<low_steppers> steppers_driver) {
+        set_delay_microseconds(delay_us);
+        set_low_level_steppers_driver(steppers_driver);
+    }
+    
+    stepping_simple_timer(const configuration::global &conf, std::shared_ptr<low_steppers> steppers_driver) {
+        set_delay_microseconds(conf.tick_duration_us);
         set_low_level_steppers_driver(steppers_driver);
     }
 };
