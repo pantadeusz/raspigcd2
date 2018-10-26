@@ -15,33 +15,42 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASPIGCD_MOTOR_LAYOUT_T_HPP__
-#define __RASPIGCD_MOTOR_LAYOUT_T_HPP__
+#ifndef __RASPIGCD_MOVEMENT_CONSTANT_SPEED_T_HPP__
+#define __RASPIGCD_MOVEMENT_CONSTANT_SPEED_T_HPP__
 
 #include <configuration.hpp>
 #include <distance_t.hpp>
 #include <steps_t.hpp>
+#include <hardware_stepping_commands.hpp>
+#include <movement_simple_steps.hpp>
+#include <hardware_motor_layout.hpp>
 #include <memory>
+#include <cmath>
+
 
 namespace raspigcd {
-namespace hardware {
-class motor_layout
-{
-private:
-public:
-    /**
-         * @brief converts distances in milimeters to number of ticks
-         */
-    virtual steps_t cartesian_to_steps(const distance_t& distances_) = 0;
-    /**
-         * @brief converts number of ticks to distances in milimeters
-         */
-    virtual distance_t steps_to_cartesian(const steps_t& steps_) = 0;
+namespace movement {
 
-    virtual void set_configuration(const configuration::global &cfg) = 0;
+class constant_speed {
+    protected:
+    hardware::motor_layout *_motor_layout;
+    std::shared_ptr<hardware::motor_layout> _motor_layout_ptr;
+    public:
+    void set_motor_layout(std::shared_ptr<hardware::motor_layout> ml);
 
-    static std::shared_ptr<motor_layout> get_instance(const configuration::global &cfg);
+    constant_speed(std::shared_ptr<hardware::motor_layout> ml);
+    /**
+     * @brief 
+     * 
+     * @param p0 
+     * @param p1 
+     * @param v 
+     * @param dt 
+     * @return std::vector<hardware::multistep_command> 
+     */
+    std::vector<hardware::multistep_command> goto_xyz(const distance_t p0, const distance_t p1, double v, double dt);
 };
+
 } // namespace hardware
 } // namespace raspigcd
 

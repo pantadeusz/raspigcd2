@@ -80,6 +80,11 @@ public:
 class global
 {
 public:
+/**
+ * @brief get tick duration in seconds
+ * 
+ * @return double tick duration in seconds
+ */
     double tick_duration() const; // czas ticku w sekundach. 0.00005 = 50mikrosekund
     int tick_duration_us;         // microseconds tick time
     bool simulate_execution;      // should I use simulator by default

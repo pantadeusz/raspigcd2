@@ -15,34 +15,33 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASPIGCD_MOTOR_LAYOUT_T_HPP__
-#define __RASPIGCD_MOTOR_LAYOUT_T_HPP__
+#ifndef __RASPIGCD_MOVEMENT_SIMPLE_STEPS_T_HPP__
+#define __RASPIGCD_MOVEMENT_SIMPLE_STEPS_T_HPP__
 
 #include <configuration.hpp>
 #include <distance_t.hpp>
+#include <hardware_stepping_commands.hpp>
+#include <list>
 #include <steps_t.hpp>
-#include <memory>
 
 namespace raspigcd {
-namespace hardware {
-class motor_layout
-{
-private:
-public:
-    /**
-         * @brief converts distances in milimeters to number of ticks
-         */
-    virtual steps_t cartesian_to_steps(const distance_t& distances_) = 0;
-    /**
-         * @brief converts number of ticks to distances in milimeters
-         */
-    virtual distance_t steps_to_cartesian(const steps_t& steps_) = 0;
+namespace movement {
 
-    virtual void set_configuration(const configuration::global &cfg) = 0;
+namespace simple_steps {
 
-    static std::shared_ptr<motor_layout> get_instance(const configuration::global &cfg);
-};
-} // namespace hardware
+int steps_remaining(const steps_t& steps_, const steps_t& destination_steps_);
+
+/**
+ * @brief generates steps to reach given destination steps
+ * @arg steps_ current steps count
+ * @arg destination_steps_ desired steps count
+ */
+std::vector<hardware::multistep_command> chase_steps(const steps_t& steps_, steps_t destination_steps_);
+
+
+} // namespace simple_steps
+
+} // namespace movement
 } // namespace raspigcd
 
 #endif
