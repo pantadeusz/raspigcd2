@@ -14,6 +14,7 @@ int main() {
         cmnd[0] = cmnd[1] = cmnd[2] = cmnd[3];
         cmnd[2].step = 1;
         cmnd[2].dir = 1;
+        raspi3.do_step(cmnd);
         std::this_thread::sleep_for(1ms);
     }
     for (int i = 0; i < cfg.steppers[2].steps_per_mm*2; i++) {
@@ -22,6 +23,7 @@ int main() {
         cmnd[0] = cmnd[1] = cmnd[2] = cmnd[3];
         cmnd[2].step = 1;
         cmnd[2].dir = 0;
+        raspi3.do_step(cmnd);
         std::this_thread::sleep_for(6ms);
     }
     raspi3.enable_steppers({false});
