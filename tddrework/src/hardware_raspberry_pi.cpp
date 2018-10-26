@@ -240,7 +240,7 @@ void raspberry_pi_3::do_step(const single_step_command *b) {
 raspberry_pi_3 &raspberry_pi_3::enable_steppers(const std::vector<bool> en)
 {
     for (unsigned i = 0; i < en.size();i++) {
-        auto c = steppers[i];
+        auto c = steppers.at(i);
         if (en.at(i)) {
             GPIO_CLR = 1 << c.en;
         } else {
