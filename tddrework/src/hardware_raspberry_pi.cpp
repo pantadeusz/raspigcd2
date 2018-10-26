@@ -112,7 +112,7 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global &configuration) {
         INP_GPIO(sppwm.pin);
         OUT_GPIO(sppwm.pin);
         _spindle_duties.push_back(0.0);
-        std::thread t([this, sppwm, i]() {
+        _spindle_threads.push_back(std::thread([this, sppwm, i]() {
             double &_duty = _spindle_duties[i];
             {
                 sched_param sch_params;
@@ -136,7 +136,7 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global &configuration) {
                     std::this_thread::sleep_until(prevTime);
                 }
             }
-        });
+        }));
         spindle_pwm_power(i, 0.0);
     }
 
