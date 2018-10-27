@@ -34,7 +34,7 @@ struct single_step_command {
 union multistep_command {
     struct {
         single_step_command b[RASPIGCD_HARDWARE_DOF]; // duplicate of first b
-        int repeat;                                   // number of times to repeat the command, it means that the command will be executed (repeat+1) times.
+        int count;                                   // number of times to repeat the command, it means that the command will be executed repeat n.
     } cmnd;
     int64_t v;
 };

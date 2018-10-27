@@ -28,14 +28,14 @@ TEST_CASE( "Hardware stepping_sim", "[hardware_stepping][stepping_sim]" ) {
 
     SECTION( "Run one command program" ) {
         int n = 0;
-        worker.exec({0,0,0,0},{ {cmnd:{b:{{0,0},{0,0},{0,0},{0,0}},repeat:1}} },[&](const auto &){n++;});
+        worker.exec({0,0,0,0},{ {cmnd:{b:{{0,0},{0,0},{0,0},{0,0}},count:1}} },[&](const auto &){n++;});
         REQUIRE(n == 1);
     }
     SECTION( "Run one step in each positive  direction" ) {
         for (int i = 0; i < 4; i++) {
             int n = 0;
             multistep_command cmnd;
-            cmnd.cmnd.repeat = 1;
+            cmnd.cmnd.count = 1;
             cmnd.cmnd.b[0].step = 0;
             cmnd.cmnd.b[0].dir = 0;
             cmnd.cmnd.b[1].step = 0;
@@ -57,7 +57,7 @@ TEST_CASE( "Hardware stepping_sim", "[hardware_stepping][stepping_sim]" ) {
         for (int i = 0; i < 4; i++) {
             int n = 0;
             multistep_command cmnd;
-            cmnd.cmnd.repeat = 1;
+            cmnd.cmnd.count = 1;
             cmnd.cmnd.b[0].step = 0;
             cmnd.cmnd.b[0].dir = 0;
             cmnd.cmnd.b[1].step = 0;
@@ -118,14 +118,14 @@ TEST_CASE( "Hardware stepping_simple_timer", "[hardware_stepping][stepping_simpl
 
     SECTION( "Run one command program" ) {
         int n = 0;
-        worker.exec({0,0,0,0},{ {cmnd:{b:{{0,0},{0,0},{0,0},{0,0}},repeat:1}} },[&](const auto &){n++;});
+        worker.exec({0,0,0,0},{ {cmnd:{b:{{0,0},{0,0},{0,0},{0,0}},count:1}} },[&](const auto &){n++;});
         REQUIRE(n == 1);
     }
     SECTION( "Run one step in each positive  direction" ) {
         for (int i = 0; i < 4; i++) {
             int n = 0;
             multistep_command cmnd;
-            cmnd.cmnd.repeat = 1;
+            cmnd.cmnd.count = 1;
             cmnd.cmnd.b[0].step = 0;
             cmnd.cmnd.b[0].dir = 0;
             cmnd.cmnd.b[1].step = 0;
@@ -148,7 +148,7 @@ TEST_CASE( "Hardware stepping_simple_timer", "[hardware_stepping][stepping_simpl
         for (int i = 0; i < 4; i++) {
             int n = 0;
             multistep_command cmnd;
-            cmnd.cmnd.repeat = 1;
+            cmnd.cmnd.count = 1;
             cmnd.cmnd.b[0].step = 0;
             cmnd.cmnd.b[0].dir = 0;
             cmnd.cmnd.b[1].step = 0;

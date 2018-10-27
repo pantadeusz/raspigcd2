@@ -32,7 +32,7 @@ steps_t stepping_sim::exec(const steps_t& start_steps, const std::vector<multist
 {
     steps_t _steps = start_steps;
     for (const auto& s : commands_to_do) {
-        for (int i = 0; i < s.cmnd.repeat; i++) {
+        for (int i = 0; i < s.cmnd.count; i++) {
             _steps[0] = _steps[0] + (int)((signed char)s.cmnd.b[0].step * ((signed char)s.cmnd.b[0].dir * 2 - 1));
             _steps[1] = _steps[1] + (int)((signed char)s.cmnd.b[1].step * ((signed char)s.cmnd.b[1].dir * 2 - 1));
             _steps[2] = _steps[2] + (int)((signed char)s.cmnd.b[2].step * ((signed char)s.cmnd.b[2].dir * 2 - 1));
@@ -70,7 +70,7 @@ steps_t stepping_simple_timer::exec(const steps_t& start_steps, const std::vecto
     auto t = std::chrono::system_clock::now();
     auto nextT = ttime + t;
     for (const auto& s : commands_to_do) {
-        for (int i = 0; i < s.cmnd.repeat; i++) {
+        for (int i = 0; i < s.cmnd.count; i++) {
             _steps[0] = _steps[0] + (int)((signed char)s.cmnd.b[0].step * ((signed char)s.cmnd.b[0].dir * 2 - 1));
             _steps[1] = _steps[1] + (int)((signed char)s.cmnd.b[1].step * ((signed char)s.cmnd.b[1].dir * 2 - 1));
             _steps[2] = _steps[2] + (int)((signed char)s.cmnd.b[2].step * ((signed char)s.cmnd.b[2].dir * 2 - 1));
@@ -105,7 +105,7 @@ steps_t stepping_simple_timer::exec(const steps_t& start_steps, const std::vecto
 
     // this part is critical - I unwinded loops in order to reduce latencies
     for (auto c : commands) {
-        int rpt = c.cmnd.repeat; // 0 means that we execute it once
+        int rpt = c.cmnd.count; // 0 means that we execute it once
         do {
             execute_single_tick(c, steppers, _position, step_clear);
             //nextT = t + ttime * current_tick_n;

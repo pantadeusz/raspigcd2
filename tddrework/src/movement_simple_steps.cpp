@@ -41,25 +41,25 @@ int steps_remaining(const steps_t& steps_, const steps_t& destination_steps_)
  * @arg steps_ current steps count
  * @arg destination_steps_ desired steps count
  */
-std::vector<hardware::multistep_command> chase_steps(const steps_t& steps_, steps_t destination_steps_)
+std::vector<hardware::multistep_command> chase_steps(const steps_t& start_pos_, steps_t destination_pos_)
 {
     std::vector<hardware::multistep_command> ret;
-    ret.reserve(steps_remaining(steps_, destination_steps_) * 2 + 32);
-    auto steps = steps_;
+    ret.reserve(steps_remaining(start_pos_, destination_pos_) * 2 + 32);
+    auto steps = start_pos_;
     hardware::multistep_command executor_command;
     do {
         executor_command.v = 0;
-        executor_command.cmnd.repeat = 1;
+        executor_command.cmnd.count = 1;
         for (unsigned int i = 0; i < steps.size(); i++) {
-            executor_command.cmnd.b[i].dir = ((destination_steps_[i] > steps[i]) ? 1 : 0);
-            executor_command.cmnd.b[i].step = (destination_steps_[i] - steps[i]) ? 1 : 0;
-            if (destination_steps_[i] > steps[i])
+            executor_command.cmnd.b[i].dir = ((destination_pos_[i] > steps[i]) ? 1 : 0);
+            executor_command.cmnd.b[i].step = (destination_pos_[i] - steps[i]) ? 1 : 0;
+            if (destination_pos_[i] > steps[i])
                 steps[i]++;
-            else if (destination_steps_[i] < steps[i])
+            else if (destination_pos_[i] < steps[i])
                 steps[i]--;
         }
         ret.push_back(executor_command);
-    } while (steps_remaining(steps, destination_steps_) > 0);
+    } while (steps_remaining(steps, destination_pos_) > 0);
     return ret;
 }
 
