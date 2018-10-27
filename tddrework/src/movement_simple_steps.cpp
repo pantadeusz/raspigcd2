@@ -49,6 +49,7 @@ std::vector<hardware::multistep_command> chase_steps(const steps_t& steps_, step
     hardware::multistep_command executor_command;
     do {
         executor_command.v = 0;
+        executor_command.cmnd.repeat = 1;
         for (unsigned int i = 0; i < steps.size(); i++) {
             executor_command.cmnd.b[i].dir = ((destination_steps_[i] > steps[i]) ? 1 : 0);
             executor_command.cmnd.b[i].step = (destination_steps_[i] - steps[i]) ? 1 : 0;
