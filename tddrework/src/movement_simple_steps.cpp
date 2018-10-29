@@ -47,6 +47,7 @@ std::vector<hardware::multistep_command> chase_steps(const steps_t& start_pos_, 
     ret.reserve(steps_remaining(start_pos_, destination_pos_) * 2 + 32);
     auto steps = start_pos_;
     hardware::multistep_command executor_command;
+    int stodo = steps_remaining(steps, destination_pos_);
     do {
         executor_command.v = 0;
         executor_command.cmnd.count = 1;
@@ -59,7 +60,7 @@ std::vector<hardware::multistep_command> chase_steps(const steps_t& start_pos_, 
                 steps[i]--;
         }
         ret.push_back(executor_command);
-    } while (steps_remaining(steps, destination_pos_) > 0);
+    } while ((--stodo) > 0);
     return ret;
 }
 

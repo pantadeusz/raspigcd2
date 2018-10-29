@@ -72,7 +72,7 @@ inline steps_t operator-(const steps_t &l, const steps_t &r) {
 
 
 inline std::ostream &operator<<(std::ostream &os, steps_t const &value) {
-    os << "[" << value[0] << ", " << value[1] << ", " << value[2] << "," << value[3] << "]";
+    os << "[" << value[0] << ", " << value[1] << ", " << value[2] << ", " << value[3] << "]";
     return os;
 }
 

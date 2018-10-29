@@ -1,5 +1,6 @@
 #include <hardware_stepping.hpp>
-
+#include <hardware_stepping_commands.hpp>
+#include <hardware_thread_helper.hpp>
 
 #include <chrono>
 #include <configuration.hpp>
@@ -11,19 +12,7 @@
 
 
 #include <cstring>
-//#include <iostream>
 #include <stdexcept>
-//#include <thread>
-// RASPBERRY PI GPIO - docs from http://www.pieter-jan.com/node/15
-
-//#include <stdio.h>
-
-//#include <fcntl.h>
-//#include <sys/mman.h>
-//#include <sys/stat.h>
-//#include <sys/types.h>
-//#include <unistd.h>
-
 
 namespace raspigcd {
 namespace hardware {
@@ -57,18 +46,13 @@ void stepping_simple_timer::set_low_level_steppers_driver(std::shared_ptr<low_st
 
 steps_t stepping_simple_timer::exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_)
 {
-    {
-        sched_param sch_params;
-        sch_params.sched_priority = sched_get_priority_max(SCHED_RR);
-        if (pthread_setschedparam(pthread_self(), SCHED_RR, &sch_params)) {
-            std::cerr << "Warning: Failed to set Thread scheduling : "
-                      << std::strerror(errno) << std::endl;
-        }
-    }
+    set_thread_realtime();
     steps_t _steps = start_steps;
     std::chrono::microseconds ttime = std::chrono::microseconds((unsigned long)(_delay_microseconds));
     auto t = std::chrono::system_clock::now();
     auto nextT = ttime + t;
+    long int step_number = 0;
+    nextT = t + ttime*step_number;
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.cmnd.count; i++) {
             _steps[0] = _steps[0] + (int)((signed char)s.cmnd.b[0].step * ((signed char)s.cmnd.b[0].dir * 2 - 1));
@@ -79,7 +63,9 @@ steps_t stepping_simple_timer::exec(const steps_t& start_steps, const std::vecto
             _steppers_driver->do_step(s.cmnd.b);
             on_step_(_steps);
             // wait till next step
-            nextT += ttime;
+            //nextT += ttime;
+            step_number++;
+            nextT = t + ttime*step_number;
             // always busy wait - better timing, but more resource consuming
             for (; std::chrono::system_clock::now() < nextT;)
                 ;

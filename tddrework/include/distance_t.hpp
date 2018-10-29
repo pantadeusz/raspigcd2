@@ -105,7 +105,7 @@ inline distance_t operator/(const distance_t& a, const double& b)
 }
 
 inline std::ostream &operator<<(std::ostream &os, distance_t const &value) {
-    os << "[" << value[0] << ", " << value[1] << ", " << value[2] << "," << value[3] << "]";
+    os << "[" << value[0] << ", " << value[1] << ", " << value[2] << ", " << value[3] << "]";
     return os;
 }
 
