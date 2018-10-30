@@ -28,7 +28,7 @@ TEST_CASE( "Hardware stepping_sim", "[hardware_stepping][stepping_sim]" ) {
 
     SECTION( "Run one command program" ) {
         int n = 0;
-        worker.exec({0,0,0,0},{ {cmnd:{b:{{0,0},{0,0},{0,0},{0,0}},count:1}} },[&](const auto &){n++;});
+        worker.exec({0,0,0,0},{ {.cmnd={.b={{0,0},{0,0},{0,0},{0,0}},.count=1}} },[&](const auto &){n++;});
         REQUIRE(n == 1);
     }
     SECTION( "Run one step in each positive  direction" ) {
@@ -118,7 +118,7 @@ TEST_CASE( "Hardware stepping_simple_timer", "[hardware_stepping][stepping_simpl
 
     SECTION( "Run one command program" ) {
         int n = 0;
-        worker.exec({0,0,0,0},{ {cmnd:{b:{{0,0},{0,0},{0,0},{0,0}},count:1}} },[&](const auto &){n++;});
+        worker.exec({0,0,0,0},{ {.cmnd={.b={{0,0},{0,0},{0,0},{0,0}},.count=1}} },[&](const auto &){n++;});
         REQUIRE(n == 1);
     }
     SECTION( "Run one step in each positive  direction" ) {

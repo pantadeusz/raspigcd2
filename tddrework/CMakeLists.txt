@@ -24,6 +24,8 @@ install(DIRECTORY include/ DESTINATION include/raspigcd2
         FILES_MATCHING PATTERN "*.hpp")
 
 
+find_package (Threads)
+
 FIND_PACKAGE( OpenMP )
   if(OPENMP_FOUND)
      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -45,6 +47,7 @@ list(REMOVE_ITEM lib_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/raspigcd.cpp)
 
 add_library(raspigcd2 SHARED ${lib_SOURCES})
 add_executable(gcd ${raspigcd2_SOURCES} ${lib_SOURCES})
+target_link_libraries(gcd raspigcd2 ${CMAKE_THREAD_LIBS_INIT})
 
 install (TARGETS raspigcd2 DESTINATION lib)
 install (TARGETS gcd DESTINATION bin)
@@ -55,7 +58,7 @@ foreach(file ${files})
   get_filename_component(fn_target ${file}
                        NAME)
   add_executable(${fn_target} ${file})
-  target_link_libraries(${fn_target} raspigcd2)
+  target_link_libraries(${fn_target} raspigcd2 ${CMAKE_THREAD_LIBS_INIT})
   add_test(NAME ${fn_target} COMMAND "${CMAKE_BINARY_DIR}/${fn_target}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 endforeach()
 
