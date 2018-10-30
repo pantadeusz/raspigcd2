@@ -29,13 +29,13 @@ global& global::load_defaults()
         stepper(9, 10, 11, 100.0),
         stepper(0, 10, 5, 100.0)};
     buttons = {
-        {pin : 21, pullup : true}, {pin : 20, pullup : true}, {pin : 16, pullup : true}, {pin : 12, pullup : true}};
+        {.pin = 21, .pullup = true}, {.pin = 20, .pullup = true}, {.pin = 16, .pullup = true}, {.pin = 12, .pullup = true}};
     spindles = {
         {
-            pin : 18,
-            cycle_time_seconds : 0.1,
-            duty_min : 0.0,
-            duty_max : 0.1
+            .pin = 18,
+            .cycle_time_seconds = 0.1,
+            .duty_min = 0.0,
+            .duty_max = 0.1
         }
         /*,        {
             pin : 18,
