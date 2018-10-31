@@ -50,8 +50,11 @@ TEST_CASE("Movement variable speed", "[movement][variable_speed]")
     configuration::global cfg;
     cfg.load_defaults();
     cfg.tick_duration_us = 60;
+    cfg.max_no_accel_velocity_mm_s = {5,5,5,5};
+    double max_speed_no_accel = cfg.max_no_accel_velocity_mm_s[0];
+    double acceleration = 100;
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
-    movement::variable_speed variable_speed_driver(motor_layout_, 5, 100, 150, cfg.tick_duration());
+    movement::variable_speed variable_speed_driver(motor_layout_, max_speed_no_accel, acceleration, 150, cfg.tick_duration());
     stepping_simple_timer stepping(cfg, lsfake);
 
     distance_t start_coord = {0, 0, 0, 0};
@@ -81,9 +84,9 @@ TEST_CASE("Movement variable speed", "[movement][variable_speed]")
             .intended_speed = 3});
         auto move_segments = variable_speed_driver.movement_intet_to_point_speeds(intended_moves);
         REQUIRE(move_segments.size() == 2);
-        REQUIRE(move_segments.front().second == move_segments.back().second);
-        REQUIRE(move_segments.front().first == intended_moves.back().p0);
-        REQUIRE(move_segments.back().first == intended_moves.back().p1);
+        REQUIRE(move_segments.front().v0 == move_segments.back().v0);
+        REQUIRE(move_segments.front().p == intended_moves.back().p0);
+        REQUIRE(move_segments.back().p == intended_moves.back().p1);
     }
     SECTION("Intention with multiple values that does not need to accelerate")
     {
@@ -102,20 +105,108 @@ TEST_CASE("Movement variable speed", "[movement][variable_speed]")
         std::vector<var_speed_intentions_t> im_vect (intended_moves.begin(),intended_moves.end());
         std::vector<var_speed_pointspeed_t> result_vect (move_segments.begin(),move_segments.end());
         REQUIRE(result_vect.size() == 6);
-        REQUIRE(result_vect[0].second == result_vect[1].second);
-        REQUIRE(result_vect[1].second != result_vect[2].second);
-        REQUIRE(result_vect[2].second == result_vect[3].second);
-        REQUIRE(result_vect[3].second != result_vect[4].second);
-        REQUIRE(result_vect[4].second == result_vect[5].second);
+        REQUIRE(result_vect[0].v0 == result_vect[1].v0);
+        REQUIRE(result_vect[1].v0 != result_vect[2].v0);
+        REQUIRE(result_vect[2].v0 == result_vect[3].v0);
+        REQUIRE(result_vect[3].v0 != result_vect[4].v0);
+        REQUIRE(result_vect[4].v0 == result_vect[5].v0);
 
-        REQUIRE(result_vect[0].first == im_vect[0].p0);
-        REQUIRE(result_vect[1].first == im_vect[0].p1);
-        REQUIRE(result_vect[2].first == im_vect[1].p0);
-        REQUIRE(result_vect[3].first == im_vect[1].p1);
-        REQUIRE(result_vect[4].first == im_vect[2].p0);
-        REQUIRE(result_vect[5].first == im_vect[2].p1);
+        REQUIRE(result_vect[0].p == im_vect[0].p0);
+        REQUIRE(result_vect[1].p == im_vect[0].p1);
+        REQUIRE(result_vect[2].p == im_vect[1].p0);
+        REQUIRE(result_vect[3].p == im_vect[1].p1);
+        REQUIRE(result_vect[4].p == im_vect[2].p0);
+        REQUIRE(result_vect[5].p == im_vect[2].p1);
+
+        REQUIRE(result_vect[0].max_v == im_vect[0].intended_speed);
+        REQUIRE(result_vect[1].max_v == im_vect[0].intended_speed);
+        REQUIRE(result_vect[2].max_v == im_vect[1].intended_speed);
+        REQUIRE(result_vect[3].max_v == im_vect[1].intended_speed);
+        REQUIRE(result_vect[4].max_v == im_vect[2].intended_speed);
+        REQUIRE(result_vect[5].max_v == im_vect[2].intended_speed);
 
     }
+    SECTION("Intention with one value that does need to accelerate and break and do some constant segment")
+    {
+        std::list<var_speed_intentions_t> intended_moves;
+        intended_moves.push_back({.p0 = {0, 0, 0, 0},
+            .p1 = {22, 32, 42, 0},
+            .intended_speed = 20});
+        auto move_segments = variable_speed_driver.movement_intet_to_point_speeds(intended_moves);
+
+        REQUIRE(move_segments.size() == 4);
+        std::vector<var_speed_intentions_t> im_vect (intended_moves.begin(),intended_moves.end());
+        std::vector<var_speed_pointspeed_t> result_vect (move_segments.begin(),move_segments.end());
+
+        REQUIRE(result_vect[0].p == im_vect[0].p0);
+        REQUIRE(result_vect[3].p == im_vect[0].p1);
+
+        REQUIRE(result_vect[0].v0 == max_speed_no_accel);
+        REQUIRE(result_vect[1].v0 > max_speed_no_accel);
+        REQUIRE(result_vect[2].v0 > max_speed_no_accel);
+        REQUIRE(result_vect[3].v0 == max_speed_no_accel);
+
+        REQUIRE(result_vect[0].max_v == im_vect[0].intended_speed);
+        REQUIRE(result_vect[1].max_v == im_vect[0].intended_speed);
+        REQUIRE(result_vect[2].max_v == im_vect[0].intended_speed);
+        REQUIRE(result_vect[3].max_v == im_vect[0].intended_speed);
+
+        double full_length = std::sqrt((im_vect[0].p1 - im_vect[0].p0).length2());
+        double full_length_of_sum = 
+            std::sqrt((result_vect[1].p - result_vect[0].p).length2()) + 
+            std::sqrt((result_vect[2].p - result_vect[1].p).length2()) +
+            std::sqrt((result_vect[3].p - result_vect[2].p).length2());
+//        for (auto e : result_vect) {
+//            std::cout << "E: " << e.p << " : " << e.v0 << std::endl;
+//        }
+        REQUIRE(full_length == Approx(full_length_of_sum));
+    }
+
+SECTION("Intention with two values that does need to accelerate and break and do some constant segment")
+    {
+        std::list<var_speed_intentions_t> intended_moves;
+        intended_moves.push_back({.p0 = {0, 0, 0, 0},
+            .p1 = {22, 32, 42, 0},
+            .intended_speed = 20});
+        intended_moves.push_back({.p0 = {22, 32, 42, 0},
+            .p1 = {0, 0, 0, 0},
+            .intended_speed = 20});
+        auto move_segments = variable_speed_driver.movement_intet_to_point_speeds(intended_moves);
+
+        REQUIRE(move_segments.size() == 7);
+        std::vector<var_speed_intentions_t> im_vect(intended_moves.begin(), intended_moves.end());
+        std::vector<var_speed_pointspeed_t> result_vect(move_segments.begin(), move_segments.end());
+
+        REQUIRE(result_vect[0].p == im_vect[0].p0);
+        REQUIRE(result_vect[3].p == im_vect[0].p1);
+
+        REQUIRE(result_vect[0].v0 == max_speed_no_accel);
+        REQUIRE(result_vect[1].v0 > max_speed_no_accel);
+        REQUIRE(result_vect[2].v0 > max_speed_no_accel);
+        REQUIRE(result_vect[3].v0 == max_speed_no_accel);
+
+        double full_length = std::sqrt((im_vect[0].p1 - im_vect[0].p0).length2()) + std::sqrt((im_vect[1].p1 - im_vect[1].p0).length2());
+        double full_length_of_sum =
+            std::sqrt((result_vect[1].p - result_vect[0].p).length2()) +
+            std::sqrt((result_vect[2].p - result_vect[1].p).length2()) +
+            std::sqrt((result_vect[3].p - result_vect[2].p).length2()) +
+            
+            std::sqrt((result_vect[4].p - result_vect[3].p).length2()) +
+            std::sqrt((result_vect[5].p - result_vect[4].p).length2()) +
+            std::sqrt((result_vect[6].p - result_vect[5].p).length2())
+            ;
+            auto ep = result_vect[0];
+                for (auto e : result_vect) {
+                    // a = (v1 - v0) / t
+                    double T = (e.v0-ep.v0) / acceleration;
+                    double sReal = std::sqrt((e.p-ep.p).length2());
+                    double sShouldBe = ep.v0*T+acceleration*T*T/2;
+                    std::cout << "E: " << e.p << " : " << e.v0 << "; " << sReal << " vs " << sShouldBe << std::endl;
+                    ep = e;
+                }
+        REQUIRE(full_length == Approx(full_length_of_sum));
+    }
+
     /*   SECTION("Generate movement forward and backward ")
     {
         int n = 0;
