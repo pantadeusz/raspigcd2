@@ -287,17 +287,19 @@ TEST_CASE("Movement variable speed", "[movement][variable_speed]")
                 double dt = cfg.tick_duration();
                 double v = pe.v0;
 
-                while ((current_position-pe.p).length2() < l*l) {
-                    current_position = current_position + vect * v * dt + vect * v * pe.accel * 0.5 * dt * dt;
-            		v = v + pe.accel * dt;
-                }
-
-                //for (double T = 0; ((current_position-pe.p).length2() < l*l); T+= dt) {
-                //    current_position = pe.p + vect*(pe.v0 * T + pe.accel * T * T / 2); // simulate movement
-                //} 
+                // while ((current_position-pe.p).length2() < l*l) {
+                //     current_position = current_position + vect * v * dt + vect * v * pe.accel * 0.5 * dt * dt;
+            	// 	v = v + pe.accel * dt;
+                // }
+                for (double T = 0; ((current_position-pe.p).length2() < l*l); T+= dt) {
+                    current_position = pe.p + vect*(pe.v0 * T + pe.accel * T * T / 2); // simulate movement
+                    v = pe.v0 + pe.accel*T;
+                } 
                 for (int i = 0; i < 4; i++) {
                     REQUIRE(current_position[i] == Approx(e.p[i]).margin(0.001));
                 }
+                
+                REQUIRE(v == Approx(e.v0).margin(0.75));
                 //std::cout << "PP : " << current_position << " v: " << v <<  " " << pe.accel <<  " ?? " << e.p << std::endl;
             }
             pe = e;

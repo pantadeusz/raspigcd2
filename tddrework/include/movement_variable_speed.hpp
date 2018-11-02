@@ -138,8 +138,8 @@ public:
                     // TODO: return_list_of_speedpoints.push_back(b);
 
                 } else { // we need to accelerate, move with constant speed, and then break
-                    double T = (intended_speed - _max_speed_no_accel)/_acceleration; // time of acceleration and break
-                    auto mvect = movement_direction_vect*(_max_speed_no_accel*T+_acceleration*T*T/2.0);
+                    //double T = (intended_speed - _max_speed_no_accel)/_acceleration; // time of acceleration and break
+                    auto mvect = movement_direction_vect*accel_length;// (_max_speed_no_accel*T+_acceleration*T*T/2.0);
                     var_speed_pointspeed_t a1 = {intent.p0 + mvect, intended_speed, 0,intent.intended_speed};
                     var_speed_pointspeed_t b1 = {intent.p1 - mvect, intended_speed, -_acceleration,intent.intended_speed};
                     return_list_of_speedpoints.back().accel = _acceleration;
