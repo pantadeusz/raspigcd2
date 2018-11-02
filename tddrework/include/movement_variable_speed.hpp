@@ -34,16 +34,22 @@
 namespace raspigcd {
 namespace movement {
 
-// using variable_speed_callback_i = std::function<void()>;
-//using var_speed_pointspeed_t = std::pair<distance_t, double>;
+/**
+ * @brief this is the node of path that supports variable speeds and accelerations
+ * 
+ */
 struct var_speed_pointspeed_t {
     distance_t p; // the start position
+
     double v0; // initial velocity
-    double accel; // acceleration
+    double accel; // acceleration to the next node
     double max_v; // maximal velocity that can be performed on this fragment. This is from var_speed_intentions_t
 };// = std::pair<distance_t, double>;
 
 
+/**
+ * @brief This represents intentions for movement steps. The accelerations can be infinite here.
+ */
 class var_speed_intentions_t
 {
 public:
@@ -118,6 +124,7 @@ public:
             }
             if (intent.intended_speed <= _max_speed_no_accel) {
                 if (a.v0 != return_list_of_speedpoints.back().v0) return_list_of_speedpoints.push_back(a);
+                else return_list_of_speedpoints.back().max_v = intent.intended_speed;
                 return_list_of_speedpoints.push_back(b);
             } else { // perform acceleration and break - first approximation. Next we can try to optimize it
                 auto movement_vector_whole = (b.p - a.p);
@@ -136,6 +143,7 @@ public:
                     var_speed_pointspeed_t a1 = {intent.p0 + mvect, intended_speed, 0,intent.intended_speed};
                     var_speed_pointspeed_t b1 = {intent.p1 - mvect, intended_speed, -_acceleration,intent.intended_speed};
                     return_list_of_speedpoints.back().accel = _acceleration;
+                    return_list_of_speedpoints.back().max_v = intent.intended_speed;
                     return_list_of_speedpoints.push_back(a1);
                     return_list_of_speedpoints.push_back(b1);
                     b.v0 = _max_speed_no_accel;

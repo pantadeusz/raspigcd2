@@ -50,7 +50,7 @@ TEST_CASE("Movement variable speed", "[movement][variable_speed]")
     configuration::global cfg;
     cfg.load_defaults();
     cfg.tick_duration_us = 60;
-    cfg.max_no_accel_velocity_mm_s = {5,5,5,5};
+    cfg.max_no_accel_velocity_mm_s = {5, 5, 5, 5};
     double max_speed_no_accel = cfg.max_no_accel_velocity_mm_s[0];
     double acceleration = 100;
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
@@ -102,8 +102,8 @@ TEST_CASE("Movement variable speed", "[movement][variable_speed]")
             .intended_speed = 1});
         auto move_segments = variable_speed_driver.movement_intet_to_point_speeds(intended_moves);
 
-        std::vector<var_speed_intentions_t> im_vect (intended_moves.begin(),intended_moves.end());
-        std::vector<var_speed_pointspeed_t> result_vect (move_segments.begin(),move_segments.end());
+        std::vector<var_speed_intentions_t> im_vect(intended_moves.begin(), intended_moves.end());
+        std::vector<var_speed_pointspeed_t> result_vect(move_segments.begin(), move_segments.end());
         REQUIRE(result_vect.size() == 6);
         REQUIRE(result_vect[0].v0 == result_vect[1].v0);
         REQUIRE(result_vect[1].v0 != result_vect[2].v0);
@@ -124,7 +124,6 @@ TEST_CASE("Movement variable speed", "[movement][variable_speed]")
         REQUIRE(result_vect[3].max_v == im_vect[1].intended_speed);
         REQUIRE(result_vect[4].max_v == im_vect[2].intended_speed);
         REQUIRE(result_vect[5].max_v == im_vect[2].intended_speed);
-
     }
     SECTION("Intention with one value that does need to accelerate and break and do some constant segment")
     {
@@ -135,8 +134,8 @@ TEST_CASE("Movement variable speed", "[movement][variable_speed]")
         auto move_segments = variable_speed_driver.movement_intet_to_point_speeds(intended_moves);
 
         REQUIRE(move_segments.size() == 4);
-        std::vector<var_speed_intentions_t> im_vect (intended_moves.begin(),intended_moves.end());
-        std::vector<var_speed_pointspeed_t> result_vect (move_segments.begin(),move_segments.end());
+        std::vector<var_speed_intentions_t> im_vect(intended_moves.begin(), intended_moves.end());
+        std::vector<var_speed_pointspeed_t> result_vect(move_segments.begin(), move_segments.end());
 
         REQUIRE(result_vect[0].p == im_vect[0].p0);
         REQUIRE(result_vect[3].p == im_vect[0].p1);
@@ -152,17 +151,14 @@ TEST_CASE("Movement variable speed", "[movement][variable_speed]")
         REQUIRE(result_vect[3].max_v == im_vect[0].intended_speed);
 
         double full_length = std::sqrt((im_vect[0].p1 - im_vect[0].p0).length2());
-        double full_length_of_sum = 
-            std::sqrt((result_vect[1].p - result_vect[0].p).length2()) + 
+        double full_length_of_sum =
+            std::sqrt((result_vect[1].p - result_vect[0].p).length2()) +
             std::sqrt((result_vect[2].p - result_vect[1].p).length2()) +
             std::sqrt((result_vect[3].p - result_vect[2].p).length2());
-//        for (auto e : result_vect) {
-//            std::cout << "E: " << e.p << " : " << e.v0 << std::endl;
-//        }
         REQUIRE(full_length == Approx(full_length_of_sum));
     }
 
-SECTION("Intention with two values that does need to accelerate and break and do some constant segment")
+    SECTION("Intention with two values that does need to accelerate and break and do some constant segment")
     {
         std::list<var_speed_intentions_t> intended_moves;
         intended_moves.push_back({.p0 = {0, 0, 0, 0},
@@ -190,65 +186,122 @@ SECTION("Intention with two values that does need to accelerate and break and do
             std::sqrt((result_vect[1].p - result_vect[0].p).length2()) +
             std::sqrt((result_vect[2].p - result_vect[1].p).length2()) +
             std::sqrt((result_vect[3].p - result_vect[2].p).length2()) +
-            
+
             std::sqrt((result_vect[4].p - result_vect[3].p).length2()) +
             std::sqrt((result_vect[5].p - result_vect[4].p).length2()) +
-            std::sqrt((result_vect[6].p - result_vect[5].p).length2())
-            ;
-            auto ep = result_vect[0];
-                for (auto e : result_vect) {
-                    // a = (v1 - v0) / t
-                    double T = (e.v0-ep.v0) / acceleration;
-                    double sReal = std::sqrt((e.p-ep.p).length2());
-                    double sShouldBe = ep.v0*T+acceleration*T*T/2;
-                    std::cout << "E: " << e.p << " : " << e.v0 << "; " << sReal << " vs " << sShouldBe << std::endl;
-                    ep = e;
-                }
+            std::sqrt((result_vect[6].p - result_vect[5].p).length2());
+        auto ep = result_vect[0];
+        for (auto e : result_vect) {
+            double T;
+            if (ep.accel == 0) {
+                T=std::sqrt((e.p - ep.p).length2())/ep.v0;
+            } else {
+                T = (e.v0 - ep.v0) / ep.accel;
+            }
+            double sReal = std::sqrt((e.p - ep.p).length2());
+            double sShouldBe = ep.v0 * T + ep.accel * T * T / 2;
+            REQUIRE(sReal == Approx(sShouldBe));
+            ep = e;
+        }
         REQUIRE(full_length == Approx(full_length_of_sum));
     }
 
-    /*   SECTION("Generate movement forward and backward ")
+    SECTION("Two segments with max speed over max speed no accel")
     {
-        int n = 0;
-        using namespace std::chrono_literals;
-        auto commands = variable_speed_driver.goto_xyz(start_coord, {1, 3, 2, 0}, 30, cfg.tick_duration());
-        auto steps_result = stepping.exec(steps,
-            commands,
-            [&n](const steps_t&) {n++;});
-        commands = variable_speed_driver.goto_xyz({1, 3, 2, 0}, start_coord, 30, cfg.tick_duration());
-        steps_result = stepping.exec(steps_result,
-            commands,
-            [&n](const steps_t&) {n++;});
-        REQUIRE (steps_result == steps);
-    }*/
-    /*
-    SECTION("Generate movement forward with timer")
-    {
-        int n = 0;
-        using namespace std::chrono_literals;
-        auto commands = variable_speed_driver.goto_xyz(start_coord, goal_coord, velocity, cfg.tick_duration());
-        auto start_time = std::chrono::system_clock::now();
-        steps = stepping.exec(steps,
-            commands,
-            [&n](const steps_t&) {n++;});
-        auto end_time = std::chrono::system_clock::now();
-        steps_t expected_steps = motor_layout_.get()->cartesian_to_steps(goal_coord);
-        // 30mm/s;  t = 2.449489742783178/30
-        double expected_duration = ((std::sqrt((goal_coord - start_coord).length2())/velocity));
-        double result_duration = (std::chrono::duration_cast<std::chrono::microseconds> (end_time - start_time).count()/1000000.0);
-        CHECK (result_duration == Approx(expected_duration).epsilon(0.01) );
-        REQUIRE (steps == expected_steps);
+        std::list<var_speed_intentions_t> intended_moves;
+        intended_moves.push_back({.p0 = {0, 0, 0, 0},
+            .p1 = {22, 32, 42, 0},
+            .intended_speed = 20});
+        intended_moves.push_back({.p0 = {22, 32, 42, 0},
+            .p1 = {0, 0, 0, 0},
+            .intended_speed = 20});
+        auto move_segments = variable_speed_driver.movement_intet_to_point_speeds(intended_moves);
+        for (auto &e : move_segments) {
+            REQUIRE(e.max_v == Approx(20.0));
+        }
     }
-    SECTION("Generate movement superfast forward with timer")
+    SECTION("Two segments with max speed over max speed 20 and 15")
     {
-        int n = 0;
-        using namespace std::chrono_literals;
-        steps_t steps = {0, 0, 0, 0};
-        auto commands = variable_speed_driver.goto_xyz({0, 0, 0, 0}, {-1, 1, 2, 0}, 3000, cfg.tick_duration());
-        steps = stepping.exec(steps,
-            commands,
-            [&n](const steps_t&) {n++;});
-        steps_t expected_steps = motor_layout_.get()->cartesian_to_steps({-1, 1, 2, 0});
-        REQUIRE (steps == expected_steps);
-    }*/
+        std::list<var_speed_intentions_t> intended_moves;
+        intended_moves.push_back({.p0 = {0, 0, 0, 0},
+            .p1 = {22, 32, 42, 0},
+            .intended_speed = 15});
+        intended_moves.push_back({.p0 = {22, 32, 42, 0},
+            .p1 = {0, 0, 0, 0},
+            .intended_speed = 20});
+        auto move_segments = variable_speed_driver.movement_intet_to_point_speeds(intended_moves);
+        int i = 0;
+        for (auto &e : move_segments) {
+            //std::cout << "E: " << e.max_v << " " << e.v0 << " " << e.accel << " " << e.p << std::endl;
+            if (i < 3) {
+                REQUIRE(e.max_v == Approx(15.0));
+            } else {
+                REQUIRE(e.max_v == Approx(20.0));
+            }
+            i++;
+        }
+    }
+
+    SECTION("Two segments with max speed over max speed 2 and 15")
+    {
+        std::list<var_speed_intentions_t> intended_moves;
+        intended_moves.push_back({.p0 = {0, 0, 0, 0},
+            .p1 = {22, 32, 42, 0},
+            .intended_speed = 2});
+        intended_moves.push_back({.p0 = {22, 32, 42, 0},
+            .p1 = {0, 0, 0, 0},
+            .intended_speed = 15});
+        auto move_segments = variable_speed_driver.movement_intet_to_point_speeds(intended_moves);
+        int i = 0;
+        for (auto &e : move_segments) {
+            std::cout << "E: " << e.max_v << " " << e.v0 << " " << e.accel << " " << e.p << std::endl;
+            if (i < 1) {
+                REQUIRE(e.max_v == Approx(2.0));
+            } else {
+                REQUIRE(e.max_v == Approx(15.0));
+            }
+            i++;
+        }
+    }
+
+
+    SECTION("Acceleration and break should give correct coordinates and velocities")
+    {
+        std::list<var_speed_intentions_t> intended_moves;
+        intended_moves.push_back({.p0 = {0, 0, 0, 0},
+            .p1 = {22, 32, 42, 0},
+            .intended_speed = 2});
+        intended_moves.push_back({.p0 = {22, 32, 42, 0},
+            .p1 = {0, 0, 0, 0},
+            .intended_speed = 15});
+        auto move_segments = variable_speed_driver.movement_intet_to_point_speeds(intended_moves);
+        distance_t current_position = {0, 0, 0, 0};
+
+        var_speed_pointspeed_t &pe = move_segments.front();
+        for (auto &e : move_segments) {
+            //double sShouldBe = ep.v0 * T + ep.accel * T * T / 2;
+            if (&pe != &e) {
+                auto vect = e.p - pe.p;
+                double l = std::sqrt(vect.length2());
+                vect = vect/l;
+                double dt = cfg.tick_duration();
+                double v = pe.v0;
+
+                while ((current_position-pe.p).length2() < l*l) {
+                    current_position = current_position + vect * v * dt + vect * v * pe.accel * 0.5 * dt * dt;
+            		v = v + pe.accel * dt;
+                }
+
+                //for (double T = 0; ((current_position-pe.p).length2() < l*l); T+= dt) {
+                //    current_position = pe.p + vect*(pe.v0 * T + pe.accel * T * T / 2); // simulate movement
+                //} 
+                for (int i = 0; i < 4; i++) {
+                    REQUIRE(current_position[i] == Approx(e.p[i]).margin(0.001));
+                }
+                //std::cout << "PP : " << current_position << " v: " << v <<  " " << pe.accel <<  " ?? " << e.p << std::endl;
+            }
+            pe = e;
+        }
+    }
+
 }
