@@ -1,8 +1,8 @@
 #include <configuration.hpp>
-#include <hardware_motor_layout.hpp>
-#include <hardware_raspberry_pi.hpp>
-#include <hardware_stepping.hpp>
-#include <movement_constant_speed.hpp>
+#include <hardware/motor_layout.hpp>
+#include <hardware/raspberry_pi.hpp>
+#include <hardware/stepping.hpp>
+#include <movement/constant_speed.hpp>
 
 using namespace raspigcd;
 using namespace raspigcd::hardware;

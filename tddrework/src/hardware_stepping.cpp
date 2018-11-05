@@ -1,12 +1,11 @@
-#include <hardware_stepping.hpp>
-#include <hardware_stepping_commands.hpp>
-#include <hardware_thread_helper.hpp>
+#include <hardware/stepping.hpp>
+#include <hardware/stepping_commands.hpp>
+#include <hardware/thread_helper.hpp>
 
 #include <chrono>
 #include <configuration.hpp>
 #include <distance_t.hpp>
 #include <functional>
-#include <hardware_stepping_commands.hpp>
 //#include <memory>
 #include <steps_t.hpp>
 

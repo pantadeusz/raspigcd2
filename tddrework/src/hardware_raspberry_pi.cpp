@@ -18,7 +18,7 @@
 
 */
 
-#include <hardware_raspberry_pi.hpp>
+#include <hardware/raspberry_pi.hpp>
 
 #include <chrono>
 #include <cstring>

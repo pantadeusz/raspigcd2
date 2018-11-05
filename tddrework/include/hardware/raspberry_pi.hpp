@@ -20,10 +20,10 @@
 
 #include <configuration.hpp>
 #include <distance_t.hpp>
-#include <hardware_low_buttons.hpp>
-#include <hardware_low_spindles_pwm.hpp>
-#include <hardware_low_steppers.hpp>
-#include <hardware_stepping_commands.hpp>
+#include <hardware/low_buttons.hpp>
+#include <hardware/low_spindles_pwm.hpp>
+#include <hardware/low_steppers.hpp>
+#include <hardware/stepping_commands.hpp>
 #include <steps_t.hpp>
 
 #include <functional>

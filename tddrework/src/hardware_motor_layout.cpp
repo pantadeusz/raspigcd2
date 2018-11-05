@@ -16,7 +16,7 @@
 */
 
 
-#include <hardware_motor_layout.hpp>
+#include <hardware/motor_layout.hpp>
 
 namespace raspigcd
 {

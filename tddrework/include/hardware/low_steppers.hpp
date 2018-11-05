@@ -19,7 +19,7 @@
 #define __RASPIGCD_HARDWARE_LOW_LEVEL_STEPPERS_T_HPP__
 
 #include <configuration.hpp>
-#include <hardware_stepping_commands.hpp>
+#include <hardware/stepping_commands.hpp>
 
 #include <vector>
 

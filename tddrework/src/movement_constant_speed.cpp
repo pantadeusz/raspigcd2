@@ -18,11 +18,11 @@
 #include <cmath>
 #include <configuration.hpp>
 #include <distance_t.hpp>
-#include <hardware_motor_layout.hpp>
-#include <hardware_stepping_commands.hpp>
+#include <movement/constant_speed.hpp>
+#include <movement/simple_steps.hpp>
+#include <hardware/motor_layout.hpp>
+#include <hardware/stepping_commands.hpp>
 #include <memory>
-#include <movement_constant_speed.hpp>
-#include <movement_simple_steps.hpp>
 #include <steps_t.hpp>
 
 

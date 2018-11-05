@@ -1,7 +1,7 @@
 #include <configuration.hpp>
 #include <configuration_json.hpp>
-#include <hardware_stepping.hpp>
-#include <movement_variable_speed.hpp>
+#include <hardware/stepping.hpp>
+#include <movement/variable_speed.hpp>
 
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_DISABLE_MATCHERS
