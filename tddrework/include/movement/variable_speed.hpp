@@ -171,9 +171,21 @@ public:
     }
 
     // converts speed intetions into list of var_speed_pointspeed_t. That is taking into account machine limits
-    std::list<std::variant<distance_t,transition_t> > movement_intet_to_point_speeds_v(const std::list<std::variant<distance_t,double> >& intentions_)
+    std::list<std::variant<distance_t,transition_t> > movement_intet_to_point_speeds_v(
+            const std::list<std::variant<distance_t,double> >& intentions_)
     {
-        return {};
+        std::list<std::variant<distance_t,transition_t> > ret;
+        bool is_coord = true;
+        for (const auto &ie:intentions_) {
+            if (is_coord) {
+                ret.push_back(std::get<distance_t>(ie));
+            } else {
+                double v = std::get<double>(ie);
+                ret.push_back(transition_t{.v0=v,.accel=0,.max_v=v});
+            }
+            is_coord = !is_coord;
+        }
+        return ret;
     }
 };
 
