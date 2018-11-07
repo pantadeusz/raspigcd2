@@ -136,7 +136,7 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
             }
         }
     }
-    GIVEN("there is a program needed acceleration") {
+    GIVEN("there is a program needed acceleration and possible to reach speed") {
         std::list<std::variant<distance_t,double> > simple_program = { 
             distance_t{0,0,0,0}, 8.0,
             distance_t{10,0,0,0}};
@@ -146,21 +146,60 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
             std::list<std::variant<distance_t,transition_t> > 
                 result = variable_speed_driver.movement_intet_to_point_speeds_v( simple_program );
             std::vector<std::variant<distance_t,transition_t>> result_v(result.begin(), result.end());
-            THEN("the result should be of the same size as simple program") {
+            THEN("the result should be of same 7") {
                 REQUIRE(result.size() == 7);
             }
-//             THEN("the result should have correct coordinates") {
-//                 for (unsigned i = 0; i < result_v.size();i+=2) {
-//                     REQUIRE(std::get<distance_t>(result_v[i]) == std::get<distance_t>(simple_program_v[i]));
-//                 }
-//             }
-//             THEN("the result should have correct maximal and actual speeds") {
-//                 for (unsigned i = 1; i < result_v.size();i+=2) {
-//                     REQUIRE(std::get<transition_t>(result_v[i]).v0 == std::get<double>(simple_program_v[i]));
-//                     REQUIRE(std::get<transition_t>(result_v[i]).max_v == std::get<double>(simple_program_v[i]));
-//                     REQUIRE(std::get<transition_t>(result_v[i]).accel == 0.0);
-//                 }
-//             }
+            THEN("the result should have correct coordinates at the beginning and the end") {
+                REQUIRE(std::get<distance_t>(result_v[0]) == std::get<distance_t>(simple_program_v[0]));
+                REQUIRE(std::get<distance_t>(result_v[6]) == std::get<distance_t>(simple_program_v[2]));
+            }
+            THEN("the result path should sum up to the same lenght as intended path") {
+                double full_length = get_path_length(simple_program);
+                double full_length_of_sum = get_path_length(result);
+                REQUIRE(full_length == Approx(full_length_of_sum));
+            }
+            THEN("the result path should have proper accelerations") {
+                REQUIRE(std::get<transition_t>(result_v[1]).accel == acceleration);
+                REQUIRE(std::get<transition_t>(result_v[3]).accel == 0);
+                REQUIRE(std::get<transition_t>(result_v[5]).accel == -acceleration);
+            }
+            THEN("the result path should have proper initial speeds") {
+                REQUIRE(std::get<transition_t>(result_v[1]).v0 == max_speed_no_accel);
+                REQUIRE(std::get<transition_t>(result_v[3]).v0 == 8.0);
+                REQUIRE(std::get<transition_t>(result_v[5]).v0 == 8.0);
+            }
+            THEN("the result path should have proper max speeds") {
+                REQUIRE(std::get<transition_t>(result_v[1]).max_v == 8.0);
+                REQUIRE(std::get<transition_t>(result_v[3]).max_v == 8.0);
+                REQUIRE(std::get<transition_t>(result_v[5]).max_v == 8.0);
+            }
+        }
+    }
+    GIVEN("there is a program needed acceleration and not possible to reach speed") {
+        std::list<std::variant<distance_t,double> > simple_program = { 
+            distance_t{0,0,0,0}, 16.0,
+            distance_t{1,0,0,0}};
+        std::vector<std::variant<distance_t,double> > simple_program_v(simple_program.begin(), simple_program.end());
+        
+        WHEN("the program is converted to actions") {
+            std::list<std::variant<distance_t,transition_t> > 
+                result = variable_speed_driver.movement_intet_to_point_speeds_v( simple_program );
+            std::vector<std::variant<distance_t,transition_t>> result_v(result.begin(), result.end());
+            THEN("the result should be of the same size as simple program") {
+                REQUIRE(result.size() == simple_program.size());
+            }
+            THEN("the result should have correct coordinates") {
+                for (unsigned i = 0; i < result_v.size();i+=2) {
+                    REQUIRE(std::get<distance_t>(result_v[i]) == std::get<distance_t>(simple_program_v[i]));
+                }
+            }
+            THEN("the result should have correct maximal and actual speeds") {
+                for (unsigned i = 1; i < result_v.size();i+=2) {
+                    REQUIRE(std::get<transition_t>(result_v[i]).v0 == max_speed_no_accel);
+                    REQUIRE(std::get<transition_t>(result_v[i]).max_v == std::get<double>(simple_program_v[i]));
+                    REQUIRE(std::get<transition_t>(result_v[i]).accel == 0.0);
+                }
+            }
         }
     }
 }

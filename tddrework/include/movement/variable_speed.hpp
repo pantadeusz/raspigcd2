@@ -193,7 +193,8 @@ public:
                         auto movement_vector_length = std::sqrt(movement_vector_whole.length2());
                         double accel_length = accleration_length_calc(_max_speed_no_accel, intended_velocity, _acceleration);
                         if ((accel_length * 2.0) >= movement_vector_length) { // we can only accelerate and break
-                            // TODO errors
+                            ret.push_back(transition_t{.v0=_max_speed_no_accel,.accel=0,.max_v=intended_velocity});
+                            ret.push_back(next_pos);
                         } else {
                             auto movement_direction_vect = movement_vector_whole / movement_vector_length;
 
@@ -221,6 +222,21 @@ public:
         return ret;
     }
 };
+
+//std::list<std::variant<distance_t,transition_t> >
+auto get_path_length = [](const auto &path) -> double {
+    double l = 0;
+    if (path.size() > 0) {
+        auto prev = path.front();
+        for (const auto &e : path) {
+            try {
+                l += std::sqrt((std::get<distance_t>(e) - std::get<distance_t>(prev)).length2()); prev = e;
+            } catch (...) {}
+        }
+    }
+    return l;
+};
+
 
 } // namespace movement
 } // namespace raspigcd
