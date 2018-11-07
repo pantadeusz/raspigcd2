@@ -51,7 +51,7 @@ struct transition_t {
     double v0;    // initial velocity
     double accel; // acceleration to the next node
     double max_v; // maximal intended velocity that can be performed on this fragment. This is from var_speed_intentions_t
-};                // = std::pair<distance_t, double>;
+};
 
 /**
  * @brief This represents intentions for movement steps. The accelerations can be infinite here.
@@ -176,12 +176,45 @@ public:
     {
         std::list<std::variant<distance_t,transition_t> > ret;
         bool is_coord = true;
+        distance_t prev_pos;
+        distance_t next_pos;
+        double intended_velocity = 1000000;
         for (const auto &ie:intentions_) {
             if (is_coord) {
-                ret.push_back(std::get<distance_t>(ie));
+                next_pos = std::get<distance_t>(ie);
+                if (ret.size() == 0) {
+                    ret.push_back(next_pos);
+                } else if (!(next_pos == prev_pos)) { // ignore empty moves
+                    if (intended_velocity <= _max_speed_no_accel) {
+                        ret.push_back(transition_t{.v0=intended_velocity,.accel=0,.max_v=intended_velocity});
+                        ret.push_back(next_pos);
+                    } else {
+                        auto movement_vector_whole = next_pos - prev_pos;
+                        auto movement_vector_length = std::sqrt(movement_vector_whole.length2());
+                        double accel_length = accleration_length_calc(_max_speed_no_accel, intended_velocity, _acceleration);
+                        if ((accel_length * 2.0) >= movement_vector_length) { // we can only accelerate and break
+                            // TODO errors
+                        } else {
+                            auto movement_direction_vect = movement_vector_whole / movement_vector_length;
+
+                            distance_t inter_pos1 = movement_direction_vect*accel_length + prev_pos;
+                            distance_t inter_pos2 = next_pos - (movement_direction_vect*accel_length);
+
+                            ret.push_back(transition_t{.v0=_max_speed_no_accel,.accel=_acceleration,.max_v=intended_velocity});
+                            ret.push_back(inter_pos1);
+
+                            ret.push_back(transition_t{.v0=intended_velocity,.accel=0,.max_v=intended_velocity});
+                            ret.push_back(inter_pos2);
+
+                            ret.push_back(transition_t{.v0=intended_velocity,.accel=-_acceleration,.max_v=intended_velocity});
+                            ret.push_back(next_pos);
+
+                        }
+                    }
+                }
+                prev_pos = next_pos;
             } else {
-                double v = std::get<double>(ie);
-                ret.push_back(transition_t{.v0=v,.accel=0,.max_v=v});
+                intended_velocity = std::get<double>(ie);
             }
             is_coord = !is_coord;
         }
