@@ -2,12 +2,11 @@
 #include <hardware/motor_layout.hpp>
 #include <hardware/raspberry_pi.hpp>
 #include <hardware/stepping.hpp>
-#include <movement/constant_speed.hpp>
+#include <movement/steps_generator.hpp>
 
 using namespace raspigcd;
 using namespace raspigcd::hardware;
 
-//constant_speed
 
 int main() {
 	using namespace std::chrono_literals;
@@ -16,7 +15,7 @@ int main() {
 	cfg.load_defaults();
 	std::shared_ptr<raspberry_pi_3> raspi3( new raspberry_pi_3( cfg ) );
 	std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance( cfg );
-	movement::constant_speed const_speed_driver( motor_layout_ );
+	movement::steps_generator const_speed_driver( motor_layout_ );
 	stepping_simple_timer stepping( cfg, raspi3 );
 
 	raspi3.get()->enable_steppers( {true} );

@@ -15,8 +15,8 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASPIGCD_MOVEMENT_CONSTANT_SPEED_T_HPP__
-#define __RASPIGCD_MOVEMENT_CONSTANT_SPEED_T_HPP__
+#ifndef __RASPIGCD_MOVEMENT_ACCELERATIONS_T_HPP__
+#define __RASPIGCD_MOVEMENT_ACCELERATIONS_T_HPP__
 
 #include <configuration.hpp>
 #include <distance_t.hpp>
@@ -26,19 +26,29 @@
 #include <hardware/motor_layout.hpp>
 #include <memory>
 #include <cmath>
+#include <variant>
 
 
 namespace raspigcd {
 namespace movement {
 
-class constant_speed {
+struct transition_t {
+    double v0;    // initial velocity
+    double accel; // acceleration to the next node
+    double max_v; // maximal intended velocity that can be performed on this fragment. The most desired speed. The velocity cannot exceed max_v no matter what.
+};
+
+using movement_plan_t = std::list<std::variant<distance_t,transition_t> >;
+
+
+class steps_generator {
     protected:
     hardware::motor_layout *_motor_layout;
     std::shared_ptr<hardware::motor_layout> _motor_layout_ptr;
     public:
     void set_motor_layout(std::shared_ptr<hardware::motor_layout> ml);
 
-    constant_speed(std::shared_ptr<hardware::motor_layout> ml);
+    steps_generator(std::shared_ptr<hardware::motor_layout> ml);
     /**
      * @brief 
      * 
@@ -48,7 +58,9 @@ class constant_speed {
      * @param dt 
      * @return std::vector<hardware::multistep_command> 
      */
-    std::vector<hardware::multistep_command> goto_xyz(const distance_t p0, const distance_t p1, double v, double dt);
+    std::vector<hardware::multistep_command> goto_xyz(const distance_t p0, const distance_t p1, double v, double dt) const ;
+
+    std::vector<hardware::multistep_command> goto_complete(const distance_t &p0,const transition_t &transition,const distance_t &p1, const double dt) const;
 };
 
 } // namespace hardware

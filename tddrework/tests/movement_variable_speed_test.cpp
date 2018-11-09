@@ -136,7 +136,7 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
             }
         }
     }
-    GIVEN("there is a program needed acceleration and possible to reach speed") {
+    GIVEN("there is a program that needs acceleration and possible to reach speed") {
         std::list<std::variant<distance_t,double> > simple_program = { 
             distance_t{0,0,0,0}, 8.0,
             distance_t{10,0,0,0}};
@@ -175,7 +175,7 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
             }
         }
     }
-    GIVEN("there is a program needed acceleration and not possible to reach speed") {
+    GIVEN("there is a program with acceleration and impossible to reach speed") {
         std::list<std::variant<distance_t,double> > simple_program = { 
             distance_t{0,0,0,0}, 16.0,
             distance_t{1,0,0,0}};
