@@ -107,6 +107,19 @@ std::vector<hardware::multistep_command> steps_generator::movement_from_to(const
     return collapse_repeated_steps(ret);
 }
 
+double steps_generator::velocity_after_from_to(const distance_t &p0,const transition_t &transition,const distance_t &p1, const double dt) const {
+    double v0 = transition.v0;
+    distance_t vp = p1 - p0;
+    double s = std::sqrt(vp.length2()); ///< summary distance to go
+    //double T = s / v0;
+    double a = transition.accel;
+    double t = dt;  ///< current time
+    auto l = [&](){return v0 * t + 0.5*a*t*t;}; ///< current distance from p0
+    double ret_v = v0;
+    for (int i = 1; l() < s; ++i, t = dt * i) ret_v = (a*t + v0);
+    return ret_v;
+}
+
 
 
 } // namespace movement

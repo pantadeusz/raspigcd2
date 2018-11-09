@@ -63,7 +63,25 @@ class steps_generator {
      */
     std::vector<hardware::multistep_command> goto_xyz(const distance_t p0, const distance_t p1, double v, double dt) const ;
 
+    /**
+     * @brief calculates steps series to move from point p0 to point p1 with given transition
+     * 
+     * This method throws exception if velocity could exceed max_v
+     * 
+     * @param p0 initial position
+     * @param p1 destination position
+     * @param transition the transition between positions (velocity, acceleration and max velocity) 
+     * @param dt time step in seconds
+     * @return std::vector<hardware::multistep_command> series of multistep_command values for stepper motors
+     */
     std::vector<hardware::multistep_command> movement_from_to(const distance_t &p0,const transition_t &transition,const distance_t &p1, const double dt) const;
+    
+    /**
+     * @brief calculates the end velocity for given movement
+     * 
+     */
+    double velocity_after_from_to(const distance_t &p0,const transition_t &transition,const distance_t &p1, const double dt) const;
+
 };
 
 } // namespace hardware
