@@ -54,6 +54,7 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
     movement::variable_speed variable_speed_driver(motor_layout_, max_speed_no_accel, acceleration, 150, cfg.tick_duration());
     stepping_simple_timer stepping(cfg, lsfake);
+    movement::steps_generator steps_generator(motor_layout_);
 
     //distance_t start_coord = {0, 0, 0, 0};
     //steps_t steps = motor_layout_.get()->cartesian_to_steps(start_coord);
@@ -133,6 +134,16 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
                     REQUIRE(std::get<transition_t>(result_v[i]).accel == 0.0);
                 }
             }
+            THEN("actions should result in going back to the origin") {
+                steps_t steps = {0, 0, 0, 0};
+                for (unsigned i = 2; i < result_v.size(); i+=2) {
+                    auto commands = steps_generator.movement_from_to(std::get<distance_t>(result_v[i-2]),std::get<transition_t>(result_v[i-1]),std::get<distance_t>(result_v[i]), cfg.tick_duration());
+                    steps = stepping.exec(steps, commands, [&](const steps_t&) {});
+                }
+                distance_t p1_expected = {0,0,0,0};
+                steps_t expected_steps = motor_layout_.get()->cartesian_to_steps(p1_expected);
+                REQUIRE (steps == expected_steps);
+            }
         }
     }
     GIVEN("there is a program that needs acceleration and possible to reach speed") {
@@ -172,6 +183,16 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
                 REQUIRE(std::get<transition_t>(result_v[3]).max_v == 8.0);
                 REQUIRE(std::get<transition_t>(result_v[5]).max_v == 8.0);
             }
+            THEN("actions should be possible to execute") {
+                steps_t steps = {0, 0, 0, 0};
+                for (unsigned i = 2; i < result_v.size(); i+=2) {
+                    auto commands = steps_generator.movement_from_to(std::get<distance_t>(result_v[i-2]),std::get<transition_t>(result_v[i-1]),std::get<distance_t>(result_v[i]), cfg.tick_duration());
+                    steps = stepping.exec(steps, commands, [&](const steps_t&) {});
+                }
+                distance_t p1_expected = {10,0,0,0};
+                steps_t expected_steps = motor_layout_.get()->cartesian_to_steps(p1_expected);
+                REQUIRE (steps == expected_steps);
+            }
         }
     }
     GIVEN("there is a program with acceleration and impossible to reach speed") {
@@ -199,6 +220,17 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
                     REQUIRE(std::get<transition_t>(result_v[i]).accel == 0.0);
                 }
             }
+            THEN("actions should be possible to execute") {
+                steps_t steps = {0, 0, 0, 0};
+                for (unsigned i = 2; i < result_v.size(); i+=2) {
+                    auto commands = steps_generator.movement_from_to(std::get<distance_t>(result_v[i-2]),std::get<transition_t>(result_v[i-1]),std::get<distance_t>(result_v[i]), cfg.tick_duration());
+                    steps = stepping.exec(steps, commands, [&](const steps_t&) {});
+                }
+                distance_t p1_expected ={1,0,0,0};
+                steps_t expected_steps = motor_layout_.get()->cartesian_to_steps(p1_expected);
+                REQUIRE (steps == expected_steps);
+            }
         }
     }
 }
+
