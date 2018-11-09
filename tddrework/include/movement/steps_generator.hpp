@@ -63,7 +63,7 @@ class steps_generator {
      */
     std::vector<hardware::multistep_command> goto_xyz(const distance_t p0, const distance_t p1, double v, double dt) const ;
 
-    std::vector<hardware::multistep_command> goto_complete(const distance_t &p0,const transition_t &transition,const distance_t &p1, const double dt) const;
+    std::vector<hardware::multistep_command> movement_from_to(const distance_t &p0,const transition_t &transition,const distance_t &p1, const double dt) const;
 };
 
 } // namespace hardware

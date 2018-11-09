@@ -71,49 +71,39 @@ std::vector<hardware::multistep_command> steps_generator::collapse_repeated_step
      */
 std::vector<hardware::multistep_command> steps_generator::goto_xyz(const distance_t p0, const distance_t p1, double v, double dt) const 
 {
-    std::list<hardware::multistep_command> ret;
-    distance_t vp = p1 - p0;
-    double s = std::sqrt(vp.length2());
-    distance_t vp_norm = (vp / s) * v;
-
-    double T = s / v;
-    double t = 0;
-
-    steps_t p0steps = _motor_layout->cartesian_to_steps(p0);
-    steps_t p_steps = p0steps;
-    steps_t p1steps = _motor_layout->cartesian_to_steps(p1);
-    for (int i = 0; t < T; ++i, t = dt * i) {
-        auto pos = _motor_layout->cartesian_to_steps(p0 + vp_norm * t);
-        std::vector<hardware::multistep_command> steps_to_add = simple_steps::chase_steps(p_steps, pos);
-        ret.insert(ret.end(), steps_to_add.begin(), steps_to_add.end());
-        p_steps = pos;
-    }
-    std::vector<hardware::multistep_command> steps_to_add = simple_steps::chase_steps(p_steps, p1steps);
-    ret.insert(ret.end(), steps_to_add.begin(), steps_to_add.end());
-    return collapse_repeated_steps(ret);
+    transition_t transition = {
+        .v0 = v,
+        .accel = 0,
+        .max_v = v
+    };
+    return movement_from_to(p0, transition, p1, dt);
 }
 
 
-std::vector<hardware::multistep_command> steps_generator::goto_complete(const distance_t &p0,const transition_t &transition,const distance_t &p1, const double dt) const {
+std::vector<hardware::multistep_command> steps_generator::movement_from_to(const distance_t &p0,const transition_t &transition,const distance_t &p1, const double dt) const {
     std::list<hardware::multistep_command> ret;
+    double v0 = transition.v0;
     distance_t vp = p1 - p0;
-    double s = std::sqrt(vp.length2());
-    distance_t vp_norm = (vp / s) * transition.v0;
+    double s = std::sqrt(vp.length2()); ///< summary distance to go
+    distance_t vp_v = vp / s;
 
-    double T = s / transition.v0;
-    double t = 0;
-
+    //double T = s / v0;
+    double a = transition.accel;
+    double t = dt;  ///< current time
+    auto l = [&](){return v0 * t + 0.5*a*t*t;}; ///< current distance from p0
     steps_t p0steps = _motor_layout->cartesian_to_steps(p0);
     steps_t p_steps = p0steps;
     steps_t p1steps = _motor_layout->cartesian_to_steps(p1);
-    for (int i = 0; t < T; ++i, t = dt * i) {
-        auto pos = _motor_layout->cartesian_to_steps(p0 + vp_norm * t);
+    for (int i = 1; l() < s; ++i, t = dt * i) {
+        auto pos = _motor_layout->cartesian_to_steps(p0 + vp_v * l());
         std::vector<hardware::multistep_command> steps_to_add = simple_steps::chase_steps(p_steps, pos);
         ret.insert(ret.end(), steps_to_add.begin(), steps_to_add.end());
         p_steps = pos;
+        if ((a*t + v0) > transition.max_v) throw std::invalid_argument("velocity exceeds max_v");
     }
     std::vector<hardware::multistep_command> steps_to_add = simple_steps::chase_steps(p_steps, p1steps);
     ret.insert(ret.end(), steps_to_add.begin(), steps_to_add.end());
+
     return collapse_repeated_steps(ret);
 }
 
