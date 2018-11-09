@@ -27,6 +27,4 @@ void set_thread_realtime();
 } // namespace raspigcd
 
 
-
-
 #endif

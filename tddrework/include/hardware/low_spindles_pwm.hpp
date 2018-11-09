@@ -21,7 +21,8 @@
 namespace raspigcd {
 namespace hardware {
 
-class low_spindles_pwm {
+class low_spindles_pwm
+{
 private:
 public:
     /**

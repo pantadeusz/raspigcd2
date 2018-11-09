@@ -65,18 +65,20 @@ public:
 
     // converts speed intetions into list of var_speed_pointspeed_t. That is taking into account machine limits
     movement_plan_t intent_to_movement_plan(
-            const std::list<std::variant<distance_t,double> >& intentions_);
+        const std::list<std::variant<distance_t, double>>& intentions_);
 };
 
 //movement_plan_t
-auto get_path_length = [](const auto &path) -> double {
+auto get_path_length = [](const auto& path) -> double {
     double l = 0;
     if (path.size() > 0) {
         auto prev = path.front();
-        for (const auto &e : path) {
+        for (const auto& e : path) {
             try {
-                l += std::sqrt((std::get<distance_t>(e) - std::get<distance_t>(prev)).length2()); prev = e;
-            } catch (...) {}
+                l += std::sqrt((std::get<distance_t>(e) - std::get<distance_t>(prev)).length2());
+                prev = e;
+            } catch (...) {
+            }
         }
     }
     return l;

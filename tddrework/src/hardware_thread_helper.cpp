@@ -1,10 +1,10 @@
 #include <hardware/thread_helper.hpp>
 
-#include <thread>
-#include <iostream>
 #include <cerrno>
 #include <cstring>
+#include <iostream>
 #include <stdexcept>
+#include <thread>
 
 
 namespace raspigcd {
@@ -18,8 +18,8 @@ void set_thread_realtime()
         static int already_warned = 0;
         if (already_warned == 0) {
             std::cerr << "Warning: Failed to set Thread scheduling : "
-                  << std::strerror(errno) << std::endl;
-            already_warned ++;
+                      << std::strerror(errno) << std::endl;
+            already_warned++;
         }
     }
 }

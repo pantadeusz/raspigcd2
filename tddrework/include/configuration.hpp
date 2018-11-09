@@ -80,7 +80,7 @@ public:
 class global
 {
 public:
-/**
+    /**
  * @brief get tick duration in seconds
  * 
  * @return double tick duration in seconds

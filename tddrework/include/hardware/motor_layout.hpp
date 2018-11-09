@@ -20,8 +20,8 @@
 
 #include <configuration.hpp>
 #include <distance_t.hpp>
-#include <steps_t.hpp>
 #include <memory>
+#include <steps_t.hpp>
 
 namespace raspigcd {
 namespace hardware {
@@ -38,9 +38,9 @@ public:
          */
     virtual distance_t steps_to_cartesian(const steps_t& steps_) = 0;
 
-    virtual void set_configuration(const configuration::global &cfg) = 0;
+    virtual void set_configuration(const configuration::global& cfg) = 0;
 
-    static std::shared_ptr<motor_layout> get_instance(const configuration::global &cfg);
+    static std::shared_ptr<motor_layout> get_instance(const configuration::global& cfg);
 };
 } // namespace hardware
 } // namespace raspigcd

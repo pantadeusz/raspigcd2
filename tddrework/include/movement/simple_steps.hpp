@@ -29,14 +29,14 @@ namespace movement {
 
 namespace simple_steps {
 
-int steps_remaining(const steps_t& steps_, const steps_t& destination_steps_);
+int steps_remaining( const steps_t& steps_, const steps_t& destination_steps_ );
 
 /**
  * @brief generates steps to reach given destination steps
  * @arg steps_ current steps count
  * @arg destination_steps_ desired steps count
  */
-std::vector<hardware::multistep_command> chase_steps(const steps_t& steps_, steps_t destination_steps_);
+std::vector<hardware::multistep_command> chase_steps( const steps_t& steps_, steps_t destination_steps_ );
 
 
 } // namespace simple_steps

@@ -18,32 +18,30 @@
 
 #include <hardware/motor_layout.hpp>
 
-namespace raspigcd
-{
+namespace raspigcd {
 namespace hardware {
 
 class corexy_layout_t : public motor_layout
 {
-  public:
+public:
     std::array<double, 4> scales_; // scale along given axis
     std::array<double, 4> steps_per_milimeter_;
 
-    steps_t cartesian_to_steps(const distance_t &distances_);
-    distance_t steps_to_cartesian(const steps_t &steps_);
-    void set_configuration(const configuration::global &cfg);
-
+    steps_t cartesian_to_steps(const distance_t& distances_);
+    distance_t steps_to_cartesian(const steps_t& steps_);
+    void set_configuration(const configuration::global& cfg);
 };
 
-steps_t corexy_layout_t::cartesian_to_steps(const distance_t &distances_)
+steps_t corexy_layout_t::cartesian_to_steps(const distance_t& distances_)
 {
     return steps_t(
-        (distances_[0] * scales_[0] + distances_[1] * scales_[1]) * steps_per_milimeter_[0], 
-        (distances_[0] * scales_[0] - distances_[1] * scales_[1]) * steps_per_milimeter_[1], 
-        distances_[2] * steps_per_milimeter_[2] * scales_[2], 
+        (distances_[0] * scales_[0] + distances_[1] * scales_[1]) * steps_per_milimeter_[0],
+        (distances_[0] * scales_[0] - distances_[1] * scales_[1]) * steps_per_milimeter_[1],
+        distances_[2] * steps_per_milimeter_[2] * scales_[2],
         distances_[3] * steps_per_milimeter_[3] * scales_[3]);
 }
 
-distance_t corexy_layout_t::steps_to_cartesian(const steps_t &steps_)
+distance_t corexy_layout_t::steps_to_cartesian(const steps_t& steps_)
 {
     return distance_t(
         0.5 * (double)(steps_[0] / steps_per_milimeter_[0] + steps_[1] / steps_per_milimeter_[1]) / scales_[0],
@@ -52,7 +50,7 @@ distance_t corexy_layout_t::steps_to_cartesian(const steps_t &steps_)
         steps_[3] / (steps_per_milimeter_[3] * scales_[3]));
 }
 
-void corexy_layout_t::set_configuration(const configuration::global &cfg)
+void corexy_layout_t::set_configuration(const configuration::global& cfg)
 {
     for (unsigned int i = 0; i < cfg.steppers.size(); i++) {
         steps_per_milimeter_[i] = cfg.steppers.at(i).steps_per_mm;
@@ -63,25 +61,25 @@ void corexy_layout_t::set_configuration(const configuration::global &cfg)
 
 class cartesian_layout_t : public motor_layout
 {
-  public:
+public:
     std::array<double, 4> scales_; // scale along given axis
     std::array<double, 4> steps_per_milimeter_;
 
-    steps_t cartesian_to_steps(const distance_t &distances_);
-    distance_t steps_to_cartesian(const steps_t &steps_);
-    void set_configuration(const configuration::global &cfg);
+    steps_t cartesian_to_steps(const distance_t& distances_);
+    distance_t steps_to_cartesian(const steps_t& steps_);
+    void set_configuration(const configuration::global& cfg);
 };
 
-steps_t cartesian_layout_t::cartesian_to_steps(const distance_t &distances_)
+steps_t cartesian_layout_t::cartesian_to_steps(const distance_t& distances_)
 {
     return steps_t(
-        distances_[0] * steps_per_milimeter_[0] * scales_[0], 
+        distances_[0] * steps_per_milimeter_[0] * scales_[0],
         distances_[1] * steps_per_milimeter_[1] * scales_[1],
-        distances_[2] * steps_per_milimeter_[2] * scales_[2], 
+        distances_[2] * steps_per_milimeter_[2] * scales_[2],
         distances_[3] * steps_per_milimeter_[3] * scales_[3]);
 }
 
-distance_t cartesian_layout_t::steps_to_cartesian(const steps_t &steps_)
+distance_t cartesian_layout_t::steps_to_cartesian(const steps_t& steps_)
 {
     return distance_t(
         steps_[0] / (steps_per_milimeter_[0] * scales_[0]),
@@ -91,7 +89,7 @@ distance_t cartesian_layout_t::steps_to_cartesian(const steps_t &steps_)
 }
 
 
-void cartesian_layout_t::set_configuration(const configuration::global &cfg)
+void cartesian_layout_t::set_configuration(const configuration::global& cfg)
 {
     for (unsigned int i = 0; i < cfg.steppers.size(); i++) {
         steps_per_milimeter_[i] = cfg.steppers.at(i).steps_per_mm;
@@ -100,7 +98,7 @@ void cartesian_layout_t::set_configuration(const configuration::global &cfg)
 }
 
 
-std::shared_ptr<motor_layout> motor_layout::get_instance(const configuration::global &cfg)
+std::shared_ptr<motor_layout> motor_layout::get_instance(const configuration::global& cfg)
 {
     if (cfg.motion_layout == configuration::motion_layouts::COREXY) {
         std::shared_ptr<motor_layout> ret(new corexy_layout_t());
@@ -116,5 +114,5 @@ std::shared_ptr<motor_layout> motor_layout::get_instance(const configuration::gl
 }
 
 
-}
+} // namespace hardware
 } // namespace raspigcd

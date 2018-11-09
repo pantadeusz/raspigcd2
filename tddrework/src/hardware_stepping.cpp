@@ -37,7 +37,7 @@ void stepping_simple_timer::set_delay_microseconds(int delay_ms)
     _delay_microseconds = delay_ms;
 }
 
-void stepping_simple_timer::set_low_level_steppers_driver(std::shared_ptr<low_steppers>steppers_driver)
+void stepping_simple_timer::set_low_level_steppers_driver(std::shared_ptr<low_steppers> steppers_driver)
 {
     _steppers_driver_shr = steppers_driver;
     _steppers_driver = _steppers_driver_shr.get();
@@ -64,13 +64,14 @@ steps_t stepping_simple_timer::exec(const steps_t& start_steps, const std::vecto
             // wait till next step
             nextT += ttime;
             step_number++;
-            //nextT = t + ttime*step_number;
-            // always busy wait - better timing, but more resource consuming
-            #ifndef STEPPING_DELAY_SLEEP_UNTIL
-            for (; std::chrono::system_clock::now() < nextT;) ;
-            #else
+//nextT = t + ttime*step_number;
+// always busy wait - better timing, but more resource consuming
+#ifndef STEPPING_DELAY_SLEEP_UNTIL
+            for (; std::chrono::system_clock::now() < nextT;)
+                ;
+#else
             std::this_thread::sleep_until(nextT);
-            #endif
+#endif
         }
     }
     return _steps;

@@ -16,10 +16,10 @@
 */
 
 
-#include <movement/simple_steps.hpp>
 #include <distance_t.hpp>
 #include <hardware/stepping_commands.hpp>
 #include <list>
+#include <movement/simple_steps.hpp>
 #include <steps_t.hpp>
 
 namespace raspigcd {

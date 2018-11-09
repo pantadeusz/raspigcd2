@@ -20,8 +20,8 @@ global& global::load_defaults()
     motion_layout = COREXY; //"corexy";
     scale = {1.0, 1.0, 1.0, 1.0};
     max_accelerations_mm_s2 = {200.0, 200.0, 200.0, 200.0};
-    max_velocity_mm_s = {220.0, 220.0, 110.0, 220.0}; ///<maximal velocity on axis in mm/s
-    max_no_accel_velocity_mm_s = {2.0,2.0,2.0,2.0};   ///<maximal velocity on axis in mm/s
+    max_velocity_mm_s = {220.0, 220.0, 110.0, 220.0};  ///<maximal velocity on axis in mm/s
+    max_no_accel_velocity_mm_s = {2.0, 2.0, 2.0, 2.0}; ///<maximal velocity on axis in mm/s
 
     steppers = {
         stepper(27, 10, 22, 100.0),
@@ -31,12 +31,10 @@ global& global::load_defaults()
     buttons = {
         {.pin = 21, .pullup = true}, {.pin = 20, .pullup = true}, {.pin = 16, .pullup = true}, {.pin = 12, .pullup = true}};
     spindles = {
-        {
-            .pin = 18,
+        {.pin = 18,
             .cycle_time_seconds = 0.1,
             .duty_min = 0.0,
-            .duty_max = 0.1
-        }
+            .duty_max = 0.1}
         /*,        {
             pin : 18,
             cycle_time_seconds : 0.02,
@@ -72,10 +70,9 @@ void to_json(nlohmann::json& j, const spindle_pwm& p)
 {
     j = nlohmann::json{
         {"pin", p.pin},
-        {"cycle_time_seconds",p.cycle_time_seconds}, // 20ms
-        {"duty_min",p.duty_min},
-        {"duty_max",p.duty_max}
-        };
+        {"cycle_time_seconds", p.cycle_time_seconds}, // 20ms
+        {"duty_min", p.duty_min},
+        {"duty_max", p.duty_max}};
 }
 
 void from_json(const nlohmann::json& j, spindle_pwm& p)
@@ -135,16 +132,8 @@ void from_json(const nlohmann::json& j, button& p)
 }
 
 
-
-
-
-
-
-
-
 void to_json(nlohmann::json& j, const global& p)
 {
-
     j = nlohmann::json{
         {"tick_duration_us", p.tick_duration_us},
         {"simulate_execution", p.simulate_execution},
@@ -155,30 +144,27 @@ void to_json(nlohmann::json& j, const global& p)
         {"max_no_accel_velocity_mm_s", p.max_no_accel_velocity_mm_s},
         {"spindles", p.spindles},
         {"steppers", p.steppers},
-        {"buttons", p.buttons}        
-        };
+        {"buttons", p.buttons}};
 }
 
 void from_json(const nlohmann::json& j, global& p)
 {
-
     p.simulate_execution = j.value("simulate_execution", p.simulate_execution);
     p.tick_duration_us = j.value("tick_duration_us", p.tick_duration_us);
-    
+
     std::string s = j.value("motion_layout", (p.motion_layout == COREXY) ? "corexy" : "cartesian");
     if (!((s == "corexy") || (s == "cartesian"))) throw std::invalid_argument("motion_layout can be only corexy or cartesian");
     p.motion_layout = (s == "corexy") ? COREXY : p.motion_layout;
     p.motion_layout = (s == "cartesian") ? CARTESIAN : p.motion_layout;
-    
+
     p.scale = j.value("scale", p.scale);
     p.max_accelerations_mm_s2 = j.value("max_accelerations_mm_s2", p.max_accelerations_mm_s2);
     p.max_velocity_mm_s = j.value("max_velocity_mm_s", p.max_velocity_mm_s);
     p.max_no_accel_velocity_mm_s = j.value("max_no_accel_velocity_mm_s", p.max_no_accel_velocity_mm_s);
 
-    p.spindles = j.value("spindles",p.spindles);
-    p.steppers = j.value("steppers",p.steppers);
-    p.buttons = j.value("buttons",p.buttons);
-
+    p.spindles = j.value("spindles", p.spindles);
+    p.steppers = j.value("steppers", p.steppers);
+    p.buttons = j.value("buttons", p.buttons);
 }
 
 std::ostream& operator<<(std::ostream& os, global const& value)
@@ -199,8 +185,7 @@ bool operator==(const global& l, const global& r)
            (l.spindles == r.spindles) &&
            (l.steppers == r.steppers) &&
            (l.buttons == r.buttons) &&
-           (l.simulate_execution == r.simulate_execution)
-           ;
+           (l.simulate_execution == r.simulate_execution);
 }
 
 bool operator==(const button& l, const button& r)
@@ -214,7 +199,7 @@ bool operator==(const stepper& l, const stepper& r)
     return (l.dir == r.dir) &&
            (l.en == r.en) &&
            (l.step == r.step) &&
-           (l.steps_per_mm == r.steps_per_mm)  ;
+           (l.steps_per_mm == r.steps_per_mm);
 }
 bool operator==(const spindle_pwm& l, const spindle_pwm& r)
 {

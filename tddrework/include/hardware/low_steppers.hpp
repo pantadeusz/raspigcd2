@@ -27,7 +27,8 @@ namespace raspigcd {
 namespace hardware {
 
 
-class low_steppers {
+class low_steppers
+{
 private:
 public:
     /**
@@ -35,7 +36,7 @@ public:
      * 
      * @param b step-dir for every stepper motor (depends on the )
      */
-    virtual void do_step(const single_step_command *b) = 0;
+    virtual void do_step(const single_step_command* b) = 0;
 
     /**
      * @brief turn on or off the stepper motors. If the hardware supports it, then

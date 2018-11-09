@@ -18,21 +18,12 @@
 #ifndef __RASPIGCD_HARDWARE_LOW_LEVEL_BUTTONS_T_HPP__
 #define __RASPIGCD_HARDWARE_LOW_LEVEL_BUTTONS_T_HPP__
 
-// #include <configuration.hpp>
-// #include <distance_t.hpp>
-// #include <steps_t.hpp>
-// #include <hardware_stepping.hpp>
-// 
-// #include <memory>
-// #include <functional>
-// #include <map>
-// #include <thread>
-
 namespace raspigcd {
 namespace hardware {
 
 
-class low_buttons {
+class low_buttons
+{
 private:
 public:
     // todo

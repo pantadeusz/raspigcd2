@@ -61,12 +61,12 @@
 #define GPIO_PULLCLK0 *(gpio.addr + 38) // Pull up/pull down clock
 
 namespace raspigcd {
-    namespace hardware {
+namespace hardware {
 
 
-raspberry_pi_3::raspberry_pi_3(const configuration::global &configuration) {
-
-// setup GPIO memory access
+raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
+{
+    // setup GPIO memory access
     gpio = {GPIO_BASE, 0, 0, 0};
     // Open /dev/mem
     if ((gpio.mem_fd = open("/dev/mem", O_RDWR | O_SYNC)) < 0) {
@@ -78,8 +78,8 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global &configuration) {
         NULL, BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
         gpio.mem_fd, // File descriptor to physical memory virtual file '/dev/mem'
         gpio.addr_p  // Address in physical map that we want this memory block to
-                   // expose
-        );
+                     // expose
+    );
 
     if (gpio.map == MAP_FAILED) {
         throw std::runtime_error("map_peripheral failed");
@@ -87,13 +87,13 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global &configuration) {
 
     gpio.addr = (volatile unsigned int*)gpio.map;
 
-// setup configuration variables
+    // setup configuration variables
 
     spindles = configuration.spindles;
     steppers = configuration.steppers;
     buttons = configuration.buttons;
 
-// enable steppers
+    // enable steppers
     for (auto c : steppers) {
         INP_GPIO(c.step);
         OUT_GPIO(c.step);
@@ -102,9 +102,9 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global &configuration) {
         INP_GPIO(c.en);
         OUT_GPIO(c.en);
     }
-    enable_steppers({false,false,false,false});
+    enable_steppers({false, false, false, false});
 
-// enable spindles
+    // enable spindles
 
     _threads_alive = true;
     for (unsigned i = 0; i < spindles.size(); i++) {
@@ -113,7 +113,7 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global &configuration) {
         OUT_GPIO(sppwm.pin);
         _spindle_duties.push_back(0.0);
         _spindle_threads.push_back(std::thread([this, sppwm, i]() {
-            double &_duty = _spindle_duties[i];
+            double& _duty = _spindle_duties[i];
             {
                 sched_param sch_params;
                 sch_params.sched_priority = sched_get_priority_max(SCHED_RR);
@@ -140,9 +140,9 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global &configuration) {
         spindle_pwm_power(i, 0.0);
     }
 
-//    std::this_thread::sleep_until(std::chrono::steady_clock::now() + std::chrono::seconds(3));
+    //    std::this_thread::sleep_until(std::chrono::steady_clock::now() + std::chrono::seconds(3));
 
-// enable buttons
+    // enable buttons
 
     using namespace std::chrono_literals;
 
@@ -166,15 +166,14 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global &configuration) {
 
     _btn_thread = std::thread([this]() {
         while (_threads_alive) {
-            
             using namespace std::chrono_literals;
             for (auto kv : _button_callbacks) {
                 auto e = buttons[kv.first];
-                int v =  (unsigned char)(1 - ((GPIO_READ(e.pin)) >> (e.pin)));
+                int v = (unsigned char)(1 - ((GPIO_READ(e.pin)) >> (e.pin)));
                 if (_button_prev_values.count(kv.first)) {
                     if (_button_prev_values[kv.first] != v) {
                         // button down
-                        if (v > 0) kv.second (kv.first);
+                        if (v > 0) kv.second(kv.first);
                         // button up
                         // if (v <= 0) kv.second (kv.first);
                     }
@@ -190,16 +189,17 @@ raspberry_pi_3::~raspberry_pi_3()
 {
     _threads_alive = false;
     _btn_thread.join();
-    for (auto &t: _spindle_threads) t.join();
+    for (auto& t : _spindle_threads)
+        t.join();
     munmap(gpio.map, BLOCK_SIZE);
     close(gpio.mem_fd);
 }
 
 
-
-void raspberry_pi_3::do_step(const single_step_command *b) {
-     unsigned int step_clear = (1 << steppers[0].step) | (1 << steppers[1].step) |
-                              (1 << steppers[2].step) | (1 << steppers[3].step);   
+void raspberry_pi_3::do_step(const single_step_command* b)
+{
+    unsigned int step_clear = (1 << steppers[0].step) | (1 << steppers[1].step) |
+                              (1 << steppers[2].step) | (1 << steppers[3].step);
     // step direction
     unsigned int dir_set =
         (b[0].dir << steppers[0].dir) | (b[1].dir << steppers[1].dir) |
@@ -239,7 +239,7 @@ void raspberry_pi_3::do_step(const single_step_command *b) {
 
 void raspberry_pi_3::enable_steppers(const std::vector<bool> en)
 {
-    for (unsigned i = 0; i < en.size();i++) {
+    for (unsigned i = 0; i < en.size(); i++) {
         auto c = steppers.at(i);
         if (en.at(i)) {
             GPIO_CLR = 1 << c.en;
@@ -256,5 +256,5 @@ void raspberry_pi_3::spindle_pwm_power(const int i, const double pwr)
     _spindle_duties[i] = (spindles[i].duty_max - spindles[i].duty_min) * pwr + spindles[i].duty_min;
 }
 
-}
+} // namespace hardware
 } // namespace raspigcd

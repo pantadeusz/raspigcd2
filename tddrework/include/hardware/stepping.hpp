@@ -18,21 +18,22 @@
 #ifndef __RASPIGCD_HARDWARE_STEPPING_T_HPP__
 #define __RASPIGCD_HARDWARE_STEPPING_T_HPP__
 
+#include <atomic>
 #include <configuration.hpp>
 #include <distance_t.hpp>
-#include <hardware/stepping_commands.hpp>
-#include <hardware/low_steppers.hpp>
-#include <steps_t.hpp>
 #include <functional>
+#include <hardware/low_steppers.hpp>
+#include <hardware/stepping_commands.hpp>
 #include <memory>
-#include <atomic>
+#include <steps_t.hpp>
 
 namespace raspigcd {
 namespace hardware {
 
-class stepping {
+class stepping
+{
 public:
-	/**
+    /**
 	* @brief Executes multistep commands list. On each step it calls on_step_ function with current position as an argument. The return value is the final steps value
 	*
 	* @param start_steps the initial position of motors in steps
@@ -40,20 +41,22 @@ public:
 	* @param on_step_ function to execute on each step. This function can throw exceptions to break execution of steps
 	* @return steps_t final position of the machine in steps
 	*/
-	virtual steps_t exec( const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void( const steps_t& )> on_step_ = []( const steps_t& ) {} ) = 0;
+    virtual steps_t exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_ = [](const steps_t&) {}) = 0;
 };
 
-class stepping_sim : public stepping {
+class stepping_sim : public stepping
+{
 public:
-	steps_t exec( const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void( const steps_t& )> on_step_ );
+    steps_t exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_);
 };
 
 
-class stepping_simple_timer : public stepping {
+class stepping_simple_timer : public stepping
+{
 public:
     std::atomic<int> _delay_microseconds;
     std::shared_ptr<low_steppers> _steppers_driver_shr;
-    low_steppers *_steppers_driver;
+    low_steppers* _steppers_driver;
 
     /**
      * @brief Set the delay in microseconds
@@ -69,14 +72,16 @@ public:
      */
     void set_low_level_steppers_driver(std::shared_ptr<low_steppers> steppers_driver);
 
-	steps_t exec( const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void( const steps_t& )> on_step_ );
+    steps_t exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_);
 
-    stepping_simple_timer(int delay_us, std::shared_ptr<low_steppers> steppers_driver) {
+    stepping_simple_timer(int delay_us, std::shared_ptr<low_steppers> steppers_driver)
+    {
         set_delay_microseconds(delay_us);
         set_low_level_steppers_driver(steppers_driver);
     }
-    
-    stepping_simple_timer(const configuration::global &conf, std::shared_ptr<low_steppers> steppers_driver) {
+
+    stepping_simple_timer(const configuration::global& conf, std::shared_ptr<low_steppers> steppers_driver)
+    {
         set_delay_microseconds(conf.tick_duration_us);
         set_low_level_steppers_driver(steppers_driver);
     }
