@@ -51,3 +51,6 @@ will  execute as following parts interpreted as separate executions of motor thr
  * G0Z10, G0X0, G0Z0
  * M18
 
+## Compilation options
+
+You can define ```STEPPING_DELAY_SLEEP_UNTIL``` to disable busy loop in timers. This definition will reduce cpu utilization, but increase jitter.

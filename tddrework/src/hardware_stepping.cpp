@@ -51,7 +51,7 @@ steps_t stepping_simple_timer::exec(const steps_t& start_steps, const std::vecto
     auto t = std::chrono::system_clock::now();
     auto nextT = ttime + t;
     long int step_number = 0;
-    nextT = t + ttime*step_number;
+    nextT = t;
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.cmnd.count; i++) {
             _steps[0] = _steps[0] + (int)((signed char)s.cmnd.b[0].step * ((signed char)s.cmnd.b[0].dir * 2 - 1));
@@ -62,13 +62,15 @@ steps_t stepping_simple_timer::exec(const steps_t& start_steps, const std::vecto
             _steppers_driver->do_step(s.cmnd.b);
             on_step_(_steps);
             // wait till next step
-            //nextT += ttime;
+            nextT += ttime;
             step_number++;
-            nextT = t + ttime*step_number;
+            //nextT = t + ttime*step_number;
             // always busy wait - better timing, but more resource consuming
-            for (; std::chrono::system_clock::now() < nextT;)
-                ;
-            // std::this_thread::sleep_until(nextT);
+            #ifndef STEPPING_DELAY_SLEEP_UNTIL
+            for (; std::chrono::system_clock::now() < nextT;) ;
+            #else
+            std::this_thread::sleep_until(nextT);
+            #endif
         }
     }
     return _steps;
