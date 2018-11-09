@@ -48,9 +48,9 @@ public:
     }
     inline double sumv() const
     {
-        return this->operator[](0) +
-               this->operator[](1) +
-               this->operator[](2) +
+        return this->operator[](0)+
+               this->operator[](1)+
+               this->operator[](2)+
                this->operator[](3);
     }
 };
@@ -104,17 +104,8 @@ inline distance_t operator/(const distance_t& a, const double& b)
         a[3] / b);
 }
 
-inline bool operator==(const distance_t& a, const distance_t& b)
-{
-    return (a[0] == b[0]) &&
-           (a[1] == b[1]) &&
-           (a[2] == b[2]) &&
-           (a[3] == b[3]);
-}
-
-inline std::ostream& operator<<(std::ostream& os, distance_t const& value)
-{
-    os << "[" << value[0] << ", " << value[1] << ", " << value[2] << ", " << value[3] << "]";
+inline std::ostream &operator<<(std::ostream &os, distance_t const &value) {
+    os << "[" << value[0] << ", " << value[1] << ", " << value[2] << "," << value[3] << "]";
     return os;
 }
 
