@@ -48,7 +48,8 @@ protected:
     double _tick_duration;
 
 public:
-    void set_motor_layout(const std::shared_ptr<hardware::motor_layout> ml) {}
+    void set_motor_layout(const std::shared_ptr<hardware::motor_layout> ml) {        _motor_layout = ml.get();
+        _motor_layout_ptr = ml;}
     void set_max_speed_no_accel(const double& max_speed_no_accel_) { _max_speed_no_accel = max_speed_no_accel_; }
     void set_acceleration(const double& acceleration_) { _acceleration = acceleration_; }
     void set_max_speed(const double& max_speed_) { _max_speed = max_speed_; }

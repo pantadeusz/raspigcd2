@@ -55,10 +55,9 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
     movement::variable_speed variable_speed_driver(motor_layout_, max_speed_no_accel, acceleration, 150, cfg.tick_duration());
     stepping_simple_timer stepping(cfg, lsfake);
 
-    distance_t start_coord = {0, 0, 0, 0};
-    steps_t steps = motor_layout_.get()->cartesian_to_steps(start_coord);
-    distance_t goal_coord = {-1, 1, 2, 0};
-    double velocity = 30; // mm/s
+    //distance_t start_coord = {0, 0, 0, 0};
+    //steps_t steps = motor_layout_.get()->cartesian_to_steps(start_coord);
+    //double velocity = 30; // mm/s
 
     GIVEN("there is an empty program to run") {
         std::list<std::variant<distance_t,double> > empty_program;

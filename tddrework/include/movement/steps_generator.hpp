@@ -45,6 +45,9 @@ class steps_generator {
     protected:
     hardware::motor_layout *_motor_layout;
     std::shared_ptr<hardware::motor_layout> _motor_layout_ptr;
+
+    std::vector<hardware::multistep_command> collapse_repeated_steps(const std::list < hardware::multistep_command > &commands) const;
+
     public:
     void set_motor_layout(std::shared_ptr<hardware::motor_layout> ml);
 

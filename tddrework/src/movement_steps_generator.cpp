@@ -39,6 +39,27 @@ steps_generator::steps_generator(std::shared_ptr<hardware::motor_layout> ml)
 {
     set_motor_layout(ml);
 }
+
+
+std::vector<hardware::multistep_command> steps_generator::collapse_repeated_steps(const std::list < hardware::multistep_command > &ret) const {
+    if (ret.size() == 0) return {};
+    std::vector<hardware::multistep_command> ret_vect;
+    ret_vect.reserve(ret.size());
+    // repeated commands should be one with apropriate count
+    for (auto &e: ret) {
+        if ((ret_vect.size() == 0) || (e.v != ret_vect.back().v)) {
+            ret_vect.push_back(e);
+        } else {
+            if (ret_vect.back().cmnd.count > 0x0fffffff) {
+                ret_vect.push_back(e);
+            } else {
+                ret_vect.back().cmnd.count++;
+            }
+        }
+    }
+    ret_vect.shrink_to_fit();
+    return ret_vect;
+}
 /**
      * @brief 
      * 
@@ -58,7 +79,6 @@ std::vector<hardware::multistep_command> steps_generator::goto_xyz(const distanc
     double T = s / v;
     double t = 0;
 
-
     steps_t p0steps = _motor_layout->cartesian_to_steps(p0);
     steps_t p_steps = p0steps;
     steps_t p1steps = _motor_layout->cartesian_to_steps(p1);
@@ -70,22 +90,7 @@ std::vector<hardware::multistep_command> steps_generator::goto_xyz(const distanc
     }
     std::vector<hardware::multistep_command> steps_to_add = simple_steps::chase_steps(p_steps, p1steps);
     ret.insert(ret.end(), steps_to_add.begin(), steps_to_add.end());
-    if (ret.size() == 0) return {};
-    std::vector<hardware::multistep_command> ret_vect;
-    ret_vect.reserve(ret.size());
-    // repeated commands should be one with apropriate count
-    for (auto &e: ret) {
-        if ((ret_vect.size() == 0) || (e.v != ret_vect.back().v)) {
-            ret_vect.push_back(e);
-        } else {
-            if (ret_vect.back().cmnd.count > 0x0fffffff) {
-                ret_vect.push_back(e);
-            } else {
-                ret_vect.back().cmnd.count++;
-            }
-        }
-    }
-    return ret_vect;
+    return collapse_repeated_steps(ret);
 }
 
 
@@ -109,22 +114,7 @@ std::vector<hardware::multistep_command> steps_generator::goto_complete(const di
     }
     std::vector<hardware::multistep_command> steps_to_add = simple_steps::chase_steps(p_steps, p1steps);
     ret.insert(ret.end(), steps_to_add.begin(), steps_to_add.end());
-    if (ret.size() == 0) return {};
-    std::vector<hardware::multistep_command> ret_vect;
-    ret_vect.reserve(ret.size());
-    // repeated commands should be one with apropriate count
-    for (auto &e: ret) {
-        if ((ret_vect.size() == 0) || (e.v != ret_vect.back().v)) {
-            ret_vect.push_back(e);
-        } else {
-            if (ret_vect.back().cmnd.count > 0x0fffffff) {
-                ret_vect.push_back(e);
-            } else {
-                ret_vect.back().cmnd.count++;
-            }
-        }
-    }
-    return ret_vect;
+    return collapse_repeated_steps(ret);
 }
 
 

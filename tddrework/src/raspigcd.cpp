@@ -14,6 +14,25 @@ int main() {
 	configuration::global cfg;
 	cfg.load_defaults();
 	std::shared_ptr<raspberry_pi_3> raspi3( new raspberry_pi_3( cfg ) );
+
+	raspi3.get()->enable_steppers( {true} );
+
+	std::this_thread::sleep_for( 3s );
+    raspi3.get()->spindle_pwm_power(0, 1);
+	std::this_thread::sleep_for( 3s );
+	raspi3.get()->spindle_pwm_power(0, 0);
+
+	raspi3.get()->enable_steppers( {false} );
+	return 0;
+}
+
+
+int main_old2() {
+	using namespace std::chrono_literals;
+
+	configuration::global cfg;
+	cfg.load_defaults();
+	std::shared_ptr<raspberry_pi_3> raspi3( new raspberry_pi_3( cfg ) );
 	std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance( cfg );
 	movement::steps_generator const_speed_driver( motor_layout_ );
 	stepping_simple_timer stepping( cfg, raspi3 );
