@@ -48,85 +48,24 @@ protected:
     double _tick_duration;
 
 public:
-    void set_motor_layout(const std::shared_ptr<hardware::motor_layout> ml) {        _motor_layout = ml.get();
-        _motor_layout_ptr = ml;}
-    void set_max_speed_no_accel(const double& max_speed_no_accel_) { _max_speed_no_accel = max_speed_no_accel_; }
-    void set_acceleration(const double& acceleration_) { _acceleration = acceleration_; }
-    void set_max_speed(const double& max_speed_) { _max_speed = max_speed_; }
-    void set_tick_duration(const double& tick_duration_) { _tick_duration = tick_duration_; }
+    void set_motor_layout(const std::shared_ptr<hardware::motor_layout> ml);
+    void set_max_speed_no_accel(const double& max_speed_no_accel_);
+    void set_acceleration(const double& acceleration_);
+    void set_max_speed(const double& max_speed_);
+    void set_tick_duration(const double& tick_duration_);
 
     variable_speed(
         std::shared_ptr<hardware::motor_layout> ml,
         double max_speed_no_accel_,
         double acceleration_,
         double max_speed_,
-        double tick_duration_) : _max_speed_no_accel(max_speed_no_accel_),
-                                 _acceleration(acceleration_),
-                                 _max_speed(max_speed_),
-                                 _tick_duration(tick_duration_)
-    {
-        _motor_layout = ml.get();
-        _motor_layout_ptr = ml;
-    }
+        double tick_duration_);
     // given speed, target speed and acceleration, it calculate distance that it will be accelerating
-    double accleration_length_calc(double speed_0, double speed_1, double acceleration)
-    {
-        double t_AM = (speed_1 - speed_0) / acceleration;
-        double l_AM = std::abs(speed_0 * t_AM + acceleration * t_AM * t_AM / 2.0);
-        return l_AM;
-    };
+    double accleration_length_calc(double speed_0, double speed_1, double acceleration);
 
     // converts speed intetions into list of var_speed_pointspeed_t. That is taking into account machine limits
-    movement_plan_t movement_intet_to_point_speeds_v(
-            const std::list<std::variant<distance_t,double> >& intentions_)
-    {
-        movement_plan_t ret;
-        bool is_coord = true;
-        distance_t prev_pos;
-        distance_t next_pos;
-        double intended_velocity = 1000000;
-        for (const auto &ie:intentions_) {
-            if (is_coord) {
-                next_pos = std::get<distance_t>(ie);
-                if (ret.size() == 0) {
-                    ret.push_back(next_pos);
-                } else if (!(next_pos == prev_pos)) { // ignore empty moves
-                    if (intended_velocity <= _max_speed_no_accel) {
-                        ret.push_back(transition_t{.v0=intended_velocity,.accel=0,.max_v=intended_velocity});
-                        ret.push_back(next_pos);
-                    } else {
-                        auto movement_vector_whole = next_pos - prev_pos;
-                        auto movement_vector_length = std::sqrt(movement_vector_whole.length2());
-                        double accel_length = accleration_length_calc(_max_speed_no_accel, intended_velocity, _acceleration);
-                        if ((accel_length * 2.0) >= movement_vector_length) { // we can only accelerate and break
-                            ret.push_back(transition_t{.v0=_max_speed_no_accel,.accel=0,.max_v=intended_velocity});
-                            ret.push_back(next_pos);
-                        } else {
-                            auto movement_direction_vect = movement_vector_whole / movement_vector_length;
-
-                            distance_t inter_pos1 = movement_direction_vect*accel_length + prev_pos;
-                            distance_t inter_pos2 = next_pos - (movement_direction_vect*accel_length);
-
-                            ret.push_back(transition_t{.v0=_max_speed_no_accel,.accel=_acceleration,.max_v=intended_velocity});
-                            ret.push_back(inter_pos1);
-
-                            ret.push_back(transition_t{.v0=intended_velocity,.accel=0,.max_v=intended_velocity});
-                            ret.push_back(inter_pos2);
-
-                            ret.push_back(transition_t{.v0=intended_velocity,.accel=-_acceleration,.max_v=intended_velocity});
-                            ret.push_back(next_pos);
-
-                        }
-                    }
-                }
-                prev_pos = next_pos;
-            } else {
-                intended_velocity = std::get<double>(ie);
-            }
-            is_coord = !is_coord;
-        }
-        return ret;
-    }
+    movement_plan_t intent_to_movement_plan(
+            const std::list<std::variant<distance_t,double> >& intentions_);
 };
 
 //movement_plan_t
