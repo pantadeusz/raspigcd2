@@ -3,12 +3,49 @@
 #include <hardware/raspberry_pi.hpp>
 #include <hardware/stepping.hpp>
 #include <movement/steps_generator.hpp>
+#include <movement/variable_speed.hpp>
 
 using namespace raspigcd;
 using namespace raspigcd::hardware;
 
 
 int main()
+{
+    using namespace std::chrono_literals;
+
+    configuration::global cfg;
+    cfg.load_defaults();
+    std::shared_ptr<raspberry_pi_3> raspi3(new raspberry_pi_3(cfg));
+    std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
+    movement::steps_generator steps_generator_drv(motor_layout_);
+    stepping_simple_timer stepping(cfg, raspi3);
+
+
+
+	movement::variable_speed variable_speed_driver( motor_layout_, cfg.max_no_accel_velocity_mm_s[0], cfg.max_accelerations_mm_s2[0], cfg.max_velocity_mm_s[0], cfg.tick_duration() );
+
+    raspi3.get()->enable_steppers({true});
+
+    
+    std::list<std::variant<distance_t, double>> simple_program = {
+			distance_t{0, 0, 0, 0}, 2.0,
+			distance_t{0, 0, 2, 0}, 1.0,
+			distance_t{0, 0, 0, 0}
+		};
+	auto plan_to_execute = variable_speed_driver.intent_to_movement_plan( simple_program );
+
+    steps_t psteps = {0, 0, 0, 0};
+    steps_generator_drv.movement_plan_to_step_commands(plan_to_execute, cfg.tick_duration(), 
+        [&psteps,&stepping](std::unique_ptr<std::vector<hardware::multistep_command> > msteps_p){
+            psteps = stepping.exec(psteps, *(msteps_p.get()), [](const steps_t&) {});      
+        });
+    
+    raspi3.get()->enable_steppers({false});
+    return 0;
+}
+
+
+int main_spindle_test()
 {
     using namespace std::chrono_literals;
 
@@ -36,14 +73,14 @@ int main_old2()
     cfg.load_defaults();
     std::shared_ptr<raspberry_pi_3> raspi3(new raspberry_pi_3(cfg));
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
-    movement::steps_generator const_speed_driver(motor_layout_);
+    movement::steps_generator steps_generator_drv(motor_layout_);
     stepping_simple_timer stepping(cfg, raspi3);
 
     raspi3.get()->enable_steppers({true});
 
-    auto commands = const_speed_driver.goto_xyz({0, 0, 0, 0}, {0, 0, 2, 0}, 30, cfg.tick_duration());
+    auto commands = steps_generator_drv.goto_xyz({0, 0, 0, 0}, {0, 0, 2, 0}, 30, cfg.tick_duration());
     stepping.exec({0, 0, 0, 0}, commands, [](const steps_t&) {});
-    commands = const_speed_driver.goto_xyz({0, 0, 2, 0}, {0, 0, 0, 0}, 30, cfg.tick_duration());
+    commands = steps_generator_drv.goto_xyz({0, 0, 2, 0}, {0, 0, 0, 0}, 30, cfg.tick_duration());
     stepping.exec({0, 0, 0, 0}, commands, [](const steps_t&) {});
 
 

@@ -27,6 +27,7 @@
 #include <movement/simple_steps.hpp>
 #include <steps_t.hpp>
 #include <variant>
+#include <functional>
 
 
 namespace raspigcd {
@@ -39,7 +40,6 @@ struct transition_t {
 };
 
 using movement_plan_t = std::list<std::variant<distance_t, transition_t>>;
-
 
 class steps_generator
 {
@@ -76,6 +76,15 @@ public:
      * @return std::vector<hardware::multistep_command> series of multistep_command values for stepper motors
      */
     std::vector<hardware::multistep_command> movement_from_to(const distance_t& p0, const transition_t& transition, const distance_t& p1, const double dt) const;
+
+
+    /**
+     * @brief UNTESTED: generates multistep commands to execute whole execution plan
+     * 
+     */
+    void movement_plan_to_step_commands(const movement_plan_t &plan_to_execute, const double dt, 
+        std::function < void (std::unique_ptr<std::vector<hardware::multistep_command> > ) > consumer_f_) const ;
+
 
     /**
      * @brief calculates the end velocity for given movement
