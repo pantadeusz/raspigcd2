@@ -44,15 +44,15 @@ int main()
 	auto plan_to_execute = variable_speed_driver.intent_to_movement_plan( simple_program );
 
     steps_t psteps = {0, 0, 0, 0};
-    std::list < std::unique_ptr<std::vector<hardware::multistep_command> > > ticks_to_execute;
+    std::vector<hardware::multistep_command> ticks_to_execute;
     steps_generator_drv.movement_plan_to_step_commands(plan_to_execute, cfg.tick_duration(), 
         [&psteps,&stepping,&ticks_to_execute](std::unique_ptr<std::vector<hardware::multistep_command> > msteps_p){
-            ticks_to_execute.push_back(std::move(msteps_p));
+            //ticks_to_execute.push_back(std::move(msteps_p));
+            ticks_to_execute.insert(ticks_to_execute.end(), msteps_p.get()->begin(), msteps_p.get()->end());
+            std::cout << "steps to execute: " << msteps_p.get()->size() << std::endl;
+
         });
-    for (auto & msteps_p : ticks_to_execute) {
-        std::cout << "should execute: " << msteps_p.get()->size() << std::endl;
-        stepping.exec( *(msteps_p.get()) );      
-    }    
+    stepping.exec( ticks_to_execute );      
     hardware_driver.get()->enable_steppers({false});
     return 0;
 }
