@@ -1,6 +1,6 @@
 #include <configuration.hpp>
 #include <hardware/motor_layout.hpp>
-#include <hardware/raspberry_pi.hpp>
+#include <hardware/driver/raspberry_pi.hpp>
 #include <hardware/stepping.hpp>
 #include <movement/steps_generator.hpp>
 #include <movement/variable_speed.hpp>
@@ -15,7 +15,8 @@ int main()
 
     configuration::global cfg;
     cfg.load_defaults();
-    std::shared_ptr<raspberry_pi_3> raspi3(new raspberry_pi_3(cfg));
+//    std::shared_ptr<driver::raspberry_pi_3> raspi3(new driver::raspberry_pi_3(cfg));
+    std::shared_ptr<driver::raspberry_pi_3> raspi3(new driver::raspberry_pi_3(cfg));
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
     movement::steps_generator steps_generator_drv(motor_layout_);
     stepping_simple_timer stepping(cfg, raspi3);
@@ -35,11 +36,15 @@ int main()
 	auto plan_to_execute = variable_speed_driver.intent_to_movement_plan( simple_program );
 
     steps_t psteps = {0, 0, 0, 0};
+    std::list < std::unique_ptr<std::vector<hardware::multistep_command> > > ticks_to_execute;
     steps_generator_drv.movement_plan_to_step_commands(plan_to_execute, cfg.tick_duration(), 
-        [&psteps,&stepping](std::unique_ptr<std::vector<hardware::multistep_command> > msteps_p){
-            psteps = stepping.exec(psteps, *(msteps_p.get()), [](const steps_t&) {});      
+        [&psteps,&stepping,&ticks_to_execute](std::unique_ptr<std::vector<hardware::multistep_command> > msteps_p){
+            ticks_to_execute.push_back(std::move(msteps_p));
         });
-    
+    for (auto & msteps_p : ticks_to_execute) {
+        std::cout << "should execute: " << msteps_p.get()->size() << std::endl;
+        //psteps = stepping.exec(psteps, *(msteps_p.get()), [](const steps_t&) {});      
+    }    
     raspi3.get()->enable_steppers({false});
     return 0;
 }
@@ -51,7 +56,7 @@ int main_spindle_test()
 
     configuration::global cfg;
     cfg.load_defaults();
-    std::shared_ptr<raspberry_pi_3> raspi3(new raspberry_pi_3(cfg));
+    std::shared_ptr<driver::raspberry_pi_3> raspi3(new driver::raspberry_pi_3(cfg));
 
     raspi3.get()->enable_steppers({true});
 
@@ -71,7 +76,7 @@ int main_old2()
 
     configuration::global cfg;
     cfg.load_defaults();
-    std::shared_ptr<raspberry_pi_3> raspi3(new raspberry_pi_3(cfg));
+    std::shared_ptr<driver::raspberry_pi_3> raspi3(new driver::raspberry_pi_3(cfg));
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
     movement::steps_generator steps_generator_drv(motor_layout_);
     stepping_simple_timer stepping(cfg, raspi3);
@@ -94,7 +99,7 @@ int main_old()
 
     configuration::global cfg;
     cfg.load_defaults();
-    raspberry_pi_3 raspi3(cfg);
+    driver::raspberry_pi_3 raspi3(cfg);
     raspi3.enable_steppers({true});
     for (int i = 0; i < cfg.steppers[2].steps_per_mm * 2; i++) {
         single_step_command cmnd[4];

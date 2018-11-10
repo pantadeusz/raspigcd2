@@ -66,12 +66,11 @@ movement_plan_t variable_speed::intent_to_movement_plan(
     const std::list<std::variant<distance_t, double>>& intentions_)
 {
     movement_plan_t ret;
-    bool is_coord = true;
     distance_t prev_pos;
     distance_t next_pos;
     double intended_velocity = 1000000;
     for (const auto& ie : intentions_) {
-        if (is_coord) {
+        if (ie.index() == 0) {
             next_pos = std::get<distance_t>(ie);
             if (ret.size() == 0) {
                 ret.push_back(next_pos);
@@ -104,10 +103,9 @@ movement_plan_t variable_speed::intent_to_movement_plan(
                 }
             }
             prev_pos = next_pos;
-        } else {
+        } else if (ie.index() == 1) {
             intended_velocity = std::get<double>(ie);
         }
-        is_coord = !is_coord;
     }
     return ret;
 }

@@ -41,7 +41,7 @@ include_directories("${PROJECT_SOURCE_DIR}/thirdparty")
 
 
 set(raspigcd2_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/raspigcd.cpp )
-file(GLOB_RECURSE lib_SOURCES "src/*.cpp")
+file(GLOB_RECURSE lib_SOURCES "src/*.cpp" "src/*/*.cpp")
 file(GLOB_RECURSE raspigcd2_TESTS "tests/*.cpp")
 list(REMOVE_ITEM lib_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/raspigcd.cpp)
 

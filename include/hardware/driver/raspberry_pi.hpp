@@ -34,73 +34,76 @@
 namespace raspigcd {
 namespace hardware {
 
+namespace driver {
 // IO Acces
 struct bcm2835_peripheral {
-	unsigned long addr_p;
-	int mem_fd;
-	void* map;
-	volatile unsigned int* addr;
+    unsigned long addr_p;
+    int mem_fd;
+    void* map;
+    volatile unsigned int* addr;
 };
 
-class raspberry_pi_3 : public low_buttons, public low_steppers, public low_spindles_pwm {
+class raspberry_pi_3 : public low_buttons, public low_steppers, public low_spindles_pwm
+{
 private:
-	std::vector<configuration::spindle_pwm> spindles;
-	std::vector<configuration::stepper> steppers;
-	std::vector<configuration::button> buttons;
+    std::vector<configuration::spindle_pwm> spindles;
+    std::vector<configuration::stepper> steppers;
+    std::vector<configuration::button> buttons;
 
-	bool _threads_alive;
-	std::vector<std::thread> _spindle_threads;
-	std::vector<double> _spindle_duties;
+    bool _threads_alive;
+    std::vector<std::thread> _spindle_threads;
+    std::vector<double> _spindle_duties;
 
-	std::thread _btn_thread;
-	std::map<int, std::function<void( int button )>> _button_callbacks;
-	std::map<int, int> _button_prev_values;
+    std::thread _btn_thread;
+    std::map<int, std::function<void(int button)>> _button_callbacks;
+    std::map<int, int> _button_prev_values;
 
-	struct bcm2835_peripheral gpio;
+    struct bcm2835_peripheral gpio;
 
 public:
-	/**
+    /**
 	 * @brief execute single step command. That is the single most basic "step-dir" action
 	 *
 	 * @param b step-dir for every stepper motor (depends on the )
 	 */
-	void do_step( const single_step_command* b );
+    void do_step(const single_step_command* b);
 
-	/**
+    /**
 	 * @brief turn on or off the stepper motors. If the hardware supports it, then
 	 *        each motor can be enabled independently
 	 *
 	 * @param en enable status for each motor
 	 * @return raspberry_pi_3&  returns this object
 	 */
-	void enable_steppers( const std::vector<bool> en );
+    void enable_steppers(const std::vector<bool> en);
 
-	/**
+    /**
 	 * @brief Set the spindle pwm power
 	 *
 	 * @param i index of spindle (usualy 0)
 	 * @param v value between 0 (stop) and 1 (maximal speed)
 	 * @return raspberry_pi_3&  the reference to this object
 	 */
-	void spindle_pwm_power( const int i, const double v );
+    void spindle_pwm_power(const int i, const double v);
 
-	/**
+    /**
 	 * @brief Construct a new raspberry pi 3 object
 	 *
 	 * @param configuration the configuration
 	 */
-	raspberry_pi_3( const configuration::global& configuration );
+    raspberry_pi_3(const configuration::global& configuration);
 
-	/**
+    /**
 	 * @brief Destroy the raspberry pi 3 object
 	 */
-	virtual ~raspberry_pi_3();
+    virtual ~raspberry_pi_3();
 
 
-	raspberry_pi_3( raspberry_pi_3 const& ) = delete;
-	void operator=( raspberry_pi_3 const& x ) = delete;
+    raspberry_pi_3(raspberry_pi_3 const&) = delete;
+    void operator=(raspberry_pi_3 const& x) = delete;
 };
 
+} // namespace driver
 } // namespace hardware
 } // namespace raspigcd
 

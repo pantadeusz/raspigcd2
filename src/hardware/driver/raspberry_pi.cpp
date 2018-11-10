@@ -18,7 +18,7 @@
 
 */
 
-#include <hardware/raspberry_pi.hpp>
+#include <hardware/driver/raspberry_pi.hpp>
 
 #include <chrono>
 #include <cstring>
@@ -63,6 +63,7 @@
 namespace raspigcd {
 namespace hardware {
 
+namespace driver {
 
 raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
 {
@@ -256,5 +257,6 @@ void raspberry_pi_3::spindle_pwm_power(const int i, const double pwr)
     _spindle_duties[i] = (spindles[i].duty_max - spindles[i].duty_min) * pwr + spindles[i].duty_min;
 }
 
+} // namespace driver
 } // namespace hardware
 } // namespace raspigcd
