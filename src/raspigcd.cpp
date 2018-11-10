@@ -37,7 +37,7 @@ int main()
 
     
     std::list<std::variant<distance_t, double>> simple_program = {
-			distance_t{0, 0, 0, 0}, 15.0,
+			distance_t{0, 0, 0, 0}, 30.0,
 			distance_t{0, 0, 5, 0}, 5.0,
 			distance_t{0, 0, 0, 0}
 		};
