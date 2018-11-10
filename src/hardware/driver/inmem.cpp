@@ -15,12 +15,10 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASPIGCD_HARDWARE_DRIVER_FILE_PRODUCER_T_HPP__
-#define __RASPIGCD_HARDWARE_DRIVER_FILE_PRODUCER_T_HPP__
-
 
 #include <configuration.hpp>
 #include <distance_t.hpp>
+#include <hardware/driver/inmem.hpp>
 #include <hardware/low_buttons.hpp>
 #include <hardware/low_spindles_pwm.hpp>
 #include <hardware/low_steppers.hpp>
@@ -36,50 +34,26 @@ namespace raspigcd {
 namespace hardware {
 namespace driver {
 
-
-/**
- * THIS CLASS IS NOT READY YET. It will not be tested in the forseenable future.
- * 
- * This is for collecting statistical data about execution of program. Can record times and coordinates. 
- * */
-
-class file_producer :  public low_steppers//, public low_buttons, public low_spindles_pwm
+void inmem::do_step(const single_step_command* b)
 {
-public:
-    int counters[RASPIGCD_HARDWARE_DOF];
-    std::vector<bool> enabled;
-
-    void on_step(){};
-
-
-////////// low_steppers //////////
-
-    void do_step(const single_step_command* b)
-    {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            if (enabled[i]) if (b[i].step == 1) {
-                counters[i] += b[i].dir * 2 - 1;
-            }
+    for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+        if (b[i].step == 1) {
+            counters[i] += b[i].dir * 2 - 1;
         }
-    };
-    
-    void enable_steppers(const std::vector<bool> en)
-    {
-        enabled = en;
-    };
-
-
-    file_producer(const std::string &coordinates_record_file_name_)
-    {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            counters[i] = 0;
-        }
-        enabled = std::vector<bool>(false, RASPIGCD_HARDWARE_DOF);
     }
 };
-
-} // namespace visualization
+void inmem::enable_steppers(const std::vector<bool> en)
+{
+    enabled = en;
+};
+inmem::inmem()
+{
+    for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+        counters[i] = 0;
+    }
+    enabled = std::vector<bool>(false, RASPIGCD_HARDWARE_DOF);
+}
+} // namespace driver
 } // namespace hardware
 } // namespace raspigcd
 
-#endif

@@ -15,8 +15,8 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASPIGCD_HARDWARE_DRIVER_FILE_PRODUCER_T_HPP__
-#define __RASPIGCD_HARDWARE_DRIVER_FILE_PRODUCER_T_HPP__
+#ifndef __RASPIGCD_HARDWARE_DRIVER_INMEM_T_HPP__
+#define __RASPIGCD_HARDWARE_DRIVER_INMEM_T_HPP__
 
 
 #include <configuration.hpp>
@@ -36,49 +36,21 @@ namespace raspigcd {
 namespace hardware {
 namespace driver {
 
-
 /**
- * THIS CLASS IS NOT READY YET. It will not be tested in the forseenable future.
- * 
- * This is for collecting statistical data about execution of program. Can record times and coordinates. 
+ * this class can be used to fake the actual steppers driver. In case of not available hardware.
  * */
 
-class file_producer :  public low_steppers//, public low_buttons, public low_spindles_pwm
+class inmem : public hardware::low_steppers
 {
 public:
     int counters[RASPIGCD_HARDWARE_DOF];
     std::vector<bool> enabled;
-
-    void on_step(){};
-
-
-////////// low_steppers //////////
-
-    void do_step(const single_step_command* b)
-    {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            if (enabled[i]) if (b[i].step == 1) {
-                counters[i] += b[i].dir * 2 - 1;
-            }
-        }
-    };
-    
-    void enable_steppers(const std::vector<bool> en)
-    {
-        enabled = en;
-    };
-
-
-    file_producer(const std::string &coordinates_record_file_name_)
-    {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            counters[i] = 0;
-        }
-        enabled = std::vector<bool>(false, RASPIGCD_HARDWARE_DOF);
-    }
+    void do_step(const single_step_command* b);
+    void enable_steppers(const std::vector<bool> en);
+    inmem();
 };
 
-} // namespace visualization
+} // namespace driver
 } // namespace hardware
 } // namespace raspigcd
 
