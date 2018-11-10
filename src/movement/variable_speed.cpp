@@ -35,16 +35,16 @@ void variable_speed::set_motor_layout(const std::shared_ptr<hardware::motor_layo
     _motor_layout = ml.get();
     _motor_layout_ptr = ml;
 }
-void variable_speed::set_max_speed_no_accel(const double& max_speed_no_accel_) { _max_speed_no_accel = max_speed_no_accel_; }
-void variable_speed::set_acceleration(const double& acceleration_) { _acceleration = acceleration_; }
-void variable_speed::set_max_speed(const double& max_speed_) { _max_speed = max_speed_; }
+void variable_speed::set_max_speed_no_accel(const std::vector<double>& max_speed_no_accel_) { _max_speed_no_accel = max_speed_no_accel_; }
+void variable_speed::set_acceleration(const std::vector<double>& acceleration_) { _acceleration = acceleration_; }
+void variable_speed::set_max_speed(const std::vector<double>& max_speed_) { _max_speed = max_speed_; }
 void variable_speed::set_tick_duration(const double& tick_duration_) { _tick_duration = tick_duration_; }
 
 variable_speed::variable_speed(
     std::shared_ptr<hardware::motor_layout> ml,
-    double max_speed_no_accel_,
-    double acceleration_,
-    double max_speed_,
+    std::vector<double> max_speed_no_accel_,
+    std::vector<double> acceleration_,
+    std::vector<double> max_speed_,
     double tick_duration_) : _max_speed_no_accel(max_speed_no_accel_),
                              _acceleration(acceleration_),
                              _max_speed(max_speed_),
@@ -75,29 +75,30 @@ movement_plan_t variable_speed::intent_to_movement_plan(
             if (ret.size() == 0) {
                 ret.push_back(next_pos);
             } else if (!(next_pos == prev_pos)) { // ignore empty moves
-                if (intended_velocity <= _max_speed_no_accel) {
+                auto movement_vector_whole = next_pos - prev_pos;
+                auto movement_vector_length = std::sqrt(movement_vector_whole.length2());
+                auto movement_direction_vect = movement_vector_whole / movement_vector_length;
+
+                if (intended_velocity <= max_speed_no_accel(movement_direction_vect)) {
                     ret.push_back(transition_t{.v0 = intended_velocity, .accel = 0, .max_v = intended_velocity});
                     ret.push_back(next_pos);
                 } else {
-                    auto movement_vector_whole = next_pos - prev_pos;
-                    auto movement_vector_length = std::sqrt(movement_vector_whole.length2());
-                    double accel_length = accleration_length_calc(_max_speed_no_accel, intended_velocity, _acceleration);
+                    double accel_length = accleration_length_calc(max_speed_no_accel(movement_direction_vect), intended_velocity, acceleration(movement_direction_vect));
                     if ((accel_length * 2.0) >= movement_vector_length) { // we can only accelerate and break
-                        ret.push_back(transition_t{.v0 = _max_speed_no_accel, .accel = 0, .max_v = intended_velocity});
+                        ret.push_back(transition_t{.v0 = max_speed_no_accel(movement_direction_vect), .accel = 0, .max_v = intended_velocity});
                         ret.push_back(next_pos);
                     } else {
-                        auto movement_direction_vect = movement_vector_whole / movement_vector_length;
 
                         distance_t inter_pos1 = movement_direction_vect * accel_length + prev_pos;
                         distance_t inter_pos2 = next_pos - (movement_direction_vect * accel_length);
 
-                        ret.push_back(transition_t{.v0 = _max_speed_no_accel, .accel = _acceleration, .max_v = intended_velocity});
+                        ret.push_back(transition_t{.v0 = max_speed_no_accel(movement_direction_vect), .accel = acceleration(movement_direction_vect), .max_v = intended_velocity});
                         ret.push_back(inter_pos1);
 
                         ret.push_back(transition_t{.v0 = intended_velocity, .accel = 0, .max_v = intended_velocity});
                         ret.push_back(inter_pos2);
 
-                        ret.push_back(transition_t{.v0 = intended_velocity, .accel = -_acceleration, .max_v = intended_velocity});
+                        ret.push_back(transition_t{.v0 = intended_velocity, .accel = - acceleration(movement_direction_vect), .max_v = intended_velocity});
                         ret.push_back(next_pos);
                     }
                 }

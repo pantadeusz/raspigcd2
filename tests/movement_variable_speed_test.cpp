@@ -43,12 +43,14 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 	std::shared_ptr<low_steppers> lsfake( new low_steppers_fake() );
 	configuration::global cfg;
 	cfg.load_defaults();
-	cfg.tick_duration_us = 60;
-	cfg.max_no_accel_velocity_mm_s = {5, 5, 5, 5};
-	double max_speed_no_accel = cfg.max_no_accel_velocity_mm_s[0];
 	double acceleration = 100;
+	double max_speed_no_accel = 5;
+	cfg.tick_duration_us = 60;
+	cfg.max_no_accel_velocity_mm_s = {max_speed_no_accel, max_speed_no_accel, max_speed_no_accel, max_speed_no_accel};
+	cfg.max_accelerations_mm_s2 = {acceleration,acceleration,acceleration,acceleration};
+	cfg.max_velocity_mm_s = {150,150,150,150};
 	std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance( cfg );
-	movement::variable_speed variable_speed_driver( motor_layout_, max_speed_no_accel, acceleration, 150, cfg.tick_duration() );
+	movement::variable_speed variable_speed_driver( motor_layout_, cfg.max_no_accel_velocity_mm_s, cfg.max_accelerations_mm_s2, cfg.max_velocity_mm_s, cfg.tick_duration() );
 	stepping_sim stepping( {0,0,0,0} );
 	movement::steps_generator steps_generator( motor_layout_ );
 
