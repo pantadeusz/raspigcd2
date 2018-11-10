@@ -42,11 +42,18 @@ namespace driver {
 
 class inmem : public hardware::low_steppers
 {
+    std::function<void(const steps_t&)> _on_step;
 public:
     int counters[RASPIGCD_HARDWARE_DOF];
     std::vector<bool> enabled;
+    steps_t current_steps;
+
     void do_step(const single_step_command* b);
     void enable_steppers(const std::vector<bool> en);
+    /**
+     * @brief allows for setting callback that monitors steps execution
+     */
+    void set_step_callback(std::function<void(const steps_t&)> on_step_ = [](const steps_t&) {});
     inmem();
 };
 

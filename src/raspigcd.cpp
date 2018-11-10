@@ -84,9 +84,9 @@ int main_old2()
     raspi3.get()->enable_steppers({true});
 
     auto commands = steps_generator_drv.goto_xyz({0, 0, 0, 0}, {0, 0, 2, 0}, 30, cfg.tick_duration());
-    stepping.exec({0, 0, 0, 0}, commands, [](const steps_t&) {});
+    stepping.exec(commands);
     commands = steps_generator_drv.goto_xyz({0, 0, 2, 0}, {0, 0, 0, 0}, 30, cfg.tick_duration());
-    stepping.exec({0, 0, 0, 0}, commands, [](const steps_t&) {});
+    stepping.exec(commands);
 
 
     raspi3.get()->enable_steppers({false});

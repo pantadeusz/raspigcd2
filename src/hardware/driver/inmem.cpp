@@ -34,6 +34,9 @@ namespace raspigcd {
 namespace hardware {
 namespace driver {
 
+void inmem::set_step_callback(std::function<void(const steps_t&)> on_step_) {
+    _on_step = on_step_;
+}
 void inmem::do_step(const single_step_command* b)
 {
     for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
@@ -41,13 +44,18 @@ void inmem::do_step(const single_step_command* b)
             counters[i] += b[i].dir * 2 - 1;
         }
     }
+    for (int j = 0; j < 4; j++)
+        current_steps[j] = current_steps[j] + (int)((signed char)b[j].step * ((signed char)b[j].dir * 2 - 1));
+    _on_step(current_steps);
 };
+
 void inmem::enable_steppers(const std::vector<bool> en)
 {
     enabled = en;
 };
 inmem::inmem()
 {
+    current_steps = {0,0,0,0};
     for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
         counters[i] = 0;
     }

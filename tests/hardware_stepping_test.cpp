@@ -1,6 +1,7 @@
 #include <configuration.hpp>
 #include <configuration_json.hpp>
 #include <hardware/stepping.hpp>
+#include <hardware/driver/inmem.hpp>
 
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_DISABLE_MATCHERS
@@ -18,19 +19,21 @@ using namespace raspigcd::hardware;
 
 TEST_CASE("Hardware stepping_sim", "[hardware_stepping][stepping_sim]")
 {
-    stepping_sim worker;
+    stepping_sim worker({0,0,0,0});
 
     SECTION("Run empty program")
     {
         int n = 0;
-        worker.exec({0, 0, 0, 0}, {}, [&](const auto&) { n++; });
+        worker.set_callback([&](const auto&) { n++; });
+        worker.exec({});
         REQUIRE(n == 0);
     }
 
     SECTION("Run one command program")
     {
         int n = 0;
-        worker.exec({0, 0, 0, 0}, {{.cmnd = {.b = {{0, 0}, {0, 0}, {0, 0}, {0, 0}}, .count = 1}}}, [&](const auto&) { n++; });
+        worker.set_callback([&](const auto&) { n++; });
+        worker.exec({{.cmnd = {.b = {{0, 0}, {0, 0}, {0, 0}, {0, 0}}, .count = 1}}});
         REQUIRE(n == 1);
     }
     SECTION("Run one step in each positive  direction")
@@ -49,11 +52,13 @@ TEST_CASE("Hardware stepping_sim", "[hardware_stepping][stepping_sim]")
             cmnd.cmnd.b[3].dir = 0;
             cmnd.cmnd.b[i].step = 1;
             cmnd.cmnd.b[i].dir = 1;
-            auto st = worker.exec({5, 6, 7, 8}, {cmnd}, [&](const auto&) { n++; });
+            worker.set_callback([&](const auto&) { n++; });
+            worker.current_steps = {5, 6, 7, 8};
+            worker.exec({cmnd});
             REQUIRE(n == 1);
             steps_t cmpto = {5, 6, 7, 8};
             cmpto[i] += 1;
-            REQUIRE(st == cmpto);
+            REQUIRE(worker.current_steps == cmpto);
         }
     }
     SECTION("Run one step in each negative direction")
@@ -72,62 +77,38 @@ TEST_CASE("Hardware stepping_sim", "[hardware_stepping][stepping_sim]")
             cmnd.cmnd.b[3].dir = 0;
             cmnd.cmnd.b[i].step = 1;
             cmnd.cmnd.b[i].dir = 0;
-            auto st = worker.exec({1, 2, 3, 4}, {cmnd}, [&](const auto&) { n++; });
+            worker.set_callback([&](const auto&) { n++; });
+            worker.current_steps = {1, 2, 3, 4};
+            worker.exec({cmnd});
             REQUIRE(n == 1);
             steps_t cmpto = {1, 2, 3, 4};
             cmpto[i] -= 1;
-            REQUIRE(st == cmpto);
+            REQUIRE(worker.current_steps == cmpto);
         }
     }
 }
 
 
-//////// stepping_simple_timer
-
-
-class low_steppers_fake : public hardware::low_steppers
-{
-public:
-    int counters[RASPIGCD_HARDWARE_DOF];
-    std::vector<bool> enabled;
-    void do_step(const single_step_command* b)
-    {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            if (b[i].step == 1) {
-                counters[i] += b[i].dir * 2 - 1;
-            }
-        }
-    };
-    void enable_steppers(const std::vector<bool> en)
-    {
-        enabled = en;
-    };
-    low_steppers_fake()
-    {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            counters[i] = 0;
-        }
-        enabled = std::vector<bool>(false, RASPIGCD_HARDWARE_DOF);
-    }
-};
-
-
 TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple_timer]")
 {
-    std::shared_ptr<low_steppers> lsfake(new low_steppers_fake());
+    std::shared_ptr<low_steppers> lsfake(new driver::inmem());
     stepping_simple_timer worker(60, lsfake);
 
     SECTION("Run empty program")
     {
         int n = 0;
-        worker.exec({0, 0, 0, 0}, {}, [&](const auto&) { n++; });
+        ((driver::inmem*)lsfake.get())->current_steps = {0, 0, 0, 0};
+        ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
+        worker.exec({});
         REQUIRE(n == 0);
     }
 
     SECTION("Run one command program")
     {
         int n = 0;
-        worker.exec({0, 0, 0, 0}, {{.cmnd = {.b = {{0, 0}, {0, 0}, {0, 0}, {0, 0}}, .count = 1}}}, [&](const auto&) { n++; });
+        ((driver::inmem*)lsfake.get())->current_steps = {0, 0, 0, 0};
+        ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
+        worker.exec({{.cmnd = {.b = {{0, 0}, {0, 0}, {0, 0}, {0, 0}}, .count = 1}}});
         REQUIRE(n == 1);
     }
     SECTION("Run one step in each positive  direction")
@@ -146,12 +127,14 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
             cmnd.cmnd.b[3].dir = 0;
             cmnd.cmnd.b[i].step = 1;
             cmnd.cmnd.b[i].dir = 1;
-            auto st = worker.exec({5, 6, 7, 8}, {cmnd}, [&](const auto&) { n++; });
+            ((driver::inmem*)lsfake.get())->current_steps = {5, 6, 7, 8};
+            ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
+            worker.exec({cmnd});
             REQUIRE(n == 1);
             steps_t cmpto = {5, 6, 7, 8};
             cmpto[i] += 1;
-            REQUIRE(st == cmpto);
-            REQUIRE(((low_steppers_fake*)lsfake.get())->counters[i] == 1);
+            REQUIRE(((driver::inmem*)lsfake.get())->current_steps == cmpto);
+            REQUIRE(((driver::inmem*)lsfake.get())->counters[i] == 1);
         }
     }
     SECTION("Run one step in each negative direction")
@@ -170,12 +153,14 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
             cmnd.cmnd.b[3].dir = 0;
             cmnd.cmnd.b[i].step = 1;
             cmnd.cmnd.b[i].dir = 0;
-            auto st = worker.exec({1, 2, 3, 4}, {cmnd}, [&](const auto&) { n++; });
+            ((driver::inmem*)lsfake.get())->current_steps = {1, 2, 3, 4};
+            ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
+            worker.exec({cmnd});
             REQUIRE(n == 1);
             steps_t cmpto = {1, 2, 3, 4};
             cmpto[i] -= 1;
-            REQUIRE(st == cmpto);
-            REQUIRE(((low_steppers_fake*)lsfake.get())->counters[i] == -1);
+            REQUIRE(((driver::inmem*)lsfake.get())->current_steps == cmpto);
+            REQUIRE(((driver::inmem*)lsfake.get())->counters[i] == -1);
         }
     }
 }

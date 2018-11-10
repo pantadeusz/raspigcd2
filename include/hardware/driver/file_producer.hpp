@@ -38,6 +38,8 @@ namespace driver {
 
 
 /**
+ * (WORK IN PROGRESS)
+ *
  * THIS CLASS IS NOT READY YET. It will not be tested in the forseenable future.
  * 
  * This is for collecting statistical data about execution of program. Can record times and coordinates. 

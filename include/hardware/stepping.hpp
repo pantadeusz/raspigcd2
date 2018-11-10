@@ -31,6 +31,10 @@
 namespace raspigcd {
 namespace hardware {
 
+/**
+ * @brief The basic class that allows for generating steps on the machine with precise timing
+ */
+
 class stepping
 {
 public:
@@ -42,7 +46,7 @@ public:
 	* @param on_step_ function to execute on each step. This function can throw exceptions to break execution of steps
 	* @return steps_t final position of the machine in steps
 	*/
-    virtual steps_t exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_ = [](const steps_t&) {}) = 0;
+    virtual void exec(const std::vector<multistep_command>& commands_to_do) = 0;
     /**
      * returns current tick index. This is not in the terms of commands. There will be at least as many ticks as commands.#pragma endregion
      * */
@@ -51,16 +55,31 @@ public:
 
 class stepping_sim : public stepping
 {
-public:
-    std::atomic<int> _tick_index; 
-    virtual int get_tick_index() const {return _tick_index;};
+    std::shared_ptr<low_steppers> _steppers_driver_shr;
+    std::function<void(const steps_t&)> _on_step;
 
-    steps_t exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_);
+public:
+    std::atomic<int> _tick_index;
+
+    steps_t current_steps;
+
+    void set_callback(std::function<void(const steps_t&)> on_step_ = [](const steps_t&) {}) {
+        _on_step = on_step_;
+    }
+
+    virtual int get_tick_index() const {return _tick_index;};
+// const steps_t& start_steps, std::function<void(const steps_t&)> on_step_
+    void exec(const std::vector<multistep_command>& commands_to_do);
+
+    stepping_sim(
+        const steps_t start_steps_,
+        std::function<void(const steps_t&)> on_step_ = [](const steps_t&) {}) {
+        current_steps = start_steps_;
+        set_callback(on_step_);
+    }
 };
 
 std::list<steps_t> hardware_commands_to_steps(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do);
-
-
 
 class stepping_simple_timer : public stepping
 {
@@ -87,7 +106,7 @@ public:
      */
     void set_low_level_steppers_driver(std::shared_ptr<low_steppers> steppers_driver);
 
-    steps_t exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_);
+    void exec(const std::vector<multistep_command>& commands_to_do);
 
     stepping_simple_timer(int delay_us, std::shared_ptr<low_steppers> steppers_driver)
     {
