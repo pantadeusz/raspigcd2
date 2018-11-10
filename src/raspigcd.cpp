@@ -1,6 +1,7 @@
 #include <configuration.hpp>
 #include <hardware/motor_layout.hpp>
 #include <hardware/driver/raspberry_pi.hpp>
+#include <hardware/driver/inmem.hpp>
 #include <hardware/stepping.hpp>
 #include <movement/steps_generator.hpp>
 #include <movement/variable_speed.hpp>
@@ -15,22 +16,29 @@ int main()
 
     configuration::global cfg;
     cfg.load_defaults();
-//    std::shared_ptr<driver::raspberry_pi_3> raspi3(new driver::raspberry_pi_3(cfg));
-    std::shared_ptr<driver::raspberry_pi_3> raspi3(new driver::raspberry_pi_3(cfg));
+    std::shared_ptr<low_steppers> hardware_driver;
+    try {
+        hardware_driver = std::make_shared< driver::raspberry_pi_3>(cfg);
+    } catch ( ... ) {
+        std::cout << "falling back to emulation of hardware motors..." << std::endl;
+        hardware_driver = std::make_shared< driver::inmem>();
+    }
+    
+    
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
     movement::steps_generator steps_generator_drv(motor_layout_);
-    stepping_simple_timer stepping(cfg, raspi3);
+    stepping_simple_timer stepping(cfg, hardware_driver);
 
 
 
 	movement::variable_speed variable_speed_driver( motor_layout_, cfg.max_no_accel_velocity_mm_s[0], cfg.max_accelerations_mm_s2[0], cfg.max_velocity_mm_s[0], cfg.tick_duration() );
 
-    raspi3.get()->enable_steppers({true});
+    hardware_driver.get()->enable_steppers({true});
 
     
     std::list<std::variant<distance_t, double>> simple_program = {
 			distance_t{0, 0, 0, 0}, 15.0,
-			distance_t{0, 0, 2, 0}, 5.0,
+			distance_t{0, 0, 5, 0}, 5.0,
 			distance_t{0, 0, 0, 0}
 		};
 	auto plan_to_execute = variable_speed_driver.intent_to_movement_plan( simple_program );
@@ -43,9 +51,9 @@ int main()
         });
     for (auto & msteps_p : ticks_to_execute) {
         std::cout << "should execute: " << msteps_p.get()->size() << std::endl;
-        //psteps = stepping.exec(psteps, *(msteps_p.get()), [](const steps_t&) {});      
+        stepping.exec( *(msteps_p.get()) );      
     }    
-    raspi3.get()->enable_steppers({false});
+    hardware_driver.get()->enable_steppers({false});
     return 0;
 }
 

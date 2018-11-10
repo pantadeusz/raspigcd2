@@ -60,6 +60,7 @@ inmem::inmem()
         counters[i] = 0;
     }
     enabled = std::vector<bool>(false, RASPIGCD_HARDWARE_DOF);
+    _on_step = [](const steps_t&) {};
 }
 } // namespace driver
 } // namespace hardware
