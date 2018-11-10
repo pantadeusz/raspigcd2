@@ -16,8 +16,9 @@
 namespace raspigcd {
 namespace hardware {
 
-steps_t stepping_sim::exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_)
+std::list<steps_t> hardware_commands_to_steps(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do)
 {
+    std::list<steps_t> ret;
     steps_t _steps = start_steps;
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.cmnd.count; i++) {
@@ -25,8 +26,21 @@ steps_t stepping_sim::exec(const steps_t& start_steps, const std::vector<multist
             _steps[1] = _steps[1] + (int)((signed char)s.cmnd.b[1].step * ((signed char)s.cmnd.b[1].dir * 2 - 1));
             _steps[2] = _steps[2] + (int)((signed char)s.cmnd.b[2].step * ((signed char)s.cmnd.b[2].dir * 2 - 1));
             _steps[3] = _steps[3] + (int)((signed char)s.cmnd.b[3].step * ((signed char)s.cmnd.b[3].dir * 2 - 1));
-            on_step_(_steps);
+            ret.push_back(_steps);
         }
+    }
+    return ret;
+}
+
+
+steps_t stepping_sim::exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_)
+{
+    auto _steps = start_steps;
+    _tick_index = 0;
+    for (auto& steps : hardware_commands_to_steps(start_steps, commands_to_do)) {
+        on_step_(steps);
+        _steps = steps;
+        _tick_index++;
     }
     return _steps;
 }
@@ -46,6 +60,7 @@ void stepping_simple_timer::set_low_level_steppers_driver(std::shared_ptr<low_st
 steps_t stepping_simple_timer::exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_)
 {
     set_thread_realtime();
+    _tick_index = 0;
     steps_t _steps = start_steps;
     std::chrono::microseconds ttime = std::chrono::microseconds((unsigned long)(_delay_microseconds));
     auto t = std::chrono::system_clock::now();
@@ -60,6 +75,7 @@ steps_t stepping_simple_timer::exec(const steps_t& start_steps, const std::vecto
             _steps[3] = _steps[3] + (int)((signed char)s.cmnd.b[3].step * ((signed char)s.cmnd.b[3].dir * 2 - 1));
             ttime = std::chrono::microseconds((unsigned long)(_delay_microseconds));
             _steppers_driver->do_step(s.cmnd.b);
+            _tick_index++;
             on_step_(_steps);
             // wait till next step
             nextT += ttime;

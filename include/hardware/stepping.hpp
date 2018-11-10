@@ -26,6 +26,7 @@
 #include <hardware/stepping_commands.hpp>
 #include <memory>
 #include <steps_t.hpp>
+#include <list>
 
 namespace raspigcd {
 namespace hardware {
@@ -42,18 +43,32 @@ public:
 	* @return steps_t final position of the machine in steps
 	*/
     virtual steps_t exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_ = [](const steps_t&) {}) = 0;
+    /**
+     * returns current tick index. This is not in the terms of commands. There will be at least as many ticks as commands.#pragma endregion
+     * */
+    virtual int get_tick_index() const = 0;
 };
 
 class stepping_sim : public stepping
 {
 public:
+    std::atomic<int> _tick_index; 
+    virtual int get_tick_index() const {return _tick_index;};
+
     steps_t exec(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do, std::function<void(const steps_t&)> on_step_);
 };
+
+std::list<steps_t> hardware_commands_to_steps(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do);
+
 
 
 class stepping_simple_timer : public stepping
 {
+    std::atomic<int> _tick_index; 
+
 public:
+    virtual int get_tick_index() const {return _tick_index;};
+
     std::atomic<int> _delay_microseconds;
     std::shared_ptr<low_steppers> _steppers_driver_shr;
     low_steppers* _steppers_driver;
