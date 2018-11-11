@@ -16,6 +16,7 @@
 namespace raspigcd {
 namespace hardware {
 
+
 std::list<steps_t> hardware_commands_to_steps(const std::vector<multistep_command>& commands_to_do)
 {
     std::list<steps_t> ret;

@@ -79,8 +79,6 @@ public:
     }
 };
 
-std::list<steps_t> hardware_commands_to_steps(const steps_t& start_steps, const std::vector<multistep_command>& commands_to_do);
-
 class stepping_simple_timer : public stepping
 {
     std::atomic<int> _tick_index; 
@@ -120,6 +118,11 @@ public:
         set_low_level_steppers_driver(steppers_driver);
     }
 };
+
+
+
+
+std::list<steps_t> hardware_commands_to_steps(const std::vector<multistep_command>& commands_to_do);
 
 } // namespace hardware
 } // namespace raspigcd
