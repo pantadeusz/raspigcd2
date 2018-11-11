@@ -62,6 +62,7 @@ public:
      * @param dt 
      * @return std::vector<hardware::multistep_command> 
      */
+    [[deprecated("This function is actualy not used anywhere and calls movement_from_to(p0, transition, p1, dt)")]]
     std::vector<hardware::multistep_command> goto_xyz(const distance_t p0, const distance_t p1, double v, double dt) const;
 
     /**
