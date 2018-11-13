@@ -72,11 +72,7 @@ std::vector<hardware::multistep_command> steps_generator::collapse_repeated_step
      */
 std::vector<hardware::multistep_command> steps_generator::goto_xyz(const distance_t p0, const distance_t p1, double v, double dt) const
 {
-    transition_t transition = {
-        .v0 = v,
-        .accel = 0,
-        .max_v = v};
-    return movement_from_to(p0, transition, p1, dt);
+    return movement_from_to(p0, {.v0 = v,.accel = 0,.max_v = v}, p1, dt);
 }
 
 
@@ -128,7 +124,7 @@ double steps_generator::velocity_after_from_to(const distance_t& p0, const trans
 void steps_generator::movement_plan_to_step_commands(const movement_plan_t &plan_to_execute, const double dt, 
         std::function < void (std::unique_ptr<std::vector<hardware::multistep_command> > ) > consumer_f_) const {
         
-        std::vector<std::variant<distance_t, transition_t>> result_v;
+        std::vector<movement_plan_element_t> result_v;
         //steps_t steps = {0, 0, 0, 0};
         for ( const auto &plan_step : plan_to_execute ) {
             result_v.push_back(plan_step);
@@ -140,7 +136,6 @@ void steps_generator::movement_plan_to_step_commands(const movement_plan_t &plan
                     std::get<distance_t>( result_v[2] ), 
                     dt );
                 consumer_f_(std::move(commands_p));
-                //steps = stepping.exec( steps, commands, [&]( const steps_t& ) {} );
                 result_v[0] = result_v[2];
                 result_v.resize(1);
             }

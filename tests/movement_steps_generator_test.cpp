@@ -42,14 +42,14 @@ TEST_CASE("Movement constant speed", "[movement][steps_generator]")
     {
         int n = 0;
         using namespace std::chrono_literals;
-        auto commands = const_speed_driver.goto_xyz(start_coord, {1, 3, 2, 0}, 30, cfg.tick_duration());
+        auto commands = const_speed_driver.movement_from_to(start_coord, {.v0 = 30,.accel = 0,.max_v = 30}, {1, 3, 2, 0}, cfg.tick_duration());
         
         stepping.set_callback([&n](const steps_t&) { n++; });
         stepping.current_steps = steps;
         stepping.exec(commands);
         auto steps_result = stepping.current_steps;
 
-        commands = const_speed_driver.goto_xyz({1, 3, 2, 0}, start_coord, 30, cfg.tick_duration());
+        commands = const_speed_driver.movement_from_to({1, 3, 2, 0}, {.v0 = 30,.accel = 0,.max_v = 30}, start_coord, cfg.tick_duration());
         stepping.current_steps = steps_result;
         stepping.exec(commands);
         steps_result = stepping.current_steps;
@@ -60,7 +60,7 @@ TEST_CASE("Movement constant speed", "[movement][steps_generator]")
     {
         using namespace std::chrono_literals;
         steps_t steps = {0, 0, 0, 0};
-        auto commands = const_speed_driver.goto_xyz({0, 0, 0, 0}, {-1, 1, 2, 0}, 30, cfg.tick_duration());
+        auto commands = const_speed_driver.movement_from_to({0, 0, 0, 0}, {.v0 = 30,.accel = 0,.max_v = 30}, {-1, 1, 2, 0}, cfg.tick_duration());
         stepping.current_steps = steps;
         stepping.exec(commands);
         steps = stepping.current_steps;
@@ -71,7 +71,7 @@ TEST_CASE("Movement constant speed", "[movement][steps_generator]")
     {
         using namespace std::chrono_literals;
         steps_t steps = {0, 0, 0, 0};
-        auto commands = const_speed_driver.goto_xyz({0, 0, 0, 0}, {-1, 1, 2, 0}, 3000, cfg.tick_duration());
+        auto commands = const_speed_driver.movement_from_to({0, 0, 0, 0}, {.v0 = 3000,.accel = 0,.max_v = 3000}, {-1, 1, 2, 0}, cfg.tick_duration());
         stepping.current_steps = steps;
         stepping.exec(commands);
         steps = stepping.current_steps;
@@ -100,7 +100,7 @@ TEST_CASE("Movement constant speed with timer", "[movement][steps_generator][chr
     {
         int n = 0;
         using namespace std::chrono_literals;
-        auto commands = const_speed_driver.goto_xyz(start_coord, goal_coord, velocity, cfg.tick_duration());
+        auto commands = const_speed_driver.movement_from_to(start_coord, {.v0 = velocity,.accel = 0,.max_v = velocity}, goal_coord, cfg.tick_duration());
         ((driver::inmem*)lsfake.get())->current_steps = steps;
         ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
         
@@ -122,8 +122,7 @@ TEST_CASE("Movement constant speed with timer", "[movement][steps_generator][chr
         using namespace std::chrono_literals;
         ((driver::inmem*)lsfake.get())->current_steps = steps;
         ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
-        auto commands = const_speed_driver.goto_xyz({0, 0, 0, 0}, {-1, 1, 2, 0}, 3000, cfg.tick_duration());
-        
+        auto commands = const_speed_driver.movement_from_to({0, 0, 0, 0}, {.v0 = 3000,.accel = 0,.max_v = 3000}, {-1, 1, 2, 0}, cfg.tick_duration());
         auto start_time = std::chrono::system_clock::now();
         stepping.exec(commands);
         auto end_time = std::chrono::system_clock::now();

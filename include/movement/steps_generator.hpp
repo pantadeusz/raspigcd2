@@ -39,7 +39,12 @@ struct transition_t {
     double max_v; // maximal intended velocity that can be performed on this fragment. The most desired speed. The velocity cannot exceed max_v no matter what.
 };
 
-using movement_plan_t = std::list<std::variant<distance_t, transition_t>>;
+using delay_t = double; // delay in seconds
+using movement_plan_element_t = std::variant<distance_t, transition_t, delay_t>;
+using movement_plan_t = std::list<movement_plan_element_t>;
+
+
+
 
 class steps_generator
 {
@@ -80,7 +85,9 @@ public:
 
 
     /**
-     * @brief UNTESTED: generates multistep commands to execute whole execution plan
+     * @brief Generates multistep commands to execute whole execution plan.
+     * 
+     * @param consumer_f_ the callback function that takes generated vector of multistep_command s for each segment of p0-(transition/delay)-p1
      * 
      */
     void movement_plan_to_step_commands(const movement_plan_t &plan_to_execute, const double dt, 

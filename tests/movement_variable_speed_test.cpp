@@ -61,7 +61,7 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 	GIVEN( "there is an empty program to run" ) {
 		std::list<std::variant<distance_t, double>> empty_program;
 		WHEN( "the program is converted to actions" ) {
-			std::list<std::variant<distance_t, transition_t>>
+			std::list<movement_plan_element_t>
 					result = variable_speed_driver.intent_to_movement_plan( empty_program );
 			THEN( "actions should be empty" ) {
 				REQUIRE( result.size() == 0 );
@@ -83,9 +83,9 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 		std::vector<std::variant<distance_t, double>> simple_program_v( simple_program.begin(), simple_program.end() );
 
 		WHEN( "the program is converted to actions" ) {
-			std::list<std::variant<distance_t, transition_t>>
+			std::list<movement_plan_element_t>
 					result = variable_speed_driver.intent_to_movement_plan( simple_program );
-			std::vector<std::variant<distance_t, transition_t>> result_v( result.begin(), result.end() );
+			std::vector<movement_plan_element_t> result_v( result.begin(), result.end() );
 			THEN( "the result should be of the same size as simple program" ) {
 				REQUIRE( result.size() == simple_program.size() );
 			}
@@ -115,9 +115,9 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 		std::vector<std::variant<distance_t, double>> simple_program_v( simple_program.begin(), simple_program.end() );
 
 		WHEN( "the program is converted to actions" ) {
-			std::list<std::variant<distance_t, transition_t>>
+			std::list<movement_plan_element_t>
 					result = variable_speed_driver.intent_to_movement_plan( simple_program );
-			std::vector<std::variant<distance_t, transition_t>> result_v( result.begin(), result.end() );
+			std::vector<movement_plan_element_t> result_v( result.begin(), result.end() );
 			THEN( "the result should be of the same size as simple program" ) {
 				REQUIRE( result.size() == simple_program.size() );
 			}
@@ -155,9 +155,9 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 		std::vector<std::variant<distance_t, double>> simple_program_v( simple_program.begin(), simple_program.end() );
 
 		WHEN( "the program is converted to actions" ) {
-			std::list<std::variant<distance_t, transition_t>>
+			std::list<movement_plan_element_t>
 					result = variable_speed_driver.intent_to_movement_plan( simple_program );
-			std::vector<std::variant<distance_t, transition_t>> result_v( result.begin(), result.end() );
+			std::vector<movement_plan_element_t> result_v( result.begin(), result.end() );
 			THEN( "the result should be of same 7" ) {
 				REQUIRE( result.size() == 7 );
 			}
@@ -207,9 +207,9 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 		std::vector<std::variant<distance_t, double>> simple_program_v( simple_program.begin(), simple_program.end() );
 
 		WHEN( "the program is converted to actions" ) {
-			std::list<std::variant<distance_t, transition_t>>
+			std::list<movement_plan_element_t>
 					result = variable_speed_driver.intent_to_movement_plan( simple_program );
-			std::vector<std::variant<distance_t, transition_t>> result_v( result.begin(), result.end() );
+			std::vector<movement_plan_element_t> result_v( result.begin(), result.end() );
 			THEN( "the result should be of the same size as simple program" ) {
 				REQUIRE( result.size() == simple_program.size() );
 			}
