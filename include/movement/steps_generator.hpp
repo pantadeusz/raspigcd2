@@ -58,17 +58,6 @@ public:
     void set_motor_layout(std::shared_ptr<hardware::motor_layout> ml);
 
     steps_generator(std::shared_ptr<hardware::motor_layout> ml);
-    /**
-     * @brief 
-     * 
-     * @param p0 
-     * @param p1 
-     * @param v 
-     * @param dt 
-     * @return std::vector<hardware::multistep_command> 
-     */
-    [[deprecated("This function is actualy not used anywhere and calls movement_from_to(p0, transition, p1, dt)")]]
-    std::vector<hardware::multistep_command> goto_xyz(const distance_t p0, const distance_t p1, double v, double dt) const;
 
     /**
      * @brief calculates steps series to move from point p0 to point p1 with given transition

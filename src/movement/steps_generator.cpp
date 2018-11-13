@@ -61,19 +61,7 @@ std::vector<hardware::multistep_command> steps_generator::collapse_repeated_step
     ret_vect.shrink_to_fit();
     return ret_vect;
 }
-/**
-     * @brief 
-     * 
-     * @param p0 
-     * @param p1 
-     * @param v 
-     * @param dt 
-     * @return std::vector<hardware::multistep_command> 
-     */
-std::vector<hardware::multistep_command> steps_generator::goto_xyz(const distance_t p0, const distance_t p1, double v, double dt) const
-{
-    return movement_from_to(p0, {.v0 = v,.accel = 0,.max_v = v}, p1, dt);
-}
+
 
 
 std::vector<hardware::multistep_command> steps_generator::movement_from_to(const distance_t& p0, const transition_t& transition, const distance_t& p1, const double dt) const
