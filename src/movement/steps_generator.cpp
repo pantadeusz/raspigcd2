@@ -63,7 +63,6 @@ std::vector<hardware::multistep_command> steps_generator::collapse_repeated_step
 }
 
 
-
 std::vector<hardware::multistep_command> steps_generator::movement_from_to(const distance_t& p0, const transition_t& transition, const distance_t& p1, const double dt) const
 {
     std::list<hardware::multistep_command> ret;

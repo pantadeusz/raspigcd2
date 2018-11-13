@@ -2,6 +2,7 @@
 #include <configuration_json.hpp>
 #include <hardware/stepping.hpp>
 #include <movement/variable_speed.hpp>
+#include <hardware/driver/inmem.hpp>
 
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_DISABLE_MATCHERS
@@ -17,30 +18,8 @@ using namespace raspigcd::configuration;
 using namespace raspigcd::hardware;
 using namespace raspigcd::movement;
 
-class low_steppers_fake : public hardware::low_steppers {
-public:
-	int counters[RASPIGCD_HARDWARE_DOF];
-	std::vector<bool> enabled;
-	void do_step( const single_step_command* b ) {
-		for ( int i = 0; i < RASPIGCD_HARDWARE_DOF; i++ ) {
-			if ( b[i].step == 1 ) {
-				counters[i] += b[i].dir * 2 - 1;
-			}
-		}
-	};
-	void enable_steppers( const std::vector<bool> en ) {
-		enabled = en;
-	};
-	low_steppers_fake() {
-		for ( int i = 0; i < RASPIGCD_HARDWARE_DOF; i++ ) {
-			counters[i] = 0;
-		}
-		enabled = std::vector<bool>( false, RASPIGCD_HARDWARE_DOF );
-	}
-};
-
 SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
-	std::shared_ptr<low_steppers> lsfake( new low_steppers_fake() );
+    std::shared_ptr<low_steppers> lsfake = std::make_shared<driver::inmem>();
 	configuration::global cfg;
 	cfg.load_defaults();
 	double acceleration = 100;
