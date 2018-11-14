@@ -72,7 +72,7 @@ public:
 
     // converts speed intetions into list of var_speed_pointspeed_t. That is taking into account machine limits
     movement_plan_t intent_to_movement_plan(
-        const std::list<std::variant<distance_t, double>>& intentions_);
+        const path_intent_t& intentions_);
 
     // calulates maximal linear value given the maximal values for each axis, and the normal vector of intended move
     // it works that if norm_vect is 1 on one axis, then the value from limits_for_axes on this

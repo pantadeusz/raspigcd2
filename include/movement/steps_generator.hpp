@@ -43,6 +43,8 @@ using delay_t = double; // delay in seconds
 using movement_plan_element_t = std::variant<distance_t, transition_t, delay_t>;
 using movement_plan_t = std::list<movement_plan_element_t>;
 
+using path_intent_element_t = std::variant<distance_t, double>;
+using path_intent_t = std::list<path_intent_element_t>;
 
 
 
