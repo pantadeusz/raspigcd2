@@ -48,18 +48,9 @@ protected:
     double _tick_duration;
 
 
-    double max_speed_no_accel(const distance_t& norm_vect) const
-    {
-        return calculate_linear_velocity_from_limits(_max_speed_no_accel, norm_vect);
-    }
-    double acceleration(const distance_t& norm_vect) const
-    {
-        return calculate_linear_velocity_from_limits(_acceleration, norm_vect);
-    }
-    double max_speed(const distance_t& norm_vect) const
-    {
-        return calculate_linear_velocity_from_limits(_max_speed, norm_vect);
-    }
+    double max_speed_no_accel(const distance_t& norm_vect) const;
+    double acceleration(const distance_t& norm_vect) const;
+    double max_speed(const distance_t& norm_vect) const;
 
 public:
     void set_motor_layout(const std::shared_ptr<hardware::motor_layout> ml);
@@ -81,20 +72,11 @@ public:
     movement_plan_t intent_to_movement_plan(
         const std::list<std::variant<distance_t, double>>& intentions_);
 
-    // calulates maximal linear acceleration given the maximal accelerations for each axis, and the normal vecotr of intended move
-    static double calculate_linear_velocity_from_limits(const std::vector<double>& limits_for_axes, const distance_t& norm_vect)
-    {
-        double average_max_accel = 0;
-        {
-            double average_max_accel_sum = 0;
-            for (unsigned int i = 0; i < limits_for_axes.size(); i++) {
-                average_max_accel += limits_for_axes.at(i) * norm_vect.at(i);
-                average_max_accel_sum += norm_vect.at(i);
-            }
-            average_max_accel = average_max_accel / average_max_accel_sum;
-        }
-        return average_max_accel;
-    };
+    // calulates maximal linear value given the maximal values for each axis, and the normal vector of intended move
+    // it works that if norm_vect is 1 on one axis, then the value from limits_for_axes on this
+    // otherwise it blends, so if it is a limit, then applying linear limit will not exceed limits
+    // it is used to calculate maximal speed for movement in any direction, as well as maximal acceleration and speed without acceleration
+    static double calculate_linear_coefficient_from_limits(const std::vector<double>& limits_for_axes, const distance_t& norm_vect);
 };
 
 //movement_plan_t

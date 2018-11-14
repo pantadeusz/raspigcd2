@@ -25,6 +25,7 @@
 #include <movement/variable_speed.hpp>
 #include <steps_t.hpp>
 
+#include <cassert>
 
 namespace raspigcd {
 namespace movement {
@@ -35,6 +36,21 @@ void variable_speed::set_motor_layout(const std::shared_ptr<hardware::motor_layo
     _motor_layout = ml.get();
     _motor_layout_ptr = ml;
 }
+
+double variable_speed::max_speed_no_accel(const distance_t& norm_vect) const
+{
+    return calculate_linear_coefficient_from_limits(_max_speed_no_accel, norm_vect);
+}
+double variable_speed::acceleration(const distance_t& norm_vect) const
+{
+    return calculate_linear_coefficient_from_limits(_acceleration, norm_vect);
+}
+double variable_speed::max_speed(const distance_t& norm_vect) const
+{
+    return calculate_linear_coefficient_from_limits(_max_speed, norm_vect);
+}
+
+
 void variable_speed::set_max_speed_no_accel(const std::vector<double>& max_speed_no_accel_) { _max_speed_no_accel = max_speed_no_accel_; }
 void variable_speed::set_acceleration(const std::vector<double>& acceleration_) { _acceleration = acceleration_; }
 void variable_speed::set_max_speed(const std::vector<double>& max_speed_) { _max_speed = max_speed_; }
@@ -60,6 +76,25 @@ double variable_speed::accleration_length_calc(double speed_0, double speed_1, d
     double l_AM = std::abs(speed_0 * t_AM + acceleration * t_AM * t_AM / 2.0);
     return l_AM;
 };
+
+
+double variable_speed::calculate_linear_coefficient_from_limits(const std::vector<double>& limits_for_axes, const distance_t& norm_vect)
+{
+    assert(std::sqrt(norm_vect.length2()) > 0.9999);
+    assert(std::sqrt(norm_vect.length2()) < 1.0001);
+    double average_max_accel = 0;
+    {
+        double average_max_accel_sum = 0;
+        for (unsigned int i = 0; i < limits_for_axes.size(); i++) {
+            average_max_accel += limits_for_axes.at(i) * norm_vect.at(i);
+            average_max_accel_sum += norm_vect.at(i);
+        }
+        average_max_accel = average_max_accel / average_max_accel_sum;
+    }
+    return average_max_accel;
+};
+
+
 
 // converts speed intetions into list of var_speed_pointspeed_t. That is taking into account machine limits
 movement_plan_t variable_speed::intent_to_movement_plan(
