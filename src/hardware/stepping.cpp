@@ -22,9 +22,9 @@ std::list<steps_t> hardware_commands_to_steps(const std::vector<multistep_comman
     std::list<steps_t> ret;
     steps_t _steps = {0,0,0,0};
     for (const auto& s : commands_to_do) {
-        for (int i = 0; i < s.cmnd.count; i++) {
+        for (int i = 0; i < s.count; i++) {
             for (int j = 0; j < 4; j++)
-                _steps[j] = _steps[j] + (int)((signed char)s.cmnd.b[j].step * ((signed char)s.cmnd.b[j].dir * 2 - 1));
+                _steps[j] = _steps[j] + (int)((signed char)s.b[j].step * ((signed char)s.b[j].dir * 2 - 1));
             ret.push_back(_steps);
         }
     }
@@ -65,13 +65,13 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
     long int step_number = 0;
     nextT = t;
     for (const auto& s : commands_to_do) {
-        for (int i = 0; i < s.cmnd.count; i++) {
-//             _steps[0] = _steps[0] + (int)((signed char)s.cmnd.b[0].step * ((signed char)s.cmnd.b[0].dir * 2 - 1));
-//             _steps[1] = _steps[1] + (int)((signed char)s.cmnd.b[1].step * ((signed char)s.cmnd.b[1].dir * 2 - 1));
-//             _steps[2] = _steps[2] + (int)((signed char)s.cmnd.b[2].step * ((signed char)s.cmnd.b[2].dir * 2 - 1));
-//             _steps[3] = _steps[3] + (int)((signed char)s.cmnd.b[3].step * ((signed char)s.cmnd.b[3].dir * 2 - 1));
+        for (int i = 0; i < s.count; i++) {
+//             _steps[0] = _steps[0] + (int)((signed char)s.b[0].step * ((signed char)s.b[0].dir * 2 - 1));
+//             _steps[1] = _steps[1] + (int)((signed char)s.b[1].step * ((signed char)s.b[1].dir * 2 - 1));
+//             _steps[2] = _steps[2] + (int)((signed char)s.b[2].step * ((signed char)s.b[2].dir * 2 - 1));
+//             _steps[3] = _steps[3] + (int)((signed char)s.b[3].step * ((signed char)s.b[3].dir * 2 - 1));
             ttime = std::chrono::microseconds((unsigned long)(_delay_microseconds));
-            _steppers_driver->do_step(s.cmnd.b);
+            _steppers_driver->do_step(s.b);
             _tick_index++;
 //             on_step_(_steps);
             // wait till next step
@@ -106,7 +106,7 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
 
     // this part is critical - I unwinded loops in order to reduce latencies
     for (auto c : commands) {
-        int rpt = c.cmnd.count; // 0 means that we execute it once
+        int rpt = c.count; // 0 means that we execute it once
         do {
             execute_single_tick(c, steppers, _position, step_clear);
             //nextT = t + ttime * current_tick_n;

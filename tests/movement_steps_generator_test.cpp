@@ -85,56 +85,56 @@ TEST_CASE("Movement constant speed", "[movement][steps_generator]")
         auto result = steps_generator::collapse_repeated_steps({});
         REQUIRE(result.size() == 0);
 
-        result = steps_generator::collapse_repeated_steps({{.cmnd = {
+        result = steps_generator::collapse_repeated_steps({{
                                                                 .b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}},
-                                                                .count = 1}}});
+                                                                .count = 1}});
         REQUIRE(result.size() == 1);
 
         result = steps_generator::collapse_repeated_steps(
             {
-            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}},
-            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}}
+            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
+            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}
             }
             );
         REQUIRE(result.size() == 1);
-        REQUIRE(result[0].cmnd.count == 2);
+        REQUIRE(result[0].count == 2);
 
         result = steps_generator::collapse_repeated_steps(
             {
-            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}},
-            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}}
+            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
+            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}
             }
             );
         REQUIRE(result.size() == 1);
-        REQUIRE(result[0].cmnd.count == 1);
+        REQUIRE(result[0].count == 1);
 
         result = steps_generator::collapse_repeated_steps(
             {
-            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}},
-            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}}
+            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0},
+            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}
             }
             );
         REQUIRE(result.size() == 0);
 
         result = steps_generator::collapse_repeated_steps(
             {
-            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}},
-            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}}
+            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
+            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}
             }
             );
         REQUIRE(result.size() == 1);
-        REQUIRE(result[0].cmnd.count == 3);
+        REQUIRE(result[0].count == 3);
 
         result = steps_generator::collapse_repeated_steps(
             {
-            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}},
-            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}},
-            {.cmnd = {.b = {{.step = 1, .dir = 0}, {.step = 1, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}}
+            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
+            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2},
+            {.b = {{.step = 1, .dir = 0}, {.step = 1, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}
             }
             );
         REQUIRE(result.size() == 2);
-        REQUIRE(result[0].cmnd.count == 3);
-        REQUIRE(result[1].cmnd.count == 2);
+        REQUIRE(result[0].count == 3);
+        REQUIRE(result[1].count == 2);
     }
 }
 

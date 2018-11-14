@@ -46,14 +46,14 @@ hardware::multistep_commands_t chase_steps(const steps_t& start_pos_, steps_t de
     hardware::multistep_commands_t ret;
     ret.reserve(steps_remaining(start_pos_, destination_pos_) * 2 + 32);
     auto steps = start_pos_;
-    hardware::multistep_command executor_command;
+    hardware::multistep_command executor_command = {};
     int stodo = steps_remaining(steps, destination_pos_);
     do {
-        executor_command.v = 0;
-        executor_command.cmnd.count = 1;
+        // executor_command.v = 0;
+        executor_command.count = 1;
         for (unsigned int i = 0; i < steps.size(); i++) {
-            executor_command.cmnd.b[i].dir = ((destination_pos_[i] > steps[i]) ? 1 : 0);
-            executor_command.cmnd.b[i].step = (destination_pos_[i] - steps[i]) ? 1 : 0;
+            executor_command.b[i].dir = ((destination_pos_[i] > steps[i]) ? 1 : 0);
+            executor_command.b[i].step = (destination_pos_[i] - steps[i]) ? 1 : 0;
             if (destination_pos_[i] > steps[i])
                 steps[i]++;
             else if (destination_pos_[i] < steps[i])

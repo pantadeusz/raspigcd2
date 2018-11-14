@@ -48,21 +48,21 @@ hardware::multistep_commands_t steps_generator::collapse_repeated_steps(const st
     ret_vect.reserve(ret.size());
     // repeated commands should be one with apropriate count
     for (auto& e : ret) {
-        if (e.cmnd.count > 0) {
+        if (e.count > 0) {
             if ((ret_vect.size() == 0) || 
                 !(
-                    (e.cmnd.b[0] == ret_vect.back().cmnd.b[0]) &&
-                    (e.cmnd.b[1] == ret_vect.back().cmnd.b[1]) &&
-                    (e.cmnd.b[2] == ret_vect.back().cmnd.b[2]) &&
-                    (e.cmnd.b[3] == ret_vect.back().cmnd.b[3])
+                    (e.b[0] == ret_vect.back().b[0]) &&
+                    (e.b[1] == ret_vect.back().b[1]) &&
+                    (e.b[2] == ret_vect.back().b[2]) &&
+                    (e.b[3] == ret_vect.back().b[3])
                 )
                 ) {
                 ret_vect.push_back(e);
             } else {
-                if (ret_vect.back().cmnd.count > 0x0fffffff) {
+                if (ret_vect.back().count > 0x0fffffff) {
                     ret_vect.push_back(e);
                 } else {
-                    ret_vect.back().cmnd.count+=e.cmnd.count;
+                    ret_vect.back().count+=e.count;
                 }
             }
         }

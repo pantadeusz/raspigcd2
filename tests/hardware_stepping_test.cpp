@@ -33,7 +33,7 @@ TEST_CASE("Hardware stepping_sim", "[hardware_stepping][stepping_sim]")
     {
         int n = 0;
         worker.set_callback([&](const auto&) { n++; });
-        worker.exec({{.cmnd = {.b = {{0, 0}, {0, 0}, {0, 0}, {0, 0}}, .count = 1}}});
+        worker.exec({{{{.step=0, .dir=0}, {.step=0, .dir=0}, {.step=0, .dir=0}, {.step=0, .dir=0}},1}});
         REQUIRE(n == 1);
     }
     SECTION("Run one step in each positive  direction")
@@ -41,17 +41,17 @@ TEST_CASE("Hardware stepping_sim", "[hardware_stepping][stepping_sim]")
         for (int i = 0; i < 4; i++) {
             int n = 0;
             multistep_command cmnd;
-            cmnd.cmnd.count = 1;
-            cmnd.cmnd.b[0].step = 0;
-            cmnd.cmnd.b[0].dir = 0;
-            cmnd.cmnd.b[1].step = 0;
-            cmnd.cmnd.b[1].dir = 0;
-            cmnd.cmnd.b[2].step = 0;
-            cmnd.cmnd.b[2].dir = 0;
-            cmnd.cmnd.b[3].step = 0;
-            cmnd.cmnd.b[3].dir = 0;
-            cmnd.cmnd.b[i].step = 1;
-            cmnd.cmnd.b[i].dir = 1;
+            cmnd.count = 1;
+            cmnd.b[0].step = 0;
+            cmnd.b[0].dir = 0;
+            cmnd.b[1].step = 0;
+            cmnd.b[1].dir = 0;
+            cmnd.b[2].step = 0;
+            cmnd.b[2].dir = 0;
+            cmnd.b[3].step = 0;
+            cmnd.b[3].dir = 0;
+            cmnd.b[i].step = 1;
+            cmnd.b[i].dir = 1;
             worker.set_callback([&](const auto&) { n++; });
             worker.current_steps = {5, 6, 7, 8};
             worker.exec({cmnd});
@@ -66,17 +66,17 @@ TEST_CASE("Hardware stepping_sim", "[hardware_stepping][stepping_sim]")
         for (int i = 0; i < 4; i++) {
             int n = 0;
             multistep_command cmnd;
-            cmnd.cmnd.count = 1;
-            cmnd.cmnd.b[0].step = 0;
-            cmnd.cmnd.b[0].dir = 0;
-            cmnd.cmnd.b[1].step = 0;
-            cmnd.cmnd.b[1].dir = 0;
-            cmnd.cmnd.b[2].step = 0;
-            cmnd.cmnd.b[2].dir = 0;
-            cmnd.cmnd.b[3].step = 0;
-            cmnd.cmnd.b[3].dir = 0;
-            cmnd.cmnd.b[i].step = 1;
-            cmnd.cmnd.b[i].dir = 0;
+            cmnd.count = 1;
+            cmnd.b[0].step = 0;
+            cmnd.b[0].dir = 0;
+            cmnd.b[1].step = 0;
+            cmnd.b[1].dir = 0;
+            cmnd.b[2].step = 0;
+            cmnd.b[2].dir = 0;
+            cmnd.b[3].step = 0;
+            cmnd.b[3].dir = 0;
+            cmnd.b[i].step = 1;
+            cmnd.b[i].dir = 0;
             worker.set_callback([&](const auto&) { n++; });
             worker.current_steps = {1, 2, 3, 4};
             worker.exec({cmnd});
@@ -108,7 +108,7 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
         int n = 0;
         ((driver::inmem*)lsfake.get())->current_steps = {0, 0, 0, 0};
         ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
-        worker.exec({{.cmnd = {.b = {{0, 0}, {0, 0}, {0, 0}, {0, 0}}, .count = 1}}});
+        worker.exec({{.b = {{0, 0}, {0, 0}, {0, 0}, {0, 0}}, .count = 1}});
         REQUIRE(n == 1);
     }
     SECTION("Run one step in each positive  direction")
@@ -116,17 +116,17 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
         for (int i = 0; i < 4; i++) {
             int n = 0;
             multistep_command cmnd;
-            cmnd.cmnd.count = 1;
-            cmnd.cmnd.b[0].step = 0;
-            cmnd.cmnd.b[0].dir = 0;
-            cmnd.cmnd.b[1].step = 0;
-            cmnd.cmnd.b[1].dir = 0;
-            cmnd.cmnd.b[2].step = 0;
-            cmnd.cmnd.b[2].dir = 0;
-            cmnd.cmnd.b[3].step = 0;
-            cmnd.cmnd.b[3].dir = 0;
-            cmnd.cmnd.b[i].step = 1;
-            cmnd.cmnd.b[i].dir = 1;
+            cmnd.count = 1;
+            cmnd.b[0].step = 0;
+            cmnd.b[0].dir = 0;
+            cmnd.b[1].step = 0;
+            cmnd.b[1].dir = 0;
+            cmnd.b[2].step = 0;
+            cmnd.b[2].dir = 0;
+            cmnd.b[3].step = 0;
+            cmnd.b[3].dir = 0;
+            cmnd.b[i].step = 1;
+            cmnd.b[i].dir = 1;
             ((driver::inmem*)lsfake.get())->current_steps = {5, 6, 7, 8};
             ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
             worker.exec({cmnd});
@@ -142,17 +142,17 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
         for (int i = 0; i < 4; i++) {
             int n = 0;
             multistep_command cmnd;
-            cmnd.cmnd.count = 1;
-            cmnd.cmnd.b[0].step = 0;
-            cmnd.cmnd.b[0].dir = 0;
-            cmnd.cmnd.b[1].step = 0;
-            cmnd.cmnd.b[1].dir = 0;
-            cmnd.cmnd.b[2].step = 0;
-            cmnd.cmnd.b[2].dir = 0;
-            cmnd.cmnd.b[3].step = 0;
-            cmnd.cmnd.b[3].dir = 0;
-            cmnd.cmnd.b[i].step = 1;
-            cmnd.cmnd.b[i].dir = 0;
+            cmnd.count = 1;
+            cmnd.b[0].step = 0;
+            cmnd.b[0].dir = 0;
+            cmnd.b[1].step = 0;
+            cmnd.b[1].dir = 0;
+            cmnd.b[2].step = 0;
+            cmnd.b[2].dir = 0;
+            cmnd.b[3].step = 0;
+            cmnd.b[3].dir = 0;
+            cmnd.b[i].step = 1;
+            cmnd.b[i].dir = 0;
             ((driver::inmem*)lsfake.get())->current_steps = {1, 2, 3, 4};
             ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
             worker.exec({cmnd});
