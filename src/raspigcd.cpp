@@ -39,6 +39,11 @@ int main()
     std::list<std::variant<distance_t, double>> simple_program = {
 			distance_t{0, 0, 0, 0}, 30.0,
 			distance_t{0, 0, 5, 0}, 5.0,
+
+			distance_t{0, 10, 5, 0}, 5.0,
+			distance_t{10, 10, 5, 0}, 30.0,
+			distance_t{10, 0, 5, 0}, 5.0,
+
 			distance_t{0, 0, 0, 0}
 		};
 	auto plan_to_execute = variable_speed_driver.intent_to_movement_plan( simple_program );
