@@ -46,7 +46,7 @@ public:
 	* @param on_step_ function to execute on each step. This function can throw exceptions to break execution of steps
 	* @return steps_t final position of the machine in steps
 	*/
-    virtual void exec(const std::vector<multistep_command>& commands_to_do) = 0;
+    virtual void exec(const multistep_commands_t& commands_to_do) = 0;
     /**
      * returns current tick index. This is not in the terms of commands. There will be at least as many ticks as commands.#pragma endregion
      * */
@@ -69,7 +69,7 @@ public:
 
     virtual int get_tick_index() const {return _tick_index;};
 // const steps_t& start_steps, std::function<void(const steps_t&)> on_step_
-    void exec(const std::vector<multistep_command>& commands_to_do);
+    void exec(const multistep_commands_t& commands_to_do);
 
     stepping_sim(
         const steps_t start_steps_,
@@ -104,7 +104,7 @@ public:
      */
     void set_low_level_steppers_driver(std::shared_ptr<low_steppers> steppers_driver);
 
-    void exec(const std::vector<multistep_command>& commands_to_do);
+    void exec(const multistep_commands_t& commands_to_do);
 
     stepping_simple_timer(int delay_us, std::shared_ptr<low_steppers> steppers_driver)
     {
@@ -122,7 +122,7 @@ public:
 
 
 
-std::list<steps_t> hardware_commands_to_steps(const std::vector<multistep_command>& commands_to_do);
+std::list<steps_t> hardware_commands_to_steps(const multistep_commands_t& commands_to_do);
 
 } // namespace hardware
 } // namespace raspigcd

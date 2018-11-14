@@ -36,6 +36,8 @@ namespace raspigcd {
 namespace movement {
 
 
+
+
 class variable_speed
 {
 protected:

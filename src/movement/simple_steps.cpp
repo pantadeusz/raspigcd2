@@ -41,9 +41,9 @@ int steps_remaining(const steps_t& steps_, const steps_t& destination_steps_)
  * @arg steps_ current steps count
  * @arg destination_steps_ desired steps count
  */
-std::vector<hardware::multistep_command> chase_steps(const steps_t& start_pos_, steps_t destination_pos_)
+hardware::multistep_commands_t chase_steps(const steps_t& start_pos_, steps_t destination_pos_)
 {
-    std::vector<hardware::multistep_command> ret;
+    hardware::multistep_commands_t ret;
     ret.reserve(steps_remaining(start_pos_, destination_pos_) * 2 + 32);
     auto steps = start_pos_;
     hardware::multistep_command executor_command;

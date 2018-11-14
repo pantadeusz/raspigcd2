@@ -36,7 +36,7 @@ int steps_remaining( const steps_t& steps_, const steps_t& destination_steps_ );
  * @arg steps_ current steps count
  * @arg destination_steps_ desired steps count
  */
-std::vector<hardware::multistep_command> chase_steps( const steps_t& steps_, steps_t destination_steps_ );
+hardware::multistep_commands_t chase_steps( const steps_t& steps_, steps_t destination_steps_ );
 
 
 } // namespace simple_steps

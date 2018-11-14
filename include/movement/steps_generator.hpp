@@ -52,9 +52,9 @@ protected:
     hardware::motor_layout* _motor_layout;
     std::shared_ptr<hardware::motor_layout> _motor_layout_ptr;
 
-    std::vector<hardware::multistep_command> collapse_repeated_steps(const std::list<hardware::multistep_command>& commands) const;
-
 public:
+    static hardware::multistep_commands_t collapse_repeated_steps(const std::list<hardware::multistep_command>& commands);
+
     void set_motor_layout(std::shared_ptr<hardware::motor_layout> ml);
 
     steps_generator(std::shared_ptr<hardware::motor_layout> ml);
@@ -68,9 +68,9 @@ public:
      * @param p1 destination position
      * @param transition the transition between positions (velocity, acceleration and max velocity) 
      * @param dt time step in seconds
-     * @return std::vector<hardware::multistep_command> series of multistep_command values for stepper motors
+     * @return hardware::multistep_commands_t series of multistep_command values for stepper motors
      */
-    std::vector<hardware::multistep_command> movement_from_to(const distance_t& p0, const transition_t& transition, const distance_t& p1, const double dt) const;
+    hardware::multistep_commands_t movement_from_to(const distance_t& p0, const transition_t& transition, const distance_t& p1, const double dt) const;
 
 
     /**
@@ -80,7 +80,7 @@ public:
      * 
      */
     void movement_plan_to_step_commands(const movement_plan_t &plan_to_execute, const double dt, 
-        std::function < void (std::unique_ptr<std::vector<hardware::multistep_command> > ) > consumer_f_) const ;
+        std::function < void (std::unique_ptr<hardware::multistep_commands_t > ) > consumer_f_) const ;
 
 
     /**

@@ -41,20 +41,29 @@ steps_generator::steps_generator(std::shared_ptr<hardware::motor_layout> ml)
 }
 
 
-std::vector<hardware::multistep_command> steps_generator::collapse_repeated_steps(const std::list<hardware::multistep_command>& ret) const
+hardware::multistep_commands_t steps_generator::collapse_repeated_steps(const std::list<hardware::multistep_command>& ret) 
 {
     if (ret.size() == 0) return {};
-    std::vector<hardware::multistep_command> ret_vect;
+    hardware::multistep_commands_t ret_vect;
     ret_vect.reserve(ret.size());
     // repeated commands should be one with apropriate count
     for (auto& e : ret) {
-        if ((ret_vect.size() == 0) || (e.v != ret_vect.back().v)) {
-            ret_vect.push_back(e);
-        } else {
-            if (ret_vect.back().cmnd.count > 0x0fffffff) {
+        if (e.cmnd.count > 0) {
+            if ((ret_vect.size() == 0) || 
+                !(
+                    (e.cmnd.b[0] == ret_vect.back().cmnd.b[0]) &&
+                    (e.cmnd.b[1] == ret_vect.back().cmnd.b[1]) &&
+                    (e.cmnd.b[2] == ret_vect.back().cmnd.b[2]) &&
+                    (e.cmnd.b[3] == ret_vect.back().cmnd.b[3])
+                )
+                ) {
                 ret_vect.push_back(e);
             } else {
-                ret_vect.back().cmnd.count++;
+                if (ret_vect.back().cmnd.count > 0x0fffffff) {
+                    ret_vect.push_back(e);
+                } else {
+                    ret_vect.back().cmnd.count+=e.cmnd.count;
+                }
             }
         }
     }
@@ -63,7 +72,7 @@ std::vector<hardware::multistep_command> steps_generator::collapse_repeated_step
 }
 
 
-std::vector<hardware::multistep_command> steps_generator::movement_from_to(const distance_t& p0, const transition_t& transition, const distance_t& p1, const double dt) const
+hardware::multistep_commands_t steps_generator::movement_from_to(const distance_t& p0, const transition_t& transition, const distance_t& p1, const double dt) const
 {
     std::list<hardware::multistep_command> ret;
     double v0 = transition.v0;
@@ -80,12 +89,12 @@ std::vector<hardware::multistep_command> steps_generator::movement_from_to(const
     steps_t p1steps = _motor_layout->cartesian_to_steps(p1);
     for (int i = 1; l() < s; ++i, t = dt * i) {
         auto pos = _motor_layout->cartesian_to_steps(p0 + vp_v * l());
-        std::vector<hardware::multistep_command> steps_to_add = simple_steps::chase_steps(p_steps, pos);
+        hardware::multistep_commands_t steps_to_add = simple_steps::chase_steps(p_steps, pos);
         ret.insert(ret.end(), steps_to_add.begin(), steps_to_add.end());
         p_steps = pos;
         if ((a * t + v0) > transition.max_v) throw std::invalid_argument("velocity exceeds max_v");
     }
-    std::vector<hardware::multistep_command> steps_to_add = simple_steps::chase_steps(p_steps, p1steps);
+    hardware::multistep_commands_t steps_to_add = simple_steps::chase_steps(p_steps, p1steps);
     ret.insert(ret.end(), steps_to_add.begin(), steps_to_add.end());
 
     return collapse_repeated_steps(ret);
@@ -109,14 +118,14 @@ double steps_generator::velocity_after_from_to(const distance_t& p0, const trans
 
 
 void steps_generator::movement_plan_to_step_commands(const movement_plan_t &plan_to_execute, const double dt, 
-        std::function < void (std::unique_ptr<std::vector<hardware::multistep_command> > ) > consumer_f_) const {
+        std::function < void (std::unique_ptr<hardware::multistep_commands_t > ) > consumer_f_) const {
         
         std::vector<movement_plan_element_t> result_v;
         //steps_t steps = {0, 0, 0, 0};
         for ( const auto &plan_step : plan_to_execute ) {
             result_v.push_back(plan_step);
             if (result_v.size() == 3) {
-                auto commands_p = std::make_unique< std::vector<hardware::multistep_command> >();
+                auto commands_p = std::make_unique< hardware::multistep_commands_t >();
                 (*(commands_p.get())) = movement_from_to( 
                     std::get<distance_t>( result_v[0] ), 
                     std::get<transition_t>( result_v[1] ), 

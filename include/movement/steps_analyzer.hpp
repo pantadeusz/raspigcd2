@@ -33,14 +33,6 @@
 namespace raspigcd {
 namespace movement {
 
-//struct transition_t {
-//    double v0;    // initial velocity
-//    double accel; // acceleration to the next node
-//    double max_v; // maximal intended velocity that can be performed on this fragment. The most desired speed. The velocity cannot exceed max_v no matter what.
-//};
-
-//using movement_plan_t = std::list<std::variant<distance_t, transition_t>>;
-
 class steps_analyzer
 {
 protected:
@@ -63,38 +55,9 @@ public:
      * Note that if the tick number is 0  then no ticks are executed.
      * 
      */
-    steps_t steps_from_tick(const std::vector<hardware::multistep_command> &commands_to_do,const int tick_number) const {
-        auto tick_number_ = tick_number;
-        steps_t _steps = {0,0,0,0};
-        int cmnd_i = 0;
-        int i = 0;
-        for (const auto& s : commands_to_do) {
-            //std::cout << " i " << i << " cmnd_i " << cmnd_i << std::endl;
-            if ((tick_number_ >= i) && (tick_number_ < (i + s.cmnd.count))) {
-                //std::cout << " i " << i << " cmnd_i " << cmnd_i << "  >> " << (tick_number_ - i) << std::endl;
-                for (int j = 0; j < 4; j++)
-                    _steps[j] = _steps[j] + (tick_number_ - i)*((int)((signed char)s.cmnd.b[j].step * ((signed char)s.cmnd.b[j].dir * 2 - 1)));
-                return _steps;
-            } else {
-                for (int j = 0; j < 4; j++)
-                    _steps[j] = _steps[j] + s.cmnd.count*((int)((signed char)s.cmnd.b[j].step * ((signed char)s.cmnd.b[j].dir * 2 - 1)));
-            }
-            cmnd_i++;
-            i += s.cmnd.count;
-        }
-        if (i == tick_number_) 
-            return _steps;
-        throw std::out_of_range("the index is after the last step");
-    };
-    int get_last_tick_index(const std::vector<hardware::multistep_command> &commands_to_do) const {
-        int cmnd_i = 0;
-        int i = 0;
-        for (const auto& s : commands_to_do) {
-            cmnd_i++;
-            i += s.cmnd.count;
-        }
-        return i;
-    };
+    steps_t steps_from_tick(const hardware::multistep_commands_t &commands_to_do,const int tick_number) const ;
+
+    int get_last_tick_index(const hardware::multistep_commands_t &commands_to_do) const ;
 
 
 };

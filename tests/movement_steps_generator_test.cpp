@@ -1,8 +1,8 @@
 #include <configuration.hpp>
 #include <configuration_json.hpp>
+#include <hardware/driver/inmem.hpp>
 #include <hardware/stepping.hpp>
 #include <movement/steps_generator.hpp>
-#include <hardware/driver/inmem.hpp>
 
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_DISABLE_MATCHERS
@@ -16,6 +16,7 @@
 using namespace raspigcd;
 using namespace raspigcd::configuration;
 using namespace raspigcd::hardware;
+using namespace raspigcd::movement;
 
 
 TEST_CASE("Movement constant speed", "[movement][steps_generator]")
@@ -25,7 +26,7 @@ TEST_CASE("Movement constant speed", "[movement][steps_generator]")
     cfg.tick_duration_us = 60;
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
     movement::steps_generator const_speed_driver(motor_layout_);
-    stepping_sim stepping({0,0,0,0});
+    stepping_sim stepping({0, 0, 0, 0});
 
     distance_t start_coord = {0, 0, 0, 0};
     steps_t steps = motor_layout_.get()->cartesian_to_steps(start_coord);
@@ -35,21 +36,21 @@ TEST_CASE("Movement constant speed", "[movement][steps_generator]")
     {
         int n = 0;
         stepping.set_callback([&](const auto&) { n++; });
-        stepping.exec( {});
+        stepping.exec({});
         REQUIRE(n == 0);
     }
     SECTION("Generate movement forward and backward ")
     {
         int n = 0;
         using namespace std::chrono_literals;
-        auto commands = const_speed_driver.movement_from_to(start_coord, {.v0 = 30,.accel = 0,.max_v = 30}, {1, 3, 2, 0}, cfg.tick_duration());
-        
+        auto commands = const_speed_driver.movement_from_to(start_coord, {.v0 = 30, .accel = 0, .max_v = 30}, {1, 3, 2, 0}, cfg.tick_duration());
+
         stepping.set_callback([&n](const steps_t&) { n++; });
         stepping.current_steps = steps;
         stepping.exec(commands);
         auto steps_result = stepping.current_steps;
 
-        commands = const_speed_driver.movement_from_to({1, 3, 2, 0}, {.v0 = 30,.accel = 0,.max_v = 30}, start_coord, cfg.tick_duration());
+        commands = const_speed_driver.movement_from_to({1, 3, 2, 0}, {.v0 = 30, .accel = 0, .max_v = 30}, start_coord, cfg.tick_duration());
         stepping.current_steps = steps_result;
         stepping.exec(commands);
         steps_result = stepping.current_steps;
@@ -60,7 +61,7 @@ TEST_CASE("Movement constant speed", "[movement][steps_generator]")
     {
         using namespace std::chrono_literals;
         steps_t steps = {0, 0, 0, 0};
-        auto commands = const_speed_driver.movement_from_to({0, 0, 0, 0}, {.v0 = 30,.accel = 0,.max_v = 30}, {-1, 1, 2, 0}, cfg.tick_duration());
+        auto commands = const_speed_driver.movement_from_to({0, 0, 0, 0}, {.v0 = 30, .accel = 0, .max_v = 30}, {-1, 1, 2, 0}, cfg.tick_duration());
         stepping.current_steps = steps;
         stepping.exec(commands);
         steps = stepping.current_steps;
@@ -71,12 +72,69 @@ TEST_CASE("Movement constant speed", "[movement][steps_generator]")
     {
         using namespace std::chrono_literals;
         steps_t steps = {0, 0, 0, 0};
-        auto commands = const_speed_driver.movement_from_to({0, 0, 0, 0}, {.v0 = 3000,.accel = 0,.max_v = 3000}, {-1, 1, 2, 0}, cfg.tick_duration());
+        auto commands = const_speed_driver.movement_from_to({0, 0, 0, 0}, {.v0 = 3000, .accel = 0, .max_v = 3000}, {-1, 1, 2, 0}, cfg.tick_duration());
         stepping.current_steps = steps;
         stepping.exec(commands);
         steps = stepping.current_steps;
         steps_t expected_steps = motor_layout_.get()->cartesian_to_steps({-1, 1, 2, 0});
         REQUIRE(steps == expected_steps);
+    }
+
+    SECTION("steps_generator::collapse_repeated_steps")
+    {
+        auto result = steps_generator::collapse_repeated_steps({});
+        REQUIRE(result.size() == 0);
+
+        result = steps_generator::collapse_repeated_steps({{.cmnd = {
+                                                                .b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}},
+                                                                .count = 1}}});
+        REQUIRE(result.size() == 1);
+
+        result = steps_generator::collapse_repeated_steps(
+            {
+            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}},
+            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}}
+            }
+            );
+        REQUIRE(result.size() == 1);
+        REQUIRE(result[0].cmnd.count == 2);
+
+        result = steps_generator::collapse_repeated_steps(
+            {
+            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}},
+            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}}
+            }
+            );
+        REQUIRE(result.size() == 1);
+        REQUIRE(result[0].cmnd.count == 1);
+
+        result = steps_generator::collapse_repeated_steps(
+            {
+            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}},
+            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}}
+            }
+            );
+        REQUIRE(result.size() == 0);
+
+        result = steps_generator::collapse_repeated_steps(
+            {
+            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}},
+            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}}
+            }
+            );
+        REQUIRE(result.size() == 1);
+        REQUIRE(result[0].cmnd.count == 3);
+
+        result = steps_generator::collapse_repeated_steps(
+            {
+            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}},
+            {.cmnd = {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}},
+            {.cmnd = {.b = {{.step = 1, .dir = 0}, {.step = 1, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}}
+            }
+            );
+        REQUIRE(result.size() == 2);
+        REQUIRE(result[0].cmnd.count == 3);
+        REQUIRE(result[1].cmnd.count == 2);
     }
 }
 
@@ -100,10 +158,10 @@ TEST_CASE("Movement constant speed with timer", "[movement][steps_generator][chr
     {
         int n = 0;
         using namespace std::chrono_literals;
-        auto commands = const_speed_driver.movement_from_to(start_coord, {.v0 = velocity,.accel = 0,.max_v = velocity}, goal_coord, cfg.tick_duration());
+        auto commands = const_speed_driver.movement_from_to(start_coord, {.v0 = velocity, .accel = 0, .max_v = velocity}, goal_coord, cfg.tick_duration());
         ((driver::inmem*)lsfake.get())->current_steps = steps;
         ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
-        
+
         auto start_time = std::chrono::system_clock::now();
         stepping.exec(commands);
         auto end_time = std::chrono::system_clock::now();
@@ -122,14 +180,14 @@ TEST_CASE("Movement constant speed with timer", "[movement][steps_generator][chr
         using namespace std::chrono_literals;
         ((driver::inmem*)lsfake.get())->current_steps = steps;
         ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
-        auto commands = const_speed_driver.movement_from_to({0, 0, 0, 0}, {.v0 = 3000,.accel = 0,.max_v = 3000}, {-1, 1, 2, 0}, cfg.tick_duration());
+        auto commands = const_speed_driver.movement_from_to({0, 0, 0, 0}, {.v0 = 3000, .accel = 0, .max_v = 3000}, {-1, 1, 2, 0}, cfg.tick_duration());
         auto start_time = std::chrono::system_clock::now();
         stepping.exec(commands);
         auto end_time = std::chrono::system_clock::now();
 
         double expected_duration = ((std::sqrt((goal_coord - start_coord).length2()) / 3000));
         double result_duration = (std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count() / 1000000.0);
-        
+
         steps = ((driver::inmem*)lsfake.get())->current_steps;
         steps_t expected_steps = motor_layout_.get()->cartesian_to_steps({-1, 1, 2, 0});
         REQUIRE(steps == expected_steps);
@@ -154,16 +212,16 @@ SCENARIO("steps_generator for transitions with accelerations", "[movement][steps
     int delay_between_steps = 0;
 
     ((driver::inmem*)lsfake.get())->set_step_callback([&](const steps_t& pos) {
-                    if (pos == prev_pos) {
-                        delay_between_steps++;
-                    } else {
-                        delays_array.push_back(delay_between_steps);
-                        delay_between_steps = 0;
-                    }
-                    prev_pos = pos;
-                });
-//        worker.exec({cmnd});
-//        auto st = ((driver::inmem*)lsfake.get())->current_steps;
+        if (pos == prev_pos) {
+            delay_between_steps++;
+        } else {
+            delays_array.push_back(delay_between_steps);
+            delay_between_steps = 0;
+        }
+        prev_pos = pos;
+    });
+    //        worker.exec({cmnd});
+    //        auto st = ((driver::inmem*)lsfake.get())->current_steps;
 
 
     GIVEN("we have segment to move with no acceleration at all")
@@ -175,7 +233,6 @@ SCENARIO("steps_generator for transitions with accelerations", "[movement][steps
             .accel = 0, // acceleration to the next node
             .max_v = 3  // maximal intended velocity that can be performed on this fragment. The most desired speed. The velocity cannot exceed max_v no matter what.
         };
-
 
 
         WHEN("steps are generated")

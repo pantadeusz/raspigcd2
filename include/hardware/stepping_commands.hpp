@@ -19,6 +19,7 @@
 #define __RASPIGCD_HARDWARE_STEPPING_COMMANDS_T_HPP__
 
 #include <cstdint>
+#include <vector>
 
 #ifndef RASPIGCD_HARDWARE_DOF
 #define RASPIGCD_HARDWARE_DOF 4
@@ -38,6 +39,12 @@ union multistep_command {
     } cmnd;
     int64_t v;
 };
+using multistep_commands_t = std::vector<multistep_command>;
+
+inline bool operator==(const single_step_command &a, const single_step_command &b) {
+    return (a.step == b.step) && (a.dir == b.dir);
+    //return *(char*)&a == *(char*)&b;
+}
 
 } // namespace hardware
 } // namespace raspigcd
