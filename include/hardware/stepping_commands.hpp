@@ -21,9 +21,7 @@
 #include <cstdint>
 #include <vector>
 
-#ifndef RASPIGCD_HARDWARE_DOF
-#define RASPIGCD_HARDWARE_DOF 4
-#endif
+#include <hardware_dof_conf.hpp>
 
 namespace raspigcd {
 namespace hardware {

@@ -21,18 +21,21 @@
 
 #include <array>
 #include <iostream>
+#include <cassert>
+
+#include <hardware_dof_conf.hpp>
 
 namespace raspigcd {
 
-class distance_t : public std::array<double, 4>
+class distance_t : public std::array<double, RASPIGCD_HARDWARE_DOF>
 {
 public:
     double& a() { return this->operator[](0); };
     double& b() { return this->operator[](1); };
     double& c() { return this->operator[](2); };
     double& d() { return this->operator[](3); };
-    distance_t() : std::array<double, 4>(){};
-    distance_t(const double a_, const double b_, const double c_, const double d_) : std::array<double, 4>()
+    distance_t() : std::array<double, RASPIGCD_HARDWARE_DOF>(){};
+    distance_t(const double a_, const double b_, const double c_, const double d_) : std::array<double, RASPIGCD_HARDWARE_DOF>()
     {
         a() = a_;
         b() = b_;
@@ -117,6 +120,32 @@ inline std::ostream& operator<<(std::ostream& os, distance_t const& value)
     os << "[" << value[0] << ", " << value[1] << ", " << value[2] << ", " << value[3] << "]";
     return os;
 }
+
+
+/*
+    * calulates maximal linear value given the maximal values for each axis, and the normal vector of intended move
+    * it works that if norm_vect is 1 on one axis, then the value from limits_for_axes on this
+    * otherwise it blends, so if it is a limit, then applying linear limit will not exceed limits
+    * it is used to calculate maximal speed for movement in any direction, as well as maximal acceleration and speed without acceleration
+    */
+//double calculate_linear_coefficient_from_limits(const std::vector<double>& limits_for_axes, const distance_t& norm_vect);
+
+//double calculate_linear_coefficient_from_limits(const std::vector<double>& limits_for_axes, const distance_t& norm_vect)
+//std::vector<double>
+auto calculate_linear_coefficient_from_limits = [](const auto& limits_for_axes, const auto& norm_vect) -> double
+{
+    assert(std::sqrt(norm_vect.length2()) > 0.9999);
+    assert(std::sqrt(norm_vect.length2()) < 1.0001);
+    double average_max_accel = 0;
+    double average_max_accel_sum = 0;
+    for (unsigned int i = 0; i < limits_for_axes.size(); i++) {
+        average_max_accel += limits_for_axes.at(i) * norm_vect.at(i);
+        average_max_accel_sum += norm_vect.at(i);
+    }
+    average_max_accel = average_max_accel / average_max_accel_sum;
+    return average_max_accel;
+};
+
 
 } // namespace raspigcd
 #endif

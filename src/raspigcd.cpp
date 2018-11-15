@@ -31,7 +31,7 @@ int main()
 
 
 
-	movement::variable_speed variable_speed_driver( motor_layout_, cfg.max_no_accel_velocity_mm_s, cfg.max_accelerations_mm_s2, cfg.max_velocity_mm_s, cfg.tick_duration() );
+	movement::variable_speed variable_speed_driver( motor_layout_, cfg, cfg.tick_duration() );
 
     hardware_driver.get()->enable_steppers({true});
 

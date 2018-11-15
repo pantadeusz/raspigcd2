@@ -30,7 +30,7 @@ SCENARIO( "steps analyzer", "[movement][steps_analyzer]" ) {
 	cfg.max_accelerations_mm_s2 = {acceleration,acceleration,acceleration,acceleration};
 	cfg.max_velocity_mm_s = {150,150,150,150};
 	std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance( cfg );
-	movement::variable_speed variable_speed_driver( motor_layout_, cfg.max_no_accel_velocity_mm_s, cfg.max_accelerations_mm_s2, cfg.max_velocity_mm_s, cfg.tick_duration() );
+	movement::variable_speed variable_speed_driver( motor_layout_, cfg, cfg.tick_duration() );
 	stepping_sim stepping( {0,0,0,0} );
 	movement::steps_generator steps_generator( motor_layout_ );
 

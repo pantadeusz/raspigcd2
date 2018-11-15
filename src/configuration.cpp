@@ -4,8 +4,21 @@
 #include <iostream>
 #include <json/json.hpp>
 
+#include <distance_t.hpp>
+
 namespace raspigcd {
 namespace configuration {
+
+double limits::proportional_max_accelerations_mm_s2(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const {
+    return calculate_linear_coefficient_from_limits(max_accelerations_mm_s2, norm_vect);
+}
+double limits::proportional_max_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const {
+    return calculate_linear_coefficient_from_limits(max_velocity_mm_s, norm_vect);
+}
+double limits::proportional_max_no_accel_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const {
+    return calculate_linear_coefficient_from_limits(max_no_accel_velocity_mm_s, norm_vect);
+}
+
 
 double global::tick_duration() const
 { // czas ticku w sekundach. 0.00005 = 50mikrosekund

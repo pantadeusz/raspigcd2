@@ -35,50 +35,30 @@
 namespace raspigcd {
 namespace movement {
 
-
-
-
 class variable_speed
 {
 protected:
     hardware::motor_layout* _motor_layout;
     std::shared_ptr<hardware::motor_layout> _motor_layout_ptr;
 
-    std::vector<double> _max_speed_no_accel;
-    std::vector<double> _acceleration;
-    std::vector<double> _max_speed;
+    configuration::limits _limits;
     double _tick_duration;
 
-
-    double max_speed_no_accel(const distance_t& norm_vect) const;
-    double acceleration(const distance_t& norm_vect) const;
-    double max_speed(const distance_t& norm_vect) const;
-
 public:
+    void set_limits(configuration::limits &limits_);
     void set_motor_layout(const std::shared_ptr<hardware::motor_layout> ml);
-    void set_max_speed_no_accel(const std::vector<double>& max_speed_no_accel_);
-    void set_acceleration(const std::vector<double>& acceleration_);
-    void set_max_speed(const std::vector<double>& max_speed_);
     void set_tick_duration(const double& tick_duration_);
 
     variable_speed(
         std::shared_ptr<hardware::motor_layout> ml,
-        std::vector<double> max_speed_no_accel_,
-        std::vector<double> acceleration_,
-        std::vector<double> max_speed_,
+        configuration::limits &limits_,
         double tick_duration_);
     // given speed, target speed and acceleration, it calculate distance that it will be accelerating
     double accleration_length_calc(double speed_0, double speed_1, double acceleration);
 
     // converts speed intetions into list of var_speed_pointspeed_t. That is taking into account machine limits
-    movement_plan_t intent_to_movement_plan(
-        const path_intent_t& intentions_);
+    movement_plan_t intent_to_movement_plan( const path_intent_t& intentions_ );
 
-    // calulates maximal linear value given the maximal values for each axis, and the normal vector of intended move
-    // it works that if norm_vect is 1 on one axis, then the value from limits_for_axes on this
-    // otherwise it blends, so if it is a limit, then applying linear limit will not exceed limits
-    // it is used to calculate maximal speed for movement in any direction, as well as maximal acceleration and speed without acceleration
-    static double calculate_linear_coefficient_from_limits(const std::vector<double>& limits_for_axes, const distance_t& norm_vect);
 };
 
 //movement_plan_t

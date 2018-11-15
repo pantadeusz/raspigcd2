@@ -23,12 +23,9 @@ TEST_CASE( "movement variable speed calculate_linear_coefficient_from_limits", "
 	SECTION("1 on each axis") {
 		double expected = 1;
 		for (const distance_t norm_vect : std::vector<distance_t>{{1,0,0,0},{0,1,0,0},	{0,0,1,0}, {0,0,0,1}}) {
-			double result = variable_speed::calculate_linear_coefficient_from_limits(limits_for_axes, norm_vect);
+			double result = calculate_linear_coefficient_from_limits(limits_for_axes, norm_vect);
 			REQUIRE(result == Approx(expected));
 			expected++;
 		}
 	}
-	
-    
-	
 }

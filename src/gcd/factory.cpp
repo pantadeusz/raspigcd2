@@ -15,13 +15,25 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <hardware/motor_layout.hpp>
+#include <hardware/stepping_commands.hpp>
+#include <movement/simple_steps.hpp>
+#include <movement/variable_speed.hpp>
+#include <memory>
 
 namespace raspigcd {
 namespace gcd {
 
+class gcode_engine_objects{
+    public:
+    
+};
 
-// factory::
+class gcode_objects_factory {
+public:
 
-} // namespace hardware
+};
+
+
+} // namespace gcd
 } // namespace raspigcd
-

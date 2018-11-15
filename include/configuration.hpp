@@ -20,7 +20,9 @@
 #define __RASPIGCD_CONFIGURATION_T_HPP__
 
 #include <string>
+#include <array>
 #include <vector>
+#include <hardware_dof_conf.hpp>
 
 
 namespace raspigcd {
@@ -77,7 +79,19 @@ public:
     }
 };
 
-class global
+
+class limits {
+public:
+    std::array<double,RASPIGCD_HARDWARE_DOF> max_accelerations_mm_s2;    ///<maximal acceleration on given axis (x, y, z, a) in mm/s2
+    std::array<double,RASPIGCD_HARDWARE_DOF> max_velocity_mm_s;          ///<maximal velocity on axis in mm/s
+    std::array<double,RASPIGCD_HARDWARE_DOF> max_no_accel_velocity_mm_s; ///<maximal velocity on axis in mm/s
+
+    double proportional_max_accelerations_mm_s2(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    double proportional_max_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    double proportional_max_no_accel_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+};
+
+class global : public limits
 {
 public:
     /**
@@ -89,10 +103,7 @@ public:
     int tick_duration_us;         // microseconds tick time
     bool simulate_execution;      // should I use simulator by default
 
-    std::vector<double> scale;                      ///< scale along each axis (can be negative)
-    std::vector<double> max_accelerations_mm_s2;    ///<maximal acceleration on given axis (x, y, z, a) in mm/s2
-    std::vector<double> max_velocity_mm_s;          ///<maximal velocity on axis in mm/s
-    std::vector<double> max_no_accel_velocity_mm_s; ///<maximal velocity on axis in mm/s
+    std::array<double,RASPIGCD_HARDWARE_DOF> scale;                      ///< scale along each axis (can be negative)
     motion_layouts motion_layout;                   ///< name of layout selected: 'corexy' 'cartesian'
 
     std::vector<spindle_pwm> spindles;
