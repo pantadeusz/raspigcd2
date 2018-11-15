@@ -23,6 +23,8 @@
 #include <distance_t.hpp>
 #include <hardware/motor_layout.hpp>
 #include <hardware/stepping_commands.hpp>
+#include <movement/movement_plan_t.hpp>
+#include <movement/movement_plan_t.hpp>
 #include <memory>
 #include <movement/simple_steps.hpp>
 #include <steps_t.hpp>
@@ -32,21 +34,6 @@
 
 namespace raspigcd {
 namespace movement {
-
-struct transition_t {
-    double v0;    // initial velocity
-    double accel; // acceleration to the next node
-    double max_v; // maximal intended velocity that can be performed on this fragment. The most desired speed. The velocity cannot exceed max_v no matter what.
-};
-
-using delay_t = double; // delay in seconds
-using movement_plan_element_t = std::variant<distance_t, transition_t, delay_t>;
-using movement_plan_t = std::list<movement_plan_element_t>;
-
-using path_intent_element_t = std::variant<distance_t, double>;
-using path_intent_t = std::list<path_intent_element_t>;
-
-
 
 class steps_generator
 {

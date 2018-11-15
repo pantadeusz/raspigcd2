@@ -23,10 +23,11 @@
 #include <distance_t.hpp>
 #include <hardware/motor_layout.hpp>
 #include <hardware/stepping_commands.hpp>
-#include <list>
-#include <memory>
 #include <movement/simple_steps.hpp>
 #include <movement/steps_generator.hpp>
+#include <movement/path_intent_t.hpp>
+#include <list>
+#include <memory>
 #include <sstream>
 #include <steps_t.hpp>
 #include <tuple>
@@ -51,7 +52,7 @@ public:
 
     variable_speed(
         std::shared_ptr<hardware::motor_layout> ml,
-        configuration::limits &limits_,
+        const configuration::limits &limits_,
         double tick_duration_);
     // given speed, target speed and acceleration, it calculate distance that it will be accelerating
     double accleration_length_calc(double speed_0, double speed_1, double acceleration);

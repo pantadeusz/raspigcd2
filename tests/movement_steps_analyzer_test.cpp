@@ -34,7 +34,7 @@ SCENARIO( "steps analyzer", "[movement][steps_analyzer]" ) {
 	stepping_sim stepping( {0,0,0,0} );
 	movement::steps_generator steps_generator( motor_layout_ );
 
-	std::list<std::variant<distance_t, double>> simple_program = {
+	path_intent_t simple_program = {
 		distance_t{0, 0, 0, 0}, 8.0,
 		distance_t{10, 0, 0, 0}
 	};

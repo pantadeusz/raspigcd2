@@ -36,7 +36,7 @@ int main()
     hardware_driver.get()->enable_steppers({true});
 
     
-    std::list<std::variant<distance_t, double>> simple_program = {
+    movement::path_intent_t simple_program = {
 			distance_t{0, 0, 0, 0}, 30.0,
 			distance_t{0, 0, 5, 0}, 5.0,
 

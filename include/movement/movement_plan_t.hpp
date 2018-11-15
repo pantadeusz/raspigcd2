@@ -15,34 +15,35 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASPIGCD_GCD_FACTORY_T_HPP__
-#define __RASPIGCD_GCD_FACTORY_T_HPP__
+#ifndef __RASPIGCD_MOVEMENT_MOVEMENT_PLAN_T_T_HPP__
+#define __RASPIGCD_MOVEMENT_MOVEMENT_PLAN_T_T_HPP__
 
+#include <cmath>
 #include <configuration.hpp>
-#include <memory>
-#include <hardware/low_steppers.hpp>
+#include <distance_t.hpp>
 #include <hardware/motor_layout.hpp>
-#include <hardware/stepping.hpp>
+#include <hardware/stepping_commands.hpp>
+#include <memory>
+#include <movement/simple_steps.hpp>
+#include <steps_t.hpp>
+#include <variant>
+#include <functional>
+
 
 namespace raspigcd {
-namespace gcd {
+namespace movement {
 
-class gcode_interpreter_objects {
-public:
-std::shared_ptr<hardware::low_steppers> hardware_driver;
-std::shared_ptr<hardware::motor_layout> motor_layout;
-std::shared_ptr<hardware::stepping> stepping;
-configuration::global configuration;
+struct transition_t {
+    double v0;    // initial velocity
+    double accel; // acceleration to the next node
+    double max_v; // maximal intended velocity that can be performed on this fragment. The most desired speed. The velocity cannot exceed max_v no matter what.
 };
 
-enum machine_driver_selection {
-    RASPBERRY_PI,
-    IN_MEMORY
-};
+using delay_t = double; // delay in seconds
+using movement_plan_element_t = std::variant<distance_t, transition_t, delay_t>;
+using movement_plan_t = std::list<movement_plan_element_t>;
 
-gcode_interpreter_objects gcode_interpreter_objects_factory(const configuration::global &configuration_, const machine_driver_selection driver_select_ = RASPBERRY_PI);
-
-} // namespace hardware
+} // namespace movement
 } // namespace raspigcd
 
 #endif

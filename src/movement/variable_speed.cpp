@@ -47,7 +47,7 @@ void variable_speed::set_limits(configuration::limits &limits_) { _limits = limi
 
 variable_speed::variable_speed(
     std::shared_ptr<hardware::motor_layout> ml,
-    configuration::limits &limits_,
+    const configuration::limits &limits_,
     double tick_duration_) : _limits(limits_),
                              _tick_duration(tick_duration_)
 {
@@ -67,8 +67,7 @@ double variable_speed::accleration_length_calc(double speed_0, double speed_1, d
 
 
 // converts speed intetions into list of var_speed_pointspeed_t. That is taking into account machine limits
-movement_plan_t variable_speed::intent_to_movement_plan(
-    const path_intent_t& intentions_)
+movement_plan_t variable_speed::intent_to_movement_plan( const path_intent_t& intentions_)
 {
     movement_plan_t ret;
     distance_t prev_pos;

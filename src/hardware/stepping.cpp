@@ -89,41 +89,6 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
     }
     //return _steps;
 }
-/*
 
-{
-    configuration_t& conf = configuration;
-    auto steppers = conf.hardware.steppers;
-    // commands are in fomat step, dir
-    unsigned int step_clear = (1 << steppers[0].step) | (1 << steppers[1].step) |
-                              (1 << steppers[2].step) | (1 << steppers[3].step);
-
-    std::chrono::microseconds ttime =
-        std::chrono::microseconds((unsigned long)(conf.tick_duration / 0.000001));
-    auto t = std::chrono::system_clock::now();
-    auto nextT = ttime + t;
-    int current_tick_n = 0;
-
-    // this part is critical - I unwinded loops in order to reduce latencies
-    for (auto c : commands) {
-        int rpt = c.count; // 0 means that we execute it once
-        do {
-            execute_single_tick(c, steppers, _position, step_clear);
-            //nextT = t + ttime * current_tick_n;
-            nextT += ttime;
-            current_tick_n++;
-            // std::this_thread::sleep_until(nextT);
-            // always busy wait - better timing, but more resource consuming
-            for (; std::chrono::system_clock::now() < nextT;) {
-            }
-        } while ((rpt--) > 0);
-        if (_terminate) {
-            _terminate = false;
-            return 1;
-        }
-    }
-
-}
- */
 } // namespace hardware
 } // namespace raspigcd

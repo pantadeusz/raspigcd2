@@ -38,7 +38,7 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 	//double velocity = 30; // mm/s
 
 	GIVEN( "there is an empty program to run" ) {
-		std::list<std::variant<distance_t, double>> empty_program;
+		movement::path_intent_t empty_program;
 		WHEN( "the program is converted to actions" ) {
 			std::list<movement_plan_element_t>
 					result = variable_speed_driver.intent_to_movement_plan( empty_program );
@@ -49,7 +49,7 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 	}
 
 	GIVEN( "there is a program with constant and safe speed" ) {
-		std::list<std::variant<distance_t, double>> simple_program;
+		movement::path_intent_t simple_program;
 		simple_program.push_back( distance_t{0, 0, 0, 0} );
 		simple_program.push_back( 2 );
 		simple_program.push_back( distance_t{1, 0, 0, 0} );
@@ -59,7 +59,7 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 		simple_program.push_back( distance_t{0, 1, 0, 0} );
 		simple_program.push_back( 2 );
 		simple_program.push_back( distance_t{0, 0, 0, 0} );
-		std::vector<std::variant<distance_t, double>> simple_program_v( simple_program.begin(), simple_program.end() );
+		std::vector<movement::path_intent_element_t> simple_program_v( simple_program.begin(), simple_program.end() );
 
 		WHEN( "the program is converted to actions" ) {
 			std::list<movement_plan_element_t>
@@ -84,14 +84,14 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 	}
 
 	GIVEN( "there is a program with different and safe speed" ) {
-		std::list<std::variant<distance_t, double>> simple_program = {
+		movement::path_intent_t simple_program = {
 			distance_t{0, 0, 0, 0}, 2.0,
 			distance_t{1, 0, 0, 0}, 1.0,
 			distance_t{1, 1, 0, 0}, 2.0,
 			distance_t{0, 1, 0, 0}, 3.0,
 			distance_t{0, 0, 0, 0}
 		};
-		std::vector<std::variant<distance_t, double>> simple_program_v( simple_program.begin(), simple_program.end() );
+		std::vector<movement::path_intent_element_t> simple_program_v( simple_program.begin(), simple_program.end() );
 
 		WHEN( "the program is converted to actions" ) {
 			std::list<movement_plan_element_t>
@@ -127,11 +127,11 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 		}
 	}
 	GIVEN( "there is a program that needs acceleration and possible to reach speed" ) {
-		std::list<std::variant<distance_t, double>> simple_program = {
+		movement::path_intent_t simple_program = {
 			distance_t{0, 0, 0, 0}, 8.0,
 			distance_t{10, 0, 0, 0}
 		};
-		std::vector<std::variant<distance_t, double>> simple_program_v( simple_program.begin(), simple_program.end() );
+		std::vector<movement::path_intent_element_t> simple_program_v( simple_program.begin(), simple_program.end() );
 
 		WHEN( "the program is converted to actions" ) {
 			std::list<movement_plan_element_t>
@@ -179,11 +179,11 @@ SCENARIO( "variable speed and accelerations", "[movement][variable_speed]" ) {
 		}
 	}
 	GIVEN( "there is a program with acceleration and impossible to reach speed" ) {
-		std::list<std::variant<distance_t, double>> simple_program = {
+		movement::path_intent_t simple_program = {
 			distance_t{0, 0, 0, 0}, 16.0,
 			distance_t{1, 0, 0, 0}
 		};
-		std::vector<std::variant<distance_t, double>> simple_program_v( simple_program.begin(), simple_program.end() );
+		std::vector<movement::path_intent_element_t> simple_program_v( simple_program.begin(), simple_program.end() );
 
 		WHEN( "the program is converted to actions" ) {
 			std::list<movement_plan_element_t>

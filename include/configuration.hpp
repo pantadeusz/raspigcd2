@@ -86,9 +86,9 @@ public:
     std::array<double,RASPIGCD_HARDWARE_DOF> max_velocity_mm_s;          ///<maximal velocity on axis in mm/s
     std::array<double,RASPIGCD_HARDWARE_DOF> max_no_accel_velocity_mm_s; ///<maximal velocity on axis in mm/s
 
-    double proportional_max_accelerations_mm_s2(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
-    double proportional_max_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
-    double proportional_max_no_accel_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    virtual double proportional_max_accelerations_mm_s2(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    virtual double proportional_max_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    virtual double proportional_max_no_accel_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
 };
 
 class global : public limits
