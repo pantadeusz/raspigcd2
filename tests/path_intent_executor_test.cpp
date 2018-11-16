@@ -71,4 +71,16 @@ TEST_CASE("path_intent_executor constructor tests", "[gcd][path_intent_executor]
 		REQUIRE(result.position == steps_t{0,0,0,0});
     }
 
+	SECTION("stepper motors enable and disable feature should work")
+    {
+        executor.set_gcode_interpreter_objects(objs);
+		((hardware::driver::inmem*)objs.steppers.get())->enabled = {false,false,false,false};
+		
+		auto result = executor.execute({ movement::path_intentions::motor_t{.delay_s = 0.01, .motor={true,true,true,true}} });
+		REQUIRE(((hardware::driver::inmem*)objs.steppers.get())->enabled == std::vector<bool>{true,true,true,true});
+
+		result = executor.execute({ movement::path_intentions::motor_t{.delay_s = 0.01, .motor={false,false,false,false}} });
+		REQUIRE(((hardware::driver::inmem*)objs.steppers.get())->enabled == std::vector<bool>{false,false,false,false});
+    }
+
 }

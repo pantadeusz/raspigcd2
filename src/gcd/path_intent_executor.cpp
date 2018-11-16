@@ -31,6 +31,15 @@ namespace gcd {
 path_intent_executor_result_t path_intent_executor::execute(const movement::path_intent_t& path_intent)
 {
     std::lock_guard<std::mutex> guard(_execute_mutex);
+
+    for (const auto &element:path_intent) {
+        switch(element.index()) {
+            case 4: // path_intentions::motor_t
+                _gcdobjs.steppers.get()->enable_steppers(std::get<movement::path_intentions::motor_t>(element).motor);
+                break;
+        }
+    }
+
     return {};
 }
 
