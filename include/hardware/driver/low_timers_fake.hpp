@@ -28,6 +28,7 @@ namespace driver {
 class low_timers_fake : public low_timers {
 private:
 public:
+    double last_delay;
     /**
      * @brief delay in seconds. This can be fraction of a second
      * 
