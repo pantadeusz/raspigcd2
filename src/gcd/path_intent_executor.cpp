@@ -28,9 +28,10 @@
 namespace raspigcd {
 namespace gcd {
 
-void path_intent_executor::execute(const movement::path_intent_t& path_intent)
+path_intent_executor_result_t path_intent_executor::execute(const movement::path_intent_t& path_intent)
 {
     std::lock_guard<std::mutex> guard(_execute_mutex);
+    return {};
 }
 
 

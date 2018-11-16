@@ -34,17 +34,20 @@
 #include <memory>
 #include <thread> // std::this_thread::sleep_for
 #include <mutex>
+#include <future>
 
 namespace raspigcd {
 namespace gcd {
 
+struct path_intent_executor_result_t {
+    steps_t position;
+};
 
 class path_intent_executor
 {
     std::mutex _execute_mutex;    
     gcode_interpreter_objects_t _gcdobjs;
 public:
-
     /**
      * @brief execute path intent
      * 
@@ -53,9 +56,10 @@ public:
      * The method executes the path intent. This method will run exclusively, so no other execute can be executed at the same time.
      * 
      */
-    void execute(const movement::path_intent_t& path_intent);
-
+    path_intent_executor_result_t execute(const movement::path_intent_t& path_intent);
+//std::future<
     void set_gcode_interpreter_objects(const gcode_interpreter_objects_t &gcdobjs_) {
+        std::lock_guard<std::mutex> guard(_execute_mutex);
         _gcdobjs = gcdobjs_;
     }
     gcode_interpreter_objects_t get_gcode_interpreter_objects() const {

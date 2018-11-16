@@ -62,4 +62,13 @@ TEST_CASE("path_intent_executor constructor tests", "[gcd][path_intent_executor]
         REQUIRE(objs.stepping.get() == nobjs.stepping.get());
         REQUIRE(objs.configuration == nobjs.configuration);
     }
+
+
+    SECTION("execute empty program. The position should not move. The task should be returned")
+    {
+        executor.set_gcode_interpreter_objects(objs);
+		auto result = executor.execute({});
+		REQUIRE(result.position == steps_t{0,0,0,0});
+    }
+
 }
