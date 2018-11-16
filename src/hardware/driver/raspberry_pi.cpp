@@ -186,6 +186,17 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
     });
 }
 
+/**
+ * @brief delay in seconds. This can be fraction of a second
+ * 
+ * @param t 
+ */
+void raspberry_pi_3::wait_s(const double t) {
+        auto prevTime = std::chrono::steady_clock::now();
+        prevTime = prevTime + std::chrono::microseconds((int)(t * 1000000.0));
+        std::this_thread::sleep_until(prevTime);
+}
+
 raspberry_pi_3::~raspberry_pi_3()
 {
     _threads_alive = false;

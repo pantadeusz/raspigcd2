@@ -15,33 +15,26 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASPIGCD_MOTOR_LAYOUT_T_HPP__
-#define __RASPIGCD_MOTOR_LAYOUT_T_HPP__
+#ifndef __RASPIGCD_HARDWARE_LOW_LEVEL_SPINDLES_FAKE_T_HPP__
+#define __RASPIGCD_HARDWARE_LOW_LEVEL_SPINDLES_FAKE_T_HPP__
 
-#include <configuration.hpp>
-#include <distance_t.hpp>
-#include <memory>
-#include <steps_t.hpp>
-
+#include <hardware/low_spindles_pwm.hpp>
+#include <map>
 namespace raspigcd {
 namespace hardware {
-class motor_layout
-{
+namespace driver {
+
+
+class low_spindles_pwm_fake : public low_spindles_pwm {
 private:
 public:
-    /**
-         * @brief converts distances in milimeters to number of ticks
-         */
-    virtual steps_t cartesian_to_steps(const distance_t& distances_) = 0;
-    /**
-         * @brief converts number of ticks to distances in milimeters
-         */
-    virtual distance_t steps_to_cartesian(const steps_t& steps_) = 0;
-
-    virtual void set_configuration(const configuration::actuators_organization& cfg) = 0;
-
-    static std::shared_ptr<motor_layout> get_instance(const configuration::actuators_organization& cfg);
+    std::map<int,double> spindle_values;
+    void spindle_pwm_power(const int i, const double v){
+        spindle_values[i]=v;
+    };
 };
+
+}
 } // namespace hardware
 } // namespace raspigcd
 

@@ -30,10 +30,6 @@ namespace raspigcd {
 namespace configuration {
 
 
-enum motion_layouts {
-    COREXY,
-    CARTESIAN
-};
 /**
  * button pin and pullup setting
  * */
@@ -91,7 +87,20 @@ public:
     virtual double proportional_max_no_accel_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
 };
 
-class global : public limits
+enum motion_layouts {
+    COREXY,
+    CARTESIAN
+};
+
+class actuators_organization {
+public:
+    std::array<double,RASPIGCD_HARDWARE_DOF> scale;                      ///< scale along each axis (can be negative)
+    motion_layouts motion_layout;                   ///< name of layout selected: 'corexy' 'cartesian'
+    std::vector<stepper> steppers;
+};
+
+
+class global : public limits, public actuators_organization
 {
 public:
     /**
@@ -103,11 +112,7 @@ public:
     int tick_duration_us;         // microseconds tick time
     bool simulate_execution;      // should I use simulator by default
 
-    std::array<double,RASPIGCD_HARDWARE_DOF> scale;                      ///< scale along each axis (can be negative)
-    motion_layouts motion_layout;                   ///< name of layout selected: 'corexy' 'cartesian'
-
     std::vector<spindle_pwm> spindles;
-    std::vector<stepper> steppers;
     std::vector<button> buttons;
 
     global& load_defaults();

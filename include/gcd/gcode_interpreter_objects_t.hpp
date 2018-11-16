@@ -1,3 +1,6 @@
+//gcode_interpreter_objects_t;
+
+
 /*
     Raspberry Pi G-CODE interpreter
     Copyright (C) 2018  Tadeusz Puźniakowski puzniakowski.pl
@@ -15,33 +18,31 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __RASPIGCD_MOTOR_LAYOUT_T_HPP__
-#define __RASPIGCD_MOTOR_LAYOUT_T_HPP__
+#ifndef __RASPIGCD_GCD_HARDWARE_GCODE_INTERPRETER_OBJECTS_T_HPP__
+#define __RASPIGCD_GCD_HARDWARE_GCODE_INTERPRETER_OBJECTS_T_HPP__
 
 #include <configuration.hpp>
-#include <distance_t.hpp>
 #include <memory>
-#include <steps_t.hpp>
+#include <hardware/motor_layout.hpp>
+#include <hardware/low_buttons.hpp>
+#include <hardware/low_steppers.hpp>
+#include <hardware/low_spindles_pwm.hpp>
+#include <hardware/low_timers.hpp>
+#include <hardware/stepping.hpp>
 
 namespace raspigcd {
-namespace hardware {
-class motor_layout
-{
-private:
-public:
-    /**
-         * @brief converts distances in milimeters to number of ticks
-         */
-    virtual steps_t cartesian_to_steps(const distance_t& distances_) = 0;
-    /**
-         * @brief converts number of ticks to distances in milimeters
-         */
-    virtual distance_t steps_to_cartesian(const steps_t& steps_) = 0;
+namespace gcd {
 
-    virtual void set_configuration(const configuration::actuators_organization& cfg) = 0;
-
-    static std::shared_ptr<motor_layout> get_instance(const configuration::actuators_organization& cfg);
+struct gcode_interpreter_objects_t {
+std::shared_ptr<hardware::low_buttons> buttons;
+std::shared_ptr<hardware::low_steppers> steppers;
+std::shared_ptr<hardware::low_spindles_pwm> spindles_pwm;
+std::shared_ptr<hardware::low_timers> timers;
+std::shared_ptr<hardware::motor_layout> motor_layout;
+std::shared_ptr<hardware::stepping> stepping;
+configuration::global configuration;
 };
+
 } // namespace hardware
 } // namespace raspigcd
 

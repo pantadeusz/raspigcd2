@@ -24,6 +24,7 @@
 #include <hardware/low_spindles_pwm.hpp>
 #include <hardware/low_steppers.hpp>
 #include <hardware/stepping_commands.hpp>
+#include <hardware/low_timers.hpp>
 #include <steps_t.hpp>
 
 #include <functional>
@@ -43,7 +44,7 @@ struct bcm2835_peripheral {
     volatile unsigned int* addr;
 };
 
-class raspberry_pi_3 : public low_buttons, public low_steppers, public low_spindles_pwm
+class raspberry_pi_3 : public low_buttons, public low_steppers, public low_spindles_pwm, public low_timers
 {
 private:
     std::vector<configuration::spindle_pwm> spindles;
@@ -59,6 +60,8 @@ private:
     std::map<int, int> _button_prev_values;
 
     struct bcm2835_peripheral gpio;
+
+
 
 public:
     /**
@@ -85,6 +88,13 @@ public:
 	 * @return raspberry_pi_3&  the reference to this object
 	 */
     void spindle_pwm_power(const int i, const double v);
+
+    /**
+     * @brief delay in seconds. This can be fraction of a second
+     * 
+     * @param t 
+     */
+    void wait_s(const double t);
 
     /**
 	 * @brief Construct a new raspberry pi 3 object

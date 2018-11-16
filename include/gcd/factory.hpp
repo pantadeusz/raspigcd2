@@ -18,29 +18,17 @@
 #ifndef __RASPIGCD_GCD_FACTORY_T_HPP__
 #define __RASPIGCD_GCD_FACTORY_T_HPP__
 
-#include <configuration.hpp>
-#include <memory>
-#include <hardware/low_steppers.hpp>
-#include <hardware/motor_layout.hpp>
-#include <hardware/stepping.hpp>
+#include <gcd/gcode_interpreter_objects_t.hpp>
 
 namespace raspigcd {
 namespace gcd {
-
-class gcode_interpreter_objects {
-public:
-std::shared_ptr<hardware::low_steppers> hardware_driver;
-std::shared_ptr<hardware::motor_layout> motor_layout;
-std::shared_ptr<hardware::stepping> stepping;
-configuration::global configuration;
-};
 
 enum machine_driver_selection {
     RASPBERRY_PI,
     IN_MEMORY
 };
 
-gcode_interpreter_objects gcode_interpreter_objects_factory(const configuration::global &configuration_, const machine_driver_selection driver_select_ = RASPBERRY_PI);
+gcode_interpreter_objects_t gcode_interpreter_objects_factory(const configuration::global &configuration_, const machine_driver_selection driver_select_ = RASPBERRY_PI);
 
 } // namespace hardware
 } // namespace raspigcd

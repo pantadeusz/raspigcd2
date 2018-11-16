@@ -29,7 +29,7 @@ public:
 
     steps_t cartesian_to_steps(const distance_t& distances_);
     distance_t steps_to_cartesian(const steps_t& steps_);
-    void set_configuration(const configuration::global& cfg);
+    void set_configuration(const configuration::actuators_organization& cfg);
 };
 
 steps_t corexy_layout_t::cartesian_to_steps(const distance_t& distances_)
@@ -50,7 +50,7 @@ distance_t corexy_layout_t::steps_to_cartesian(const steps_t& steps_)
         steps_[3] / (steps_per_milimeter_[3] * scales_[3]));
 }
 
-void corexy_layout_t::set_configuration(const configuration::global& cfg)
+void corexy_layout_t::set_configuration(const configuration::actuators_organization& cfg)
 {
     for (unsigned int i = 0; i < cfg.steppers.size(); i++) {
         steps_per_milimeter_[i] = cfg.steppers.at(i).steps_per_mm;
@@ -67,7 +67,7 @@ public:
 
     steps_t cartesian_to_steps(const distance_t& distances_);
     distance_t steps_to_cartesian(const steps_t& steps_);
-    void set_configuration(const configuration::global& cfg);
+    void set_configuration(const configuration::actuators_organization& cfg);
 };
 
 steps_t cartesian_layout_t::cartesian_to_steps(const distance_t& distances_)
@@ -89,7 +89,7 @@ distance_t cartesian_layout_t::steps_to_cartesian(const steps_t& steps_)
 }
 
 
-void cartesian_layout_t::set_configuration(const configuration::global& cfg)
+void cartesian_layout_t::set_configuration(const configuration::actuators_organization& cfg)
 {
     for (unsigned int i = 0; i < cfg.steppers.size(); i++) {
         steps_per_milimeter_[i] = cfg.steppers.at(i).steps_per_mm;
@@ -98,7 +98,7 @@ void cartesian_layout_t::set_configuration(const configuration::global& cfg)
 }
 
 
-std::shared_ptr<motor_layout> motor_layout::get_instance(const configuration::global& cfg)
+std::shared_ptr<motor_layout> motor_layout::get_instance(const configuration::actuators_organization& cfg)
 {
     if (cfg.motion_layout == configuration::motion_layouts::COREXY) {
         std::shared_ptr<motor_layout> ret(new corexy_layout_t());
