@@ -34,6 +34,9 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
 
     for (const auto &element:path_intent) {
         switch(element.index()) {
+            case 2: //path_intentions::pause_t
+                _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::pause_t>(element).delay_s);
+                break;
             case 4: // path_intentions::motor_t
                 _gcdobjs.steppers.get()->enable_steppers(std::get<movement::path_intentions::motor_t>(element).motor);
                 _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::motor_t>(element).delay_s);

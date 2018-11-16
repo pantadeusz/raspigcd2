@@ -17,7 +17,7 @@ using namespace raspigcd::movement;
 using namespace raspigcd::configuration;
 
 
-TEST_CASE("path_intent_executor constructor tests", "[gcd][path_intent_executor]")
+TEST_CASE("path_intent_executor constructor tests basic and motors", "[gcd][path_intent_executor][motors]")
 {
     configuration::actuators_organization actuators_cfg;
     actuators_cfg.motion_layout = COREXY; //"corexy";
@@ -39,6 +39,11 @@ TEST_CASE("path_intent_executor constructor tests", "[gcd][path_intent_executor]
     objs.configuration.scale = actuators_cfg.scale;
     objs.configuration.steppers = actuators_cfg.steppers;
     objs.stepping = std::make_shared<hardware::stepping_sim>(steps_t{0, 0, 0, 0});
+
+
+	hardware::driver::inmem* inmem_ptr = ((hardware::driver::inmem*)objs.steppers.get());
+	hardware::driver::low_timers_fake* low_timers_fake_ptr = ((hardware::driver::low_timers_fake*)objs.timers.get());
+
 
     SECTION("set_gcode_interpreter_objects")
     {
@@ -95,8 +100,6 @@ TEST_CASE("path_intent_executor constructor tests", "[gcd][path_intent_executor]
     {
 		std::list<int> rec;
         executor.set_gcode_interpreter_objects(objs);
-		hardware::driver::inmem* inmem_ptr = ((hardware::driver::inmem*)objs.steppers.get());
-		hardware::driver::low_timers_fake* low_timers_fake_ptr = ((hardware::driver::low_timers_fake*)objs.timers.get());
 		inmem_ptr->on_enable_steppers = [&rec](auto){rec.push_back(0);};
 		low_timers_fake_ptr->on_wait_s = [&rec](auto){rec.push_back(1);};
 		auto result = executor.execute({ movement::path_intentions::motor_t{.delay_s = 0.01, .motor={true,true,true,true}} });
@@ -107,4 +110,25 @@ TEST_CASE("path_intent_executor constructor tests", "[gcd][path_intent_executor]
 		REQUIRE(rec == std::list<int>{0,1,0,1,0,1,0,1});
     }
 
+
+	SECTION("delay command test")
+    {
+        executor.set_gcode_interpreter_objects(objs);
+		std::list<double> rec;
+
+		low_timers_fake_ptr->on_wait_s = [&rec](const double e){rec.push_back(e);};
+		auto result = executor.execute({ 
+			movement::path_intentions::pause_t{.delay_s = 0.1},
+			movement::path_intentions::pause_t{.delay_s = 0.2},
+			movement::path_intentions::pause_t{.delay_s = 0.3},
+			movement::path_intentions::pause_t{.delay_s = 0.4} 
+		});
+		REQUIRE(low_timers_fake_ptr->last_delay == Approx(0.4));
+		REQUIRE(rec == std::list<double>{0.1,0.2,0.3,0.4});
+    }
+
+	
 }
+
+
+
