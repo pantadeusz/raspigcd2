@@ -20,6 +20,8 @@
 
 #include <hardware/low_spindles_pwm.hpp>
 #include <map>
+#include <functional>
+
 namespace raspigcd {
 namespace hardware {
 namespace driver {
@@ -29,9 +31,16 @@ class low_spindles_pwm_fake : public low_spindles_pwm {
 private:
 public:
     std::map<int,double> spindle_values;
-    void spindle_pwm_power(const int i, const double v){
+    
+    std::function<void(const int, const double)> on_spindle_pwm_power;
+        void spindle_pwm_power(const int i, const double v){
         spindle_values[i]=v;
+        on_spindle_pwm_power(i,v);
     };
+
+    low_spindles_pwm_fake(){
+        on_spindle_pwm_power = [](const int, const double){};
+    }
 };
 
 }

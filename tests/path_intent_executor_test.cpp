@@ -41,9 +41,9 @@ TEST_CASE("path_intent_executor constructor tests basic and motors", "[gcd][path
     objs.stepping = std::make_shared<hardware::stepping_sim>(steps_t{0, 0, 0, 0});
 
 
-	hardware::driver::inmem* inmem_ptr = ((hardware::driver::inmem*)objs.steppers.get());
-	hardware::driver::low_timers_fake* low_timers_fake_ptr = ((hardware::driver::low_timers_fake*)objs.timers.get());
-
+	hardware::driver::inmem* inmem_ptr = (hardware::driver::inmem*)objs.steppers.get();
+	hardware::driver::low_timers_fake* low_timers_fake_ptr = (hardware::driver::low_timers_fake*)objs.timers.get();
+    hardware::driver::low_spindles_pwm_fake* low_spindles_pwm_fake_ptr = (hardware::driver::low_spindles_pwm_fake*)objs.spindles_pwm.get();
 
     SECTION("set_gcode_interpreter_objects")
     {
@@ -79,21 +79,21 @@ TEST_CASE("path_intent_executor constructor tests basic and motors", "[gcd][path
 	SECTION("stepper motors enable and disable feature should work for enabling and disabling motors")
     {
         executor.set_gcode_interpreter_objects(objs);
-		((hardware::driver::inmem*)objs.steppers.get())->enabled = {false,false,false,false};
+		inmem_ptr->enabled = {false,false,false,false};
 		auto result = executor.execute({ movement::path_intentions::motor_t{.delay_s = 0.01, .motor={true,true,true,true}} });
-		REQUIRE(((hardware::driver::inmem*)objs.steppers.get())->enabled == std::vector<bool>{true,true,true,true});
+		REQUIRE(inmem_ptr->enabled == std::vector<bool>{true,true,true,true});
 		result = executor.execute({ movement::path_intentions::motor_t{.delay_s = 0.01, .motor={false,false,false,false}} });
-		REQUIRE(((hardware::driver::inmem*)objs.steppers.get())->enabled == std::vector<bool>{false,false,false,false});
+		REQUIRE(inmem_ptr->enabled == std::vector<bool>{false,false,false,false});
     }
 
 	SECTION("stepper motors enable and disable feature should work with delay")
     {
         executor.set_gcode_interpreter_objects(objs);
-		((hardware::driver::inmem*)objs.steppers.get())->enabled = {false,false,false,false};
+		inmem_ptr->enabled = {false,false,false,false};
 		auto result = executor.execute({ movement::path_intentions::motor_t{.delay_s = 0.01, .motor={true,true,true,true}} });
-		REQUIRE(((hardware::driver::low_timers_fake*)objs.timers.get())->last_delay == Approx(0.01));
+		REQUIRE(low_timers_fake_ptr->last_delay == Approx(0.01));
 		result = executor.execute({ movement::path_intentions::motor_t{.delay_s = 0.02, .motor={false,false,false,false}} });
-		REQUIRE(((hardware::driver::low_timers_fake*)objs.timers.get())->last_delay == Approx(0.02));
+		REQUIRE(low_timers_fake_ptr->last_delay == Approx(0.02));
     }
 
 	SECTION("stepper motors enable and disable feature should work with delay and in order")
@@ -128,6 +128,39 @@ TEST_CASE("path_intent_executor constructor tests basic and motors", "[gcd][path
     }
 
 	
+// path_intentions::spindle_t
+
+
+SECTION("spindle enable and disable feature should work for enabling and disabling motors")
+    {
+        executor.set_gcode_interpreter_objects(objs);
+		auto result = executor.execute({ 
+            movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle={ {0,1.0}}},
+            movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle={ {1,0.5}}} 
+        });
+		REQUIRE(low_spindles_pwm_fake_ptr->spindle_values[0] == Approx(1.0));
+		REQUIRE(low_spindles_pwm_fake_ptr->spindle_values[1] == Approx(0.5));
+		REQUIRE(low_timers_fake_ptr->last_delay == Approx(0.01));
+		result = executor.execute({ movement::path_intentions::spindle_t{.delay_s = 0.1, .spindle={ {1,0.0}}} });
+		REQUIRE(low_spindles_pwm_fake_ptr->spindle_values[1] == Approx(0.0));
+		REQUIRE(low_timers_fake_ptr->last_delay == Approx(0.1));
+    }
+
+	SECTION("stepper motors enable and disable feature should work with delay and in order")
+    {
+		std::list<int> rec;
+        executor.set_gcode_interpreter_objects(objs);
+		inmem_ptr->on_enable_steppers = [&rec](auto){rec.push_back(0);};
+		low_timers_fake_ptr->on_wait_s = [&rec](auto){rec.push_back(1);};
+		low_spindles_pwm_fake_ptr->on_spindle_pwm_power = [&rec](auto,auto){rec.push_back(2);};
+		auto result = executor.execute({ 
+            movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle={ {0,1.0}}},
+			movement::path_intentions::pause_t{.delay_s = 0.2},
+            movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle={ {1,0.5}}} 
+        });
+		REQUIRE(rec == std::list<int>{2,1,1,2,1});
+    }
+
 }
 
 

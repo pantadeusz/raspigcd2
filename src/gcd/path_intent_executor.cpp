@@ -37,6 +37,12 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
             case 2: //path_intentions::pause_t
                 _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::pause_t>(element).delay_s);
                 break;
+            case 3: // path_intentions::spindle_t
+                for (const auto& s: std::get<movement::path_intentions::spindle_t>(element).spindle) {
+                    _gcdobjs.spindles_pwm.get()->spindle_pwm_power(s.first, s.second);
+                }
+                _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::spindle_t>(element).delay_s);
+                break;
             case 4: // path_intentions::motor_t
                 _gcdobjs.steppers.get()->enable_steppers(std::get<movement::path_intentions::motor_t>(element).motor);
                 _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::motor_t>(element).delay_s);

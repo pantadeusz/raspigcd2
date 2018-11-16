@@ -28,7 +28,7 @@
 #include <steps_t.hpp>
 #include <variant>
 #include <functional>
-
+#include <map>
 
 namespace raspigcd {
 namespace movement {
@@ -44,7 +44,7 @@ namespace path_intentions {
     };
     struct spindle_t {
         double delay_s; // how long to wait for spindle to start/stop
-        std::vector <double> spindle; // the motors speeds 0.0-1.0
+        std::map <int, double> spindle; // the motors speeds 0.0-1.0
     };
     struct motor_t {
         double delay_s; // how long to wait for motor to start/stop
