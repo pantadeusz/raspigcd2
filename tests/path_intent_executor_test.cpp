@@ -91,4 +91,20 @@ TEST_CASE("path_intent_executor constructor tests", "[gcd][path_intent_executor]
 		REQUIRE(((hardware::driver::low_timers_fake*)objs.timers.get())->last_delay == Approx(0.02));
     }
 
+	SECTION("stepper motors enable and disable feature should work with delay and in order")
+    {
+		std::list<int> rec;
+        executor.set_gcode_interpreter_objects(objs);
+		hardware::driver::inmem* inmem_ptr = ((hardware::driver::inmem*)objs.steppers.get());
+		hardware::driver::low_timers_fake* low_timers_fake_ptr = ((hardware::driver::low_timers_fake*)objs.timers.get());
+		inmem_ptr->on_enable_steppers = [&rec](auto){rec.push_back(0);};
+		low_timers_fake_ptr->on_wait_s = [&rec](auto){rec.push_back(1);};
+		auto result = executor.execute({ movement::path_intentions::motor_t{.delay_s = 0.01, .motor={true,true,true,true}} });
+		REQUIRE(rec == std::list<int>{0,1});
+		result = executor.execute({ movement::path_intentions::motor_t{.delay_s = 0.02, .motor={false,false,false,false}} });
+		REQUIRE(rec == std::list<int>{0,1,0,1});
+		result = executor.execute({ movement::path_intentions::motor_t{.delay_s = 0.01, .motor={true,true,true,true}},movement::path_intentions::motor_t{.delay_s = 0.02, .motor={false,false,false,false}} });
+		REQUIRE(rec == std::list<int>{0,1,0,1,0,1,0,1});
+    }
+
 }

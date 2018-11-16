@@ -49,7 +49,10 @@ public:
     steps_t current_steps;
 
     void do_step(const single_step_command* b);
+    
     void enable_steppers(const std::vector<bool> en);
+    std::function<void(const std::vector<bool>)> on_enable_steppers;
+
     /**
      * @brief allows for setting callback that monitors steps execution
      */

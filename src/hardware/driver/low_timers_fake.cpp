@@ -8,6 +8,7 @@ namespace driver {
 void low_timers_fake::wait_s(const double t)
 {
     last_delay = t;
+    on_wait_s(t);
     // auto prevTime = std::chrono::steady_clock::now();
     // prevTime = prevTime + std::chrono::microseconds((int)(t * 1000000.0));
     // std::this_thread::sleep_until(prevTime);

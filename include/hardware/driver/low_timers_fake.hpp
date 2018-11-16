@@ -19,6 +19,7 @@
 #define __RASPIGCD_HARDWARE_LOW_LEVEL_TIMERS_FAKE_T_HPP__
 
 #include <hardware/low_timers.hpp>
+#include <functional>
 
 namespace raspigcd {
 namespace hardware {
@@ -28,6 +29,7 @@ namespace driver {
 class low_timers_fake : public low_timers {
 private:
 public:
+   
     double last_delay;
     /**
      * @brief delay in seconds. This can be fraction of a second
@@ -35,6 +37,9 @@ public:
      * @param t 
      */
     void wait_s(const double t) ;
+
+    std::function<void(const double)> on_wait_s;
+    low_timers_fake(){on_wait_s = [](const double){};}
 };
 
 }

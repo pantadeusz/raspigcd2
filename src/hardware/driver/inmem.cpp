@@ -52,6 +52,7 @@ void inmem::do_step(const single_step_command* b)
 void inmem::enable_steppers(const std::vector<bool> en)
 {
     enabled = en;
+    on_enable_steppers(en);
 };
 inmem::inmem()
 {
@@ -61,6 +62,8 @@ inmem::inmem()
     }
     enabled = std::vector<bool>(false, RASPIGCD_HARDWARE_DOF);
     _on_step = [](const steps_t&) {};
+
+    on_enable_steppers = [](const std::vector<bool>){};
 }
 } // namespace driver
 } // namespace hardware
