@@ -32,32 +32,43 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
 {
     std::lock_guard<std::mutex> guard(_execute_mutex);
 
+    movement::path_intent_t path_fragment_to_go{};
+
     for (const auto& element : path_intent) {
-        switch (element.index()) {
-        case 2: //path_intentions::pause_t
-            _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::pause_t>(element).delay_s);
-            break;
-        case 3: // path_intentions::spindle_t
-            for (const auto& s : std::get<movement::path_intentions::spindle_t>(element).spindle) {
-                _gcdobjs.spindles_pwm.get()->spindle_pwm_power(s.first, s.second);
+        if (element.index() < 2) {
+            path_fragment_to_go.push_back(element);
+        } else {
+            if (path_fragment_to_go.size() > 0) {
+                execute_pure_path_intent(path_fragment_to_go);
+                path_fragment_to_go.clear();
             }
-            _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::spindle_t>(element).delay_s);
-            break;
-        case 4: // path_intentions::motor_t
-            _gcdobjs.steppers.get()->enable_steppers(std::get<movement::path_intentions::motor_t>(element).motor);
-            _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::motor_t>(element).delay_s);
-            break;
+            switch (element.index()) {
+                case 2: //path_intentions::pause_t
+                    _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::pause_t>(element).delay_s);
+                    break;
+                case 3: // path_intentions::spindle_t
+                    for (const auto& s : std::get<movement::path_intentions::spindle_t>(element).spindle) {
+                        _gcdobjs.spindles_pwm.get()->spindle_pwm_power(s.first, s.second);
+                    }
+                    _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::spindle_t>(element).delay_s);
+                    break;
+                case 4: // path_intentions::motor_t
+                    _gcdobjs.steppers.get()->enable_steppers(std::get<movement::path_intentions::motor_t>(element).motor);
+                    _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::motor_t>(element).delay_s);
+                    break;
+                default: throw std::invalid_argument("path_intent_executor::execute: unsupported element");
+            }
         }
     }
-
+    if (path_fragment_to_go.size() > 0) {
+        execute_pure_path_intent(path_fragment_to_go);
+        path_fragment_to_go.clear();
+    }
     return {};
 }
 
 void path_intent_executor::execute_pure_path_intent(const movement::path_intent_t& path_intent)
 {
-    if (_gcdobjs.configuration.max_accelerations_mm_s2.size() == 0) throw std::invalid_argument("_gcdobjs.configuration.max_accelerations_mm_s2 must be set");
-    if (_gcdobjs.configuration.max_no_accel_velocity_mm_s.size() == 0) throw std::invalid_argument("_gcdobjs.configuration.max_no_accel_velocity_mm_s must be set");
-    if (_gcdobjs.configuration.max_velocity_mm_s.size() == 0) throw std::invalid_argument("_gcdobjs.configuration.max_velocity_mm_s must be set");
     movement::steps_generator steps_generator_drv(_gcdobjs.motor_layout);
     movement::variable_speed variable_speed_driver(_gcdobjs.motor_layout, _gcdobjs.configuration, _gcdobjs.configuration.tick_duration());
     //movement::steps_analyzer sa(_gcdobjs.motor_layout);

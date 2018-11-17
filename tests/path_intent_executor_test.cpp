@@ -70,12 +70,12 @@ TEST_CASE("path_intent_executor execute_pure_path_intent constructor tests", "[g
         executor.execute_pure_path_intent({
             distance_t{0,0,0,0},
             movement::path_intentions::move_t(60.0),
-            distance_t{1,2,3,4},
+            distance_t{1,2,3,4}
         });
         REQUIRE(inmem_ptr->current_steps == objs.motor_layout.get()->cartesian_to_steps(distance_t{1,2,3,4}));
     }
 
-    SECTION("execute simple program and check result")
+    SECTION("execute not that simple program and check result")
     {
         executor.set_gcode_interpreter_objects(objs);
         executor.execute_pure_path_intent({
@@ -83,10 +83,31 @@ TEST_CASE("path_intent_executor execute_pure_path_intent constructor tests", "[g
             movement::path_intentions::move_t(48.0),
             distance_t{1,2,3,4},
             movement::path_intentions::move_t(20.0),
-            distance_t{2,1,0,2},
+            distance_t{2,1,0,2}
         });
         REQUIRE(inmem_ptr->current_steps == objs.motor_layout.get()->cartesian_to_steps(distance_t{2,1,0,2}));
     }
+
+    SECTION("execute two programs that would lead to position 0. Simulation of resetting coordinates")
+    {
+        executor.set_gcode_interpreter_objects(objs);
+        executor.execute_pure_path_intent({
+            distance_t{0,0,0,0},
+            movement::path_intentions::move_t(48.0),
+            distance_t{1,2,3,4},
+            movement::path_intentions::move_t(20.0),
+            distance_t{2,1,0,2}
+        });
+        // simulate coordinates reset
+        executor.execute_pure_path_intent({
+            distance_t{0,0,0,0},
+            movement::path_intentions::move_t(48.0),
+            distance_t{-2,-1,-0,-2}
+        });
+
+        REQUIRE(inmem_ptr->current_steps == objs.motor_layout.get()->cartesian_to_steps(distance_t{0,0,0,0}));
+    }
+
 }
 
 TEST_CASE("path_intent_executor constructor tests basic and motors", "[gcd][path_intent_executor][motors]")
@@ -218,8 +239,8 @@ TEST_CASE("path_intent_executor constructor tests basic and motors", "[gcd][path
 
     SECTION("stepper motors enable and disable feature should work with delay and in order")
     {
-        std::list<int> rec;
         executor.set_gcode_interpreter_objects(objs);
+        std::list<int> rec;
         inmem_ptr->on_enable_steppers = [&rec](auto) { rec.push_back(0); };
         low_timers_fake_ptr->on_wait_s = [&rec](auto) { rec.push_back(1); };
         low_spindles_pwm_fake_ptr->on_spindle_pwm_power = [&rec](auto, auto) { rec.push_back(2); };
@@ -229,3 +250,4 @@ TEST_CASE("path_intent_executor constructor tests basic and motors", "[gcd][path
         REQUIRE(rec == std::list<int>{2, 1, 1, 2, 1});
     }
 }
+
