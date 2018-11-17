@@ -74,6 +74,12 @@ hardware::multistep_commands_t steps_generator::collapse_repeated_steps(const st
 
 hardware::multistep_commands_t steps_generator::movement_from_to(const distance_t& p0, const transition_t& transition, const distance_t& p1, const double dt) const
 {
+    for (int i = 0; i < RASPIGCD_HARDWARE_DOF;i++) {
+        if (std::isnan(p0[i]))  throw std::invalid_argument("steps_generator::movement_from_to: not a number in p0");
+        if (std::isnan(p1[i]))  throw std::invalid_argument("steps_generator::movement_from_to: not a number in p1");
+    }
+    if (dt <= 0.0000000001) throw std::invalid_argument("dt must be greater than 0!");
+    if ((transition.v0 < 0.00001) && ( std::abs(transition.accel) < 0.0000001))  throw std::invalid_argument("when acceleration is 0 then v0 must be greater than 0.00001");
     std::list<hardware::multistep_command> ret;
     double v0 = transition.v0;
     distance_t vp = p1 - p0;

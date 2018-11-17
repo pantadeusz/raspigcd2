@@ -25,7 +25,9 @@
 #include <movement/variable_speed.hpp>
 #include <steps_t.hpp>
 
+#include <cmath>
 #include <cassert>
+
 
 namespace raspigcd {
 namespace movement {
@@ -43,16 +45,26 @@ void variable_speed::set_tick_duration(const double& tick_duration_) {
 
 
 
-void variable_speed::set_limits(configuration::limits &limits_) { _limits = limits_; }
+void variable_speed::set_limits(const configuration::limits &limits_) { 
+    for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+        if (std::isnan(limits_.max_velocity_mm_s[i])) throw std::invalid_argument("limits_.max_velocity_mm_s cannot contain nans");
+        if (std::isnan(limits_.max_no_accel_velocity_mm_s[i])) throw std::invalid_argument("limits_.max_no_accel_velocity_mm_s cannot contain nans");
+        if (std::isnan(limits_.max_accelerations_mm_s2[i])) throw std::invalid_argument("limits_.max_accelerations_mm_s2 cannot contain nans");
+        if (limits_.max_velocity_mm_s[i] < 0.01) throw std::invalid_argument("limits_.max_velocity_mm_s cannot be less than 0.01");
+        if (limits_.max_no_accel_velocity_mm_s[i] < 0.01) throw std::invalid_argument("limits_.max_no_accel_velocity_mm_s cannot be less than 0.01");
+        if (limits_.max_accelerations_mm_s2[i] < 0.01) throw std::invalid_argument("limits_.max_accelerations_mm_s2 cannot be less than 0.01");
+    }
+    _limits = limits_;
+}
 
 variable_speed::variable_speed(
     std::shared_ptr<hardware::motor_layout> ml,
     const configuration::limits &limits_,
-    double tick_duration_) : _limits(limits_),
-                             _tick_duration(tick_duration_)
+    double tick_duration_) : _tick_duration(tick_duration_)
 {
     _motor_layout = ml.get();
     _motor_layout_ptr = ml;
+    set_limits(limits_);
 }
 // given speed, target speed and acceleration, it calculate distance that it will be accelerating
 double variable_speed::accleration_length_calc(double speed_0, double speed_1, double acceleration)
@@ -113,15 +125,15 @@ movement_plan_t variable_speed::intent_to_movement_plan( const path_intent_t& in
                     }
                 }
 
-                if (prev_ie.index() == 2) {
+                if (prev_ie.index() >= 2) {
                     // TODO
-                    throw "delays are not supported yet";
+                    throw "variable_speed does not to delays!!";
                 }
 
             }
             prev_pos = next_pos;
         } else if (ie.index() == 1) {
-            intended_velocity = std::get<double>(ie);
+            intended_velocity = std::get<path_intentions::move_t>(ie);
         }
         prev_ie = ie;
     }

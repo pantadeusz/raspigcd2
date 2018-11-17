@@ -46,7 +46,7 @@ protected:
     double _tick_duration;
 
 public:
-    void set_limits(configuration::limits &limits_);
+    void set_limits(const configuration::limits &limits_);
     void set_motor_layout(const std::shared_ptr<hardware::motor_layout> ml);
     void set_tick_duration(const double& tick_duration_);
 
