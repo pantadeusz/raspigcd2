@@ -5,6 +5,10 @@
 #include <hardware/stepping.hpp>
 #include <movement/steps_generator.hpp>
 #include <movement/variable_speed.hpp>
+#include <gcd/path_intent_executor.hpp>
+#include <hardware/driver/low_buttons_fake.hpp>
+#include <hardware/driver/low_spindles_pwm_fake.hpp>
+#include <hardware/driver/low_timers_fake.hpp>
 
 using namespace raspigcd;
 using namespace raspigcd::hardware;
@@ -16,49 +20,49 @@ int main()
 
     configuration::global cfg;
     cfg.load_defaults();
-    std::shared_ptr<low_steppers> hardware_driver;
+
+    raspigcd::gcd::gcode_interpreter_objects_t objs{};
+    objs.motor_layout = hardware::motor_layout::get_instance(cfg);
+    objs.configuration.motion_layout = cfg.motion_layout;
+    objs.configuration.scale = cfg.scale;
+    objs.configuration.steppers = cfg.steppers;
+    objs.configuration = cfg;
+    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers);
+
+
     try {
-        hardware_driver = std::make_shared< driver::raspberry_pi_3>(cfg);
+        auto hardware_driver = std::make_shared< driver::raspberry_pi_3>(cfg);
+        objs.steppers = hardware_driver;
+        objs.buttons = hardware_driver;
+        objs.spindles_pwm = hardware_driver;
+        objs.timers = hardware_driver;
     } catch ( ... ) {
         std::cout << "falling back to emulation of hardware motors..." << std::endl;
-        hardware_driver = std::make_shared< driver::inmem>();
+        objs.steppers = std::make_shared< driver::inmem>();
+        objs.buttons = std::make_shared<hardware::driver::low_buttons_fake>();
+        objs.spindles_pwm = std::make_shared<hardware::driver::low_spindles_pwm_fake>();
+        objs.timers = std::make_shared<hardware::driver::low_timers_fake>();
     }
+    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers);
     
-    
-    std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
-    movement::steps_generator steps_generator_drv(motor_layout_);
-    stepping_simple_timer stepping(cfg, hardware_driver);
-
-
-
-	movement::variable_speed variable_speed_driver( motor_layout_, cfg, cfg.tick_duration() );
-
-    hardware_driver.get()->enable_steppers({true});
-
-    
-    movement::path_intent_t simple_program = {
-			distance_t{0, 0, 0, 0}, 30.0,
-			distance_t{0, 0, 5, 0}, 5.0,
-
-			distance_t{0, 10, 5, 0}, 5.0,
-			distance_t{10, 10, 5, 0}, 30.0,
-			distance_t{10, 0, 5, 0}, 5.0,
-
-			distance_t{0, 0, 0, 0}
-		};
-	auto plan_to_execute = variable_speed_driver.intent_to_movement_plan( simple_program );
-
-    steps_t psteps = {0, 0, 0, 0};
-    std::vector<hardware::multistep_command> ticks_to_execute;
-    steps_generator_drv.movement_plan_to_step_commands(plan_to_execute, cfg.tick_duration(), 
-        [&psteps,&stepping,&ticks_to_execute](std::unique_ptr<std::vector<hardware::multistep_command> > msteps_p){
-            //ticks_to_execute.push_back(std::move(msteps_p));
-            ticks_to_execute.insert(ticks_to_execute.end(), msteps_p.get()->begin(), msteps_p.get()->end());
-            std::cout << "steps to execute: " << msteps_p.get()->size() << std::endl;
-
+    raspigcd::gcd::path_intent_executor executor;
+    executor.set_gcode_interpreter_objects(objs);
+    auto result = executor.execute(
+        {
+            //movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle = {{0, 1.0}}},
+            movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {true,true,true,true}},
+            distance_t{0,0,0,0},
+            movement::path_intentions::move_t(10.0),
+            distance_t{1,2,3,0},
+            movement::path_intentions::pause_t{.delay_s=0.0},
+            distance_t{0,0,0,0},
+            movement::path_intentions::move_t(10.0),
+            distance_t{-1,-2,-3,0},
+            //movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle = {{0, 0.0}}},
+            movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {false,false,false,false}},
         });
-    stepping.exec( ticks_to_execute );      
-    hardware_driver.get()->enable_steppers({false});
+
+
     return 0;
 }
 

@@ -134,8 +134,6 @@ inline std::ostream& operator<<(std::ostream& os, distance_t const& value)
 //std::vector<double>
 auto calculate_linear_coefficient_from_limits = [](const auto& limits_for_axes, const auto& norm_vect) -> double
 {
-    assert(std::sqrt(norm_vect.length2()) > 0.9999);
-    assert(std::sqrt(norm_vect.length2()) < 1.0001);
     double average_max_accel = 0;
     double average_max_accel_sum = 0;
     for (unsigned int i = 0; i < limits_for_axes.size(); i++) {
