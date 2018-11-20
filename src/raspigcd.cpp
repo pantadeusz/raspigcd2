@@ -49,16 +49,15 @@ int main()
     executor.set_gcode_interpreter_objects(objs);
     auto result = executor.execute(
         {
-            //movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle = {{0, 1.0}}},
             movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {true,true,true,true}},
+            movement::path_intentions::spindle_t{.delay_s = 0.0001, .spindle = {{0, 1.0}}},
             distance_t{0,0,0,0},
-            movement::path_intentions::move_t(10.0),
-            distance_t{1,2,3,0},
-            movement::path_intentions::pause_t{.delay_s=0.0},
+            movement::path_intentions::move_t(2.0),
+            distance_t{20,0,20,0},
+            movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle = {{0, 0.0}}},
+            distance_t{20,0,20,0},
+            movement::path_intentions::move_t(20.0),
             distance_t{0,0,0,0},
-            movement::path_intentions::move_t(10.0),
-            distance_t{-1,-2,-3,0},
-            //movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle = {{0, 0.0}}},
             movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {false,false,false,false}},
         });
 
