@@ -1,6 +1,8 @@
 #include <configuration.hpp>
 #include <configuration_json.hpp>
 #include <hardware/driver/inmem.hpp>
+#include <hardware/driver/low_timers_fake.hpp>
+#include <hardware/driver/low_timers_busy_wait.hpp>
 #include <hardware/stepping.hpp>
 #include <movement/steps_generator.hpp>
 
@@ -146,8 +148,10 @@ TEST_CASE("Movement constant speed with timer", "[movement][steps_generator][chr
     cfg.load_defaults();
     cfg.tick_duration_us = 60;
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
+    std::shared_ptr<low_timers> ltbwait = std::make_shared<driver::low_timers_busy_wait>();
+
     movement::steps_generator const_speed_driver(motor_layout_);
-    stepping_simple_timer stepping(cfg, lsfake);
+    stepping_simple_timer stepping(cfg, lsfake, ltbwait);
 
     distance_t start_coord = {0, 0, 0, 0};
     steps_t steps = motor_layout_.get()->cartesian_to_steps(start_coord);
@@ -202,8 +206,10 @@ SCENARIO("steps_generator for transitions with accelerations", "[movement][steps
     cfg.load_defaults();
     cfg.tick_duration_us = 60;
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
+    std::shared_ptr<low_timers> ltfake = std::make_shared<driver::low_timers_fake>();
+
     movement::steps_generator steps_generator(motor_layout_);
-    stepping_simple_timer stepping(cfg, lsfake);
+    stepping_simple_timer stepping(cfg, lsfake,ltfake);
 
 
     steps_t prev_pos = {0, 0, 0, 0};
@@ -313,12 +319,14 @@ SCENARIO("steps_generator for transitions with accelerations", "[movement][steps
 SCENARIO("steps_generator to calculate velocity at the end of movement", "[movement][steps_generator][velocity_after_from_to]")
 {
     std::shared_ptr<low_steppers> lsfake = std::make_shared<driver::inmem>();
+    std::shared_ptr<low_timers> ltfake = std::make_shared<driver::low_timers_fake>();
     configuration::global cfg;
     cfg.load_defaults();
     cfg.tick_duration_us = 60;
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
+
     movement::steps_generator steps_generator(motor_layout_);
-    stepping_simple_timer stepping(cfg, lsfake);
+    stepping_simple_timer stepping(cfg, lsfake, ltfake);
 
     GIVEN("we have segment to move with acceleration")
     {

@@ -44,7 +44,7 @@ struct bcm2835_peripheral {
     volatile unsigned int* addr;
 };
 
-class raspberry_pi_3 : public low_buttons, public low_steppers, public low_spindles_pwm, public low_timers
+class raspberry_pi_3 : public low_buttons, public low_steppers, public low_spindles_pwm// , public low_timers
 {
 private:
     std::vector<configuration::spindle_pwm> spindles;

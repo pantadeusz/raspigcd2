@@ -9,6 +9,7 @@
 #include <hardware/driver/low_buttons_fake.hpp>
 #include <hardware/driver/low_spindles_pwm_fake.hpp>
 #include <hardware/driver/low_timers_fake.hpp>
+#include <hardware/driver/low_timers_busy_wait.hpp>
 #include <gcd/factory.hpp>
 
 using namespace raspigcd;
@@ -77,7 +78,7 @@ int main_spindle_test()
 
     configuration::global cfg;
     cfg.load_defaults();
-    std::shared_ptr<driver::raspberry_pi_3> raspi3(new driver::raspberry_pi_3(cfg));
+    std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
 
     raspi3.get()->enable_steppers({true});
 
@@ -97,10 +98,11 @@ int main_old2()
 
     configuration::global cfg;
     cfg.load_defaults();
-    std::shared_ptr<driver::raspberry_pi_3> raspi3(new driver::raspberry_pi_3(cfg));
+    std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
+;
     movement::steps_generator steps_generator_drv(motor_layout_);
-    stepping_simple_timer stepping(cfg, raspi3);
+    stepping_simple_timer stepping(cfg, raspi3, std::make_shared<hardware::driver::low_timers_busy_wait>());
 
     raspi3.get()->enable_steppers({true});
 

@@ -2,6 +2,7 @@
 #include <configuration_json.hpp>
 #include <hardware/stepping.hpp>
 #include <hardware/driver/inmem.hpp>
+#include <hardware/driver/low_timers_fake.hpp>
 
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_DISABLE_MATCHERS
@@ -92,7 +93,8 @@ TEST_CASE("Hardware stepping_sim", "[hardware_stepping][stepping_sim]")
 TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple_timer]")
 {
     std::shared_ptr<low_steppers> lsfake(new driver::inmem());
-    stepping_simple_timer worker(60, lsfake);
+    std::shared_ptr<low_timers> ltfake = std::make_shared<driver::low_timers_fake>();
+    stepping_simple_timer worker(60, lsfake, ltfake);
 
     SECTION("Run empty program")
     {

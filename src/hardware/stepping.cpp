@@ -54,37 +54,48 @@ void stepping_simple_timer::set_low_level_steppers_driver(std::shared_ptr<low_st
     _steppers_driver = _steppers_driver_shr.get();
 }
 
+void stepping_simple_timer::set_low_level_timers(std::shared_ptr<low_timers> timer_drv_) {
+    _low_timer_shr = timer_drv_;
+    _low_timer = timer_drv_.get();
+}
+
+
 void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_to_do)
 {
     set_thread_realtime();
     _tick_index = 0;
     //steps_t _steps = start_steps;
-    std::chrono::microseconds ttime = std::chrono::microseconds((unsigned long)(_delay_microseconds));
-    auto t = std::chrono::system_clock::now();
-    auto nextT = ttime + t;
-    long int step_number = 0;
-    nextT = t;
+//    std::chrono::microseconds ttime = std::chrono::microseconds((unsigned long)(_delay_microseconds));
+//    auto t = std::chrono::system_clock::now();
+//    auto nextT = ttime + t;
+    //long int step_number = 0;
+//    nextT = t;
+    std::chrono::high_resolution_clock::time_point prev_timer = _low_timer->start_timing();
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
 //             _steps[0] = _steps[0] + (int)((signed char)s.b[0].step * ((signed char)s.b[0].dir * 2 - 1));
 //             _steps[1] = _steps[1] + (int)((signed char)s.b[1].step * ((signed char)s.b[1].dir * 2 - 1));
 //             _steps[2] = _steps[2] + (int)((signed char)s.b[2].step * ((signed char)s.b[2].dir * 2 - 1));
 //             _steps[3] = _steps[3] + (int)((signed char)s.b[3].step * ((signed char)s.b[3].dir * 2 - 1));
-            ttime = std::chrono::microseconds((unsigned long)(_delay_microseconds));
+//            ttime = std::chrono::microseconds((unsigned long)(_delay_microseconds));
             _steppers_driver->do_step(s.b);
             _tick_index++;
+            
+
+        prev_timer = _low_timer->wait_for_tick_s(prev_timer, _delay_microseconds);
+
 //             on_step_(_steps);
             // wait till next step
-            nextT += ttime;
-            step_number++;
+//            nextT += ttime;
+            //step_number++;
 //nextT = t + ttime*step_number;
 // always busy wait - better timing, but more resource consuming
-#ifndef STEPPING_DELAY_SLEEP_UNTIL
-            for (; std::chrono::system_clock::now() < nextT;)
-                ;
-#else
-            std::this_thread::sleep_until(nextT);
-#endif
+//#ifndef STEPPING_DELAY_SLEEP_UNTIL
+//            for (; std::chrono::system_clock::now() < nextT;)
+//                ;
+//#else
+//            std::this_thread::sleep_until(nextT);
+//#endif
         }
     }
     //return _steps;

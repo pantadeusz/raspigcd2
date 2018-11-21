@@ -18,6 +18,7 @@
 #ifndef __RASPIGCD_HARDWARE_LOW_LEVEL__TIMERS_T_HPP__
 #define __RASPIGCD_HARDWARE_LOW_LEVEL__TIMERS_T_HPP__
 
+#include <chrono>
 
 namespace raspigcd {
 namespace hardware {
@@ -38,13 +39,13 @@ public:
      * @brief start the timer
      * 
      */
-    //virtual void start_timing() = 0;
+    virtual std::chrono::high_resolution_clock::time_point start_timing() = 0;
 
     /**
      * @brief wait for the tick to end.
      * Remember to run start_timing first!
      */
-    //virtual void wait_for_tick(const double t) = 0;
+    virtual std::chrono::high_resolution_clock::time_point wait_for_tick_s(const std::chrono::high_resolution_clock::time_point &prev_timer, const double t) = 0;
 };
 
 } // namespace hardware

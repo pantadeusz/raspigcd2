@@ -38,6 +38,18 @@ public:
      */
     void wait_s(const double t) ;
 
+    /**
+     * @brief start the timer
+     * 
+     */
+    std::chrono::high_resolution_clock::time_point start_timing();
+
+    /**
+     * @brief wait for the tick to end.
+     * Remember to run start_timing first!
+     */
+    std::chrono::high_resolution_clock::time_point wait_for_tick_s(const std::chrono::high_resolution_clock::time_point &, const double);
+
     std::function<void(const double)> on_wait_s;
     low_timers_fake(){on_wait_s = [](const double){};}
 };

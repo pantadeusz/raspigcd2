@@ -13,6 +13,24 @@ void low_timers_fake::wait_s(const double t)
     // prevTime = prevTime + std::chrono::microseconds((int)(t * 1000000.0));
     // std::this_thread::sleep_until(prevTime);
 }
+
+/**
+     * @brief start the timer
+     * 
+     */
+std::chrono::high_resolution_clock::time_point low_timers_fake::start_timing()
+{
+    return std::chrono::system_clock::now();
+};
+
+/**
+     * @brief wait for the tick to end.
+     * Remember to run start_timing first!
+     */
+std::chrono::high_resolution_clock::time_point low_timers_fake::wait_for_tick_s(const std::chrono::high_resolution_clock::time_point&, const double)
+{
+    return std::chrono::system_clock::now();
+};
 } // namespace driver
 } // namespace hardware
 } // namespace raspigcd

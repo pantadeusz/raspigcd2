@@ -23,6 +23,7 @@
 #include <distance_t.hpp>
 #include <functional>
 #include <hardware/low_steppers.hpp>
+#include <hardware/low_timers.hpp>
 #include <hardware/stepping_commands.hpp>
 #include <memory>
 #include <steps_t.hpp>
@@ -90,6 +91,9 @@ public:
     std::shared_ptr<low_steppers> _steppers_driver_shr;
     low_steppers* _steppers_driver;
 
+    std::shared_ptr<low_timers> _low_timer_shr;
+    low_timers *_low_timer;
+
     /**
      * @brief Set the delay in microseconds
      * 
@@ -104,18 +108,22 @@ public:
      */
     void set_low_level_steppers_driver(std::shared_ptr<low_steppers> steppers_driver);
 
+    void set_low_level_timers(std::shared_ptr<low_timers> timer_drv_);
+
     void exec(const multistep_commands_t& commands_to_do);
 
-    stepping_simple_timer(int delay_us, std::shared_ptr<low_steppers> steppers_driver)
+    stepping_simple_timer(int delay_us, std::shared_ptr<low_steppers> steppers_driver, std::shared_ptr<low_timers> timer_drv_)
     {
         set_delay_microseconds(delay_us);
         set_low_level_steppers_driver(steppers_driver);
+        set_low_level_timers(timer_drv_);
     }
 
-    stepping_simple_timer(const configuration::global& conf, std::shared_ptr<low_steppers> steppers_driver)
+    stepping_simple_timer(const configuration::global& conf, std::shared_ptr<low_steppers> steppers_driver, std::shared_ptr<low_timers> timer_drv_)
     {
         set_delay_microseconds(conf.tick_duration_us);
         set_low_level_steppers_driver(steppers_driver);
+        set_low_level_timers(timer_drv_);
     }
 };
 

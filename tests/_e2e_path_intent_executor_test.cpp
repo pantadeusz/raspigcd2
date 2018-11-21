@@ -49,7 +49,7 @@ TEST_CASE("path_intent_executor test whole program and motors", "[gcd][path_inte
     objs.configuration.steppers = actuators_cfg.steppers;
     objs.configuration = actuators_cfg;
     
-    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers);
+    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers, objs.timers);
 
     hardware::driver::inmem* inmem_ptr = (hardware::driver::inmem*)objs.steppers.get();
     hardware::driver::low_timers_fake* low_timers_fake_ptr = (hardware::driver::low_timers_fake*)objs.timers.get();

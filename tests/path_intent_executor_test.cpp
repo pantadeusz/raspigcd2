@@ -47,7 +47,7 @@ TEST_CASE("path_intent_executor execute_pure_path_intent constructor tests", "[g
     objs.configuration.steppers = actuators_cfg.steppers;
     objs.configuration = actuators_cfg;
     
-    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers);
+    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers,objs.timers);
 
 
 

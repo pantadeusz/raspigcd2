@@ -21,6 +21,7 @@
 #include <hardware/driver/low_buttons_fake.hpp>
 #include <hardware/driver/low_spindles_pwm_fake.hpp>
 #include <hardware/driver/low_timers_fake.hpp>
+#include <hardware/driver/low_timers_busy_wait.hpp>
 #include <hardware/driver/raspberry_pi.hpp>
 #include <hardware/motor_layout.hpp>
 #include <hardware/stepping.hpp>
@@ -98,7 +99,7 @@ std::shared_ptr<raspigcd::gcd::path_intent_executor> path_intent_executor_factor
     objs.configuration.scale = cfg.scale;
     objs.configuration.steppers = cfg.steppers;
     objs.configuration = cfg;
-    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers);
+    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers, objs.timers);
 
     auto setup_fake = [&]() {
         objs.steppers = std::make_shared<driver::inmem>();
@@ -113,7 +114,8 @@ std::shared_ptr<raspigcd::gcd::path_intent_executor> path_intent_executor_factor
             objs.steppers = hardware_driver;
             objs.buttons = hardware_driver;
             objs.spindles_pwm = hardware_driver;
-            objs.timers = hardware_driver;
+            objs.timers = std::make_shared<hardware::driver::low_timers_busy_wait>();
+            //objs.timers = //hardware_driver;
         } catch (...) {
             std::cout << "falling back to emulation of hardware motors..." << std::endl;
             setup_fake();
@@ -121,7 +123,7 @@ std::shared_ptr<raspigcd::gcd::path_intent_executor> path_intent_executor_factor
     } else {
         setup_fake();
     }
-    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers);
+    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers, objs.timers);
 
     //raspigcd::gcd::path_intent_executor executor;
     std::shared_ptr<raspigcd::gcd::path_intent_executor> executor;
