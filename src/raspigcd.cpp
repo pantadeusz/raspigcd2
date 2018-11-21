@@ -54,7 +54,7 @@ int main()
     auto &executor =*(executor_p.get());
     auto result = executor.execute(
         {
-            movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {true,true,true,true}},
+            movement::path_intentions::motor_t{.delay_s = 0.5, .motor = {true,true,true,true}},
             movement::path_intentions::spindle_t{.delay_s = 0.0001, .spindle = {{0, 1.0}}},
             distance_t{0,0,0,0},
             movement::path_intentions::move_t(20.0),
