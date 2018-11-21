@@ -9,6 +9,7 @@
 #include <hardware/driver/low_buttons_fake.hpp>
 #include <hardware/driver/low_spindles_pwm_fake.hpp>
 #include <hardware/driver/low_timers_fake.hpp>
+#include <gcd/factory.hpp>
 
 using namespace raspigcd;
 using namespace raspigcd::hardware;
@@ -21,7 +22,7 @@ int main()
     configuration::global cfg;
     cfg.load_defaults();
 
-    raspigcd::gcd::gcode_interpreter_objects_t objs{};
+    /*raspigcd::gcd::gcode_interpreter_objects_t objs{};
     objs.motor_layout = hardware::motor_layout::get_instance(cfg);
     objs.configuration.motion_layout = cfg.motion_layout;
     objs.configuration.scale = cfg.scale;
@@ -47,6 +48,10 @@ int main()
     
     raspigcd::gcd::path_intent_executor executor;
     executor.set_gcode_interpreter_objects(objs);
+    */
+
+    std::shared_ptr<raspigcd::gcd::path_intent_executor> executor_p = gcd::path_intent_executor_factory(cfg, gcd::machine_driver_selection::RASPBERRY_PI);
+    auto &executor =*(executor_p.get());
     auto result = executor.execute(
         {
             movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {true,true,true,true}},

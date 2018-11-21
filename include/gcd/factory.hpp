@@ -19,6 +19,7 @@
 #define __RASPIGCD_GCD_FACTORY_T_HPP__
 
 #include <gcd/gcode_interpreter_objects_t.hpp>
+#include <gcd/path_intent_executor.hpp>
 
 namespace raspigcd {
 namespace gcd {
@@ -27,8 +28,11 @@ enum machine_driver_selection {
     RASPBERRY_PI,
     IN_MEMORY
 };
+//
+//gcode_interpreter_objects_t gcode_interpreter_objects_factory(const configuration::global &configuration_, const machine_driver_selection driver_select_ = RASPBERRY_PI);
 
-gcode_interpreter_objects_t gcode_interpreter_objects_factory(const configuration::global &configuration_, const machine_driver_selection driver_select_ = RASPBERRY_PI);
+std::shared_ptr<raspigcd::gcd::path_intent_executor> path_intent_executor_factory(const configuration::global &cfg, const machine_driver_selection driver_select_ = RASPBERRY_PI);
+
 
 } // namespace hardware
 } // namespace raspigcd

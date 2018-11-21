@@ -16,20 +16,24 @@
 */
 
 #include <gcd/factory.hpp>
-#include <hardware/motor_layout.hpp>
-#include <hardware/driver/raspberry_pi.hpp>
+#include <gcd/path_intent_executor.hpp>
 #include <hardware/driver/inmem.hpp>
+#include <hardware/driver/low_buttons_fake.hpp>
+#include <hardware/driver/low_spindles_pwm_fake.hpp>
+#include <hardware/driver/low_timers_fake.hpp>
+#include <hardware/driver/raspberry_pi.hpp>
+#include <hardware/motor_layout.hpp>
 #include <hardware/stepping.hpp>
 #include <hardware/stepping_commands.hpp>
+#include <memory>
+#include <movement/path_intent_t.hpp>
 #include <movement/simple_steps.hpp>
 #include <movement/variable_speed.hpp>
-#include <movement/path_intent_t.hpp>
-#include <memory>
 
 namespace raspigcd {
 namespace gcd {
 
-
+/*
 gcode_interpreter_objects_t gcode_interpreter_objects_factory(const configuration::global &cfg, const machine_driver_selection driver_select_) {
     gcode_interpreter_objects_t gio_ret;
 //std::shared_ptr<hardware::motor_layout> motor_layout;
@@ -80,7 +84,50 @@ gcode_interpreter_objects_t gcode_interpreter_objects_factory(const configuratio
   //  gio_ret.hardware_driver.get()->enable_steppers({false});
     return gio_ret;
 }
+*/
 
+
+std::shared_ptr<raspigcd::gcd::path_intent_executor> path_intent_executor_factory(const configuration::global& cfg, const machine_driver_selection driver_select_)
+{
+    using namespace raspigcd;
+    using namespace raspigcd::hardware;
+
+    raspigcd::gcd::gcode_interpreter_objects_t objs{};
+    objs.motor_layout = hardware::motor_layout::get_instance(cfg);
+    objs.configuration.motion_layout = cfg.motion_layout;
+    objs.configuration.scale = cfg.scale;
+    objs.configuration.steppers = cfg.steppers;
+    objs.configuration = cfg;
+    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers);
+
+    auto setup_fake = [&]() {
+        objs.steppers = std::make_shared<driver::inmem>();
+        objs.buttons = std::make_shared<hardware::driver::low_buttons_fake>();
+        objs.spindles_pwm = std::make_shared<hardware::driver::low_spindles_pwm_fake>();
+        objs.timers = std::make_shared<hardware::driver::low_timers_fake>();
+    };
+
+    if (driver_select_ == RASPBERRY_PI) {
+        try {
+            auto hardware_driver = std::make_shared<driver::raspberry_pi_3>(cfg);
+            objs.steppers = hardware_driver;
+            objs.buttons = hardware_driver;
+            objs.spindles_pwm = hardware_driver;
+            objs.timers = hardware_driver;
+        } catch (...) {
+            std::cout << "falling back to emulation of hardware motors..." << std::endl;
+            setup_fake();
+        }
+    } else {
+        setup_fake();
+    }
+    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers);
+
+    //raspigcd::gcd::path_intent_executor executor;
+    std::shared_ptr<raspigcd::gcd::path_intent_executor> executor;
+    executor.get()->set_gcode_interpreter_objects(objs);
+    return executor;
+}
 
 } // namespace gcd
 } // namespace raspigcd

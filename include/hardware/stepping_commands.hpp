@@ -27,7 +27,7 @@ namespace raspigcd {
 namespace hardware {
 
 struct single_step_command {
-    bool step : 1, dir : 1, sync_laser_en: 1, sync_laser: 1;
+    bool step : 1, dir : 1;//, sync_laser_en: 1, sync_laser: 1;
 };
 
 struct multistep_command {
