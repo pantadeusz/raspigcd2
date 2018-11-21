@@ -126,7 +126,7 @@ std::shared_ptr<raspigcd::gcd::path_intent_executor> path_intent_executor_factor
     objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers, objs.timers);
 
     //raspigcd::gcd::path_intent_executor executor;
-    std::shared_ptr<raspigcd::gcd::path_intent_executor> executor;
+    std::shared_ptr<raspigcd::gcd::path_intent_executor> executor = std::make_shared<raspigcd::gcd::path_intent_executor>();
     executor.get()->set_gcode_interpreter_objects(objs);
     return executor;
 }
