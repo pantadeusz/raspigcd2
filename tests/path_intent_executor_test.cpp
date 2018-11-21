@@ -120,7 +120,6 @@ TEST_CASE("path_intent_executor constructor tests basic and motors", "[gcd][path
         stepper(4, 10, 17, 100.0),
         stepper(9, 10, 11, 100.0),
         stepper(0, 10, 5, 100.0)};
-
     raspigcd::gcd::path_intent_executor executor;
     raspigcd::gcd::gcode_interpreter_objects_t objs;
     objs.buttons = std::make_shared<hardware::driver::low_buttons_fake>();
@@ -131,7 +130,11 @@ TEST_CASE("path_intent_executor constructor tests basic and motors", "[gcd][path
     objs.configuration.motion_layout = actuators_cfg.motion_layout;
     objs.configuration.scale = actuators_cfg.scale;
     objs.configuration.steppers = actuators_cfg.steppers;
+    objs.configuration.max_accelerations_mm_s2 = {1000,1000,1000,1000};
+    objs.configuration.max_no_accel_velocity_mm_s = {20,20,20,20};
+    objs.configuration.max_velocity_mm_s = {160,160,160,160};
     objs.stepping = std::make_shared<hardware::stepping_sim>(steps_t{0, 0, 0, 0});
+
 
 
     hardware::driver::inmem* inmem_ptr = (hardware::driver::inmem*)objs.steppers.get();

@@ -100,7 +100,9 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
                 return ticks_to_execute;
             },
             path_fragment_to_go));
-        actions_list.push_back([this, &actions_futures, i = (actions_futures.size() - 1)]() { _gcdobjs.stepping.get()->exec(actions_futures.at(i).get()); });
+        actions_list.push_back([this, &actions_futures, i = (actions_futures.size() - 1)]() {
+            _gcdobjs.stepping.get()->exec(actions_futures.at(i).get());
+        });
         path_fragment_to_go.clear();
     }
     for (auto& e : actions_list) {
@@ -166,7 +168,6 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
     return {};
 }
 */
-
 
 
 void path_intent_executor::execute_pure_path_intent(const movement::path_intent_t& path_intent)

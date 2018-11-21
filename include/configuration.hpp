@@ -75,6 +75,19 @@ public:
     }
 };
 
+/**
+ * stepper motor configuration
+ * */
+class sync_laser
+{
+public:
+    int pin; // laser pin
+    bool hi_is_off; // false - 0 sets laser off. true - 1 sets laser off
+    inline sync_laser(const int& _pin = 0, const bool& _hi_is_off = false) : pin(_pin), hi_is_off(_hi_is_off)
+    {
+    }
+};
+
 
 class limits {
 public:
@@ -113,6 +126,7 @@ public:
     bool simulate_execution;      // should I use simulator by default
 
     std::vector<spindle_pwm> spindles;
+    std::vector<sync_laser> lasers;
     std::vector<button> buttons;
 
     global& load_defaults();
@@ -124,6 +138,7 @@ bool operator==(const global& l, const global& r);
 bool operator==(const button& l, const button& r);
 bool operator==(const stepper& l, const stepper& r);
 bool operator==(const spindle_pwm& l, const spindle_pwm& r);
+bool operator==(const sync_laser& l, const sync_laser& r);
 
 } // namespace configuration
 
