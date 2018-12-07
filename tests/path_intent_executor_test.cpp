@@ -16,6 +16,7 @@ using namespace raspigcd;
 using namespace raspigcd::movement;
 using namespace raspigcd::configuration;
 
+/*
 // void path_intent_executor::execute_pure_path_intent(const movement::path_intent_t& path_intent) {
 TEST_CASE("path_intent_executor execute_pure_path_intent constructor tests", "[gcd][path_intent_executor][execute_pure_path_intent]")
 {
@@ -108,7 +109,7 @@ TEST_CASE("path_intent_executor execute_pure_path_intent constructor tests", "[g
         REQUIRE(inmem_ptr->current_steps == objs.motor_layout.get()->cartesian_to_steps(distance_t{0,0,0,0}));
     }
 
-}
+} */
 
 TEST_CASE("path_intent_executor constructor tests basic and motors", "[gcd][path_intent_executor][motors]")
 {

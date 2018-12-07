@@ -157,7 +157,7 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
     return return_val;
 }
 
-
+/*
 void path_intent_executor::execute_pure_path_intent(const movement::path_intent_t& path_intent)
 {
     movement::steps_generator steps_generator_drv(_gcdobjs.motor_layout);
@@ -192,7 +192,7 @@ void path_intent_executor::execute_pure_path_intent(const movement::path_intent_
 
     handle.get();
 }
-
+*/
 #ifdef NIEZADEFINIOWANE
 
 void path_intent_executor::execute(const movement::path_intent_t& path_intent)

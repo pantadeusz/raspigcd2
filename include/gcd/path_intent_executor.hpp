@@ -74,7 +74,7 @@ public:
     /**
      * @brief Executes pure path intent, that is with only positions and moves
      */
-    void execute_pure_path_intent(const movement::path_intent_t& path_intent);
+    //void execute_pure_path_intent(const movement::path_intent_t& path_intent);
 
     void set_gcode_interpreter_objects(const gcode_interpreter_objects_t &gcdobjs_) {
         std::lock_guard<std::mutex> guard(_execute_mutex);
