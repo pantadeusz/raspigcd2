@@ -32,6 +32,17 @@
 namespace raspigcd {
 namespace hardware {
 
+//raspigcd::hardware::execution_terminated
+
+class execution_terminated : public std::exception {
+public:
+    const char* what() const noexcept
+    {
+        static const char what_[]="stepping has been terminated";
+        return what_;
+    }
+};
+
 /**
  * @brief The basic class that allows for generating steps on the machine with precise timing
  */
@@ -52,6 +63,12 @@ public:
      * returns current tick index. This is not in the terms of commands. There will be at least as many ticks as commands.#pragma endregion
      * */
     virtual int get_tick_index() const = 0;
+
+    /**
+     * breaks execution of the exec method. This will stop everyting at once;
+     * */
+    virtual void terminate() = 0;
+    virtual void reset_after_terminate() = 0;
 };
 
 class stepping_sim : public stepping
@@ -59,6 +76,7 @@ class stepping_sim : public stepping
     std::shared_ptr<low_steppers> _steppers_driver_shr;
     std::function<void(const steps_t&)> _on_step;
 
+    std::atomic<int> _terminate_execution;
 public:
     std::atomic<int> _tick_index;
 
@@ -72,6 +90,11 @@ public:
 // const steps_t& start_steps, std::function<void(const steps_t&)> on_step_
     void exec(const multistep_commands_t& commands_to_do);
 
+    void terminate() {
+        _terminate_execution = 1;
+    }
+    void reset_after_terminate() {_terminate_execution = 0;};    
+
     stepping_sim(
         const steps_t start_steps_,
         std::function<void(const steps_t&)> on_step_ = [](const steps_t&) {}) {
@@ -83,6 +106,7 @@ public:
 class stepping_simple_timer : public stepping
 {
     std::atomic<int> _tick_index; 
+    std::atomic<int> _terminate_execution;
 
 public:
     virtual int get_tick_index() const {return _tick_index;};
@@ -111,6 +135,12 @@ public:
     void set_low_level_timers(std::shared_ptr<low_timers> timer_drv_);
 
     void exec(const multistep_commands_t& commands_to_do);
+
+    void terminate() {
+        _terminate_execution = 1;
+    }
+    void reset_after_terminate() {_terminate_execution = 0;};
+
 
     stepping_simple_timer(int delay_us, std::shared_ptr<low_steppers> steppers_driver, std::shared_ptr<low_timers> timer_drv_)
     {

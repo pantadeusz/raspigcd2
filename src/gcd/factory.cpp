@@ -115,7 +115,6 @@ std::shared_ptr<raspigcd::gcd::path_intent_executor> path_intent_executor_factor
             objs.buttons = hardware_driver;
             objs.spindles_pwm = hardware_driver;
             objs.timers = std::make_shared<hardware::driver::low_timers_busy_wait>();
-            //objs.timers = //hardware_driver;
         } catch (...) {
             std::cout << "falling back to emulation of hardware motors..." << std::endl;
             setup_fake();

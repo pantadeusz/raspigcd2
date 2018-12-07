@@ -43,6 +43,7 @@ namespace raspigcd {
 namespace gcd {
 
 struct path_intent_executor_result_t {
+    std::vector<std::string> errors;
     steps_t position;
 };
 
@@ -50,6 +51,8 @@ class path_intent_executor
 {
     std::mutex _execute_mutex;    
     gcode_interpreter_objects_t _gcdobjs;
+
+
 public:
     /**
      * @brief execute path intent
@@ -60,6 +63,13 @@ public:
      * 
      */
     path_intent_executor_result_t execute(const movement::path_intent_t& path_intent);
+
+
+    /**
+     * @brief Terminate currently executing path intent. The execute command shall be stopped
+     * 
+     */
+    void terminate();
 
     /**
      * @brief Executes pure path intent, that is with only positions and moves

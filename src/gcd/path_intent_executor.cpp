@@ -28,6 +28,12 @@
 namespace raspigcd {
 namespace gcd {
 
+
+void path_intent_executor::terminate()
+{
+    _gcdobjs.stepping.get()->terminate();
+}
+
 path_intent_executor_result_t path_intent_executor::execute(const movement::path_intent_t& path_intent)
 {
     std::lock_guard<std::mutex> guard(_execute_mutex);
@@ -37,7 +43,7 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
 
     // this method works asynchronous - it calculates steps in another thread that feeds the results to the main thread. This allows for no breaking execution of code
 
-    path_intent_executor_result_t return_val = {.position = {0, 0, 0, 0}};
+    path_intent_executor_result_t return_val = {.errors={},.position = {0, 0, 0, 0}};
 
     // group actions to form movement fragments and actions
     std::vector<movement::path_intent_t> path_fragments; // fragments to execute in sequence
@@ -77,14 +83,29 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
                     return ticks_to_execute;
                 },
                 path_fragment_to_go));
-            actions_list.push_back([this, &return_val, pos_after = path_fragment_to_go.back(), &actions_futures, i = (actions_futures.size() - 1)]() { 
-                _gcdobjs.stepping.get()->exec(actions_futures.at(i).get()); 
+            actions_list.push_back([this, &return_val, pos_after = path_fragment_to_go.back(), &actions_futures, i = (actions_futures.size() - 1)]() {
+                auto commands_to_do = actions_futures.at(i).get(); // get the ticks that should be executed. This is generated in future
+                try {
+                    _gcdobjs.stepping.get()->exec(commands_to_do);
+                } catch (const raspigcd::hardware::execution_terminated& e) {
+                    // update positions...
+                    raspigcd::hardware::execution_terminated e_ = e;
+                    return_val.errors.push_back(e.what());
+
+                    std::list<steps_t> steps_from_commands_ = hardware_commands_to_steps(commands_to_do);
+                    std::vector<steps_t> steps_from_commands(steps_from_commands_.begin(),steps_from_commands_.end());
+                    
+                    return_val.position = return_val.position + (steps_from_commands.at(_gcdobjs.stepping.get()->get_tick_index()-1));
+                    throw e_;
+                }
                 return_val.position = _gcdobjs.motor_layout.get()->cartesian_to_steps(std::get<distance_t>(pos_after));
             });
 
             break;
         case 2: //path_intentions::pause_t
-            actions_list.push_back([this, path_fragment_to_go]() { _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::pause_t>(path_fragment_to_go.front()).delay_s); });
+            actions_list.push_back([this, path_fragment_to_go]() {
+                _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::pause_t>(path_fragment_to_go.front()).delay_s);
+            });
             break;
         case 3: // path_intentions::spindle_t
             actions_list.push_back([this, path_fragment_to_go]() {
@@ -107,68 +128,15 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
 
     // exec actions list
     for (auto& e : actions_list) {
-        e();
+        try {
+            e();
+        } catch (const raspigcd::hardware::execution_terminated& e) {
+            _gcdobjs.stepping.get()->reset_after_terminate();
+            return return_val;
+        }
     }
     return return_val;
 }
-
-
-/*
-path_intent_executor_result_t path_intent_executor::execute(const movement::path_intent_t& path_intent)
-{
-    std::lock_guard<std::mutex> guard(_execute_mutex);
-    movement::path_intent_t path_fragment_to_go{};
-
-    movement::steps_generator steps_generator_drv(_gcdobjs.motor_layout);
-    movement::variable_speed variable_speed_driver(_gcdobjs.motor_layout, _gcdobjs.configuration, _gcdobjs.configuration.tick_duration());
-
-
-    for (const auto& element : path_intent) {
-        if (element.index() < 2) {
-            path_fragment_to_go.push_back(element);
-        } else {
-            if (path_fragment_to_go.size() > 0) {
-                auto plan_to_execute = variable_speed_driver.intent_to_movement_plan(path_fragment_to_go);
-                hardware::multistep_commands_t ticks_to_execute;
-                steps_generator_drv.movement_plan_to_step_commands(plan_to_execute, _gcdobjs.configuration.tick_duration(),
-                    [&, this](std::unique_ptr<hardware::multistep_commands_t> msteps_p) {
-                        ticks_to_execute.insert(ticks_to_execute.end(), msteps_p.get()->begin(), msteps_p.get()->end());
-                    });
-                _gcdobjs.stepping.get()->exec(ticks_to_execute);
-
-                path_fragment_to_go.clear();
-            }
-            switch (element.index()) {
-                case 2: //path_intentions::pause_t
-                    _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::pause_t>(element).delay_s);
-                    break;
-                case 3: // path_intentions::spindle_t
-                    for (const auto& s : std::get<movement::path_intentions::spindle_t>(element).spindle) {
-                        _gcdobjs.spindles_pwm.get()->spindle_pwm_power(s.first, s.second);
-                    }
-                    _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::spindle_t>(element).delay_s);
-                    break;
-                case 4: // path_intentions::motor_t
-                    _gcdobjs.steppers.get()->enable_steppers(std::get<movement::path_intentions::motor_t>(element).motor);
-                    _gcdobjs.timers.get()->wait_s(std::get<movement::path_intentions::motor_t>(element).delay_s);
-                    break;
-                default: throw std::invalid_argument("path_intent_executor::execute: unsupported element");
-            }
-        }
-    }
-    if (path_fragment_to_go.size() > 0) {
-        auto plan_to_execute = variable_speed_driver.intent_to_movement_plan(path_fragment_to_go);
-        hardware::multistep_commands_t ticks_to_execute;
-        steps_generator_drv.movement_plan_to_step_commands(plan_to_execute, _gcdobjs.configuration.tick_duration(),
-            [&, this](std::unique_ptr<hardware::multistep_commands_t> msteps_p) {
-                ticks_to_execute.insert(ticks_to_execute.end(), msteps_p.get()->begin(), msteps_p.get()->end());
-            });
-        _gcdobjs.stepping.get()->exec(ticks_to_execute);
-        path_fragment_to_go.clear();
-    }
-    return {};
-}
-*/
 
 
 void path_intent_executor::execute_pure_path_intent(const movement::path_intent_t& path_intent)

@@ -42,9 +42,8 @@ TEST_CASE("gcd::path_intent_executor_factory in memory execute whole program", "
             movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {false,false,false,false}},
         })
     );
-
-
 }
+
 /*
 
 int main_spindle_test()
