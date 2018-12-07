@@ -60,19 +60,33 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
     }
 
     // build executor actions list
-    std::vector<std::future<hardware::multistep_commands_t>> actions_futures;
-    actions_futures.reserve(1024);
+    std::map<int,std::future<hardware::multistep_commands_t>> actions_futures;
+    int actions_futures_id = 0;
+    std::mutex actions_futures_mutex;
+
     std::mutex mpe_mutex;
-    int mpe_calculated_size = 0;
     std::list<std::function<void()>> actions_list;
 
+    /*
+
+    this part works in the following way:
+
+    creates lambdas that should be executed in order to fulfill the path_fragments plan.
+
+    One of the lambdas is in *case 0*, it is tied to the result of async steps
+       generations in actions_futures.push_back(std::async ..)
+    this lambda will wait until its steps (hardware::multistep_commands_t) are ready.
+
+    */
     for (const auto& path_fragment_to_go : path_fragments) {
         switch (path_fragment_to_go.front().index()) {
         case 0:
-            actions_futures.push_back(std::async(
+            actions_futures_id++;
+            // producer - todo: make list and work on list
+            actions_futures[actions_futures_id] = std::async(
                 std::launch::async,
-                [this, &mpe_mutex, &steps_generator_drv, &variable_speed_driver, &mpe_calculated_size](const movement::path_intent_t& path_fragment_to_go) -> hardware::multistep_commands_t {
-                    std::lock_guard<std::mutex> lock(mpe_mutex);
+                [this, &mpe_mutex, &steps_generator_drv, &variable_speed_driver,actions_futures_id](const movement::path_intent_t& path_fragment_to_go) -> hardware::multistep_commands_t {
+                    std::lock_guard<std::mutex> lock(mpe_mutex); // only one thread should prepare steps for execution.
                     // only movement commands
                     auto plan_to_execute = variable_speed_driver.intent_to_movement_plan(path_fragment_to_go);
                     hardware::multistep_commands_t ticks_to_execute;
@@ -82,9 +96,14 @@ path_intent_executor_result_t path_intent_executor::execute(const movement::path
                         });
                     return ticks_to_execute;
                 },
-                path_fragment_to_go));
-            actions_list.push_back([this, &return_val, pos_after = path_fragment_to_go.back(), &actions_futures, i = (actions_futures.size() - 1)]() {
-                auto commands_to_do = actions_futures.at(i).get(); // get the ticks that should be executed. This is generated in future
+                path_fragment_to_go);
+            //consumer
+            actions_list.push_back([this, &return_val, pos_after = path_fragment_to_go.back(),&actions_futures_mutex, &actions_futures, actions_futures_id]() {
+                auto commands_to_do = actions_futures.at(actions_futures_id).get(); // get the ticks that should be executed. This is generated in future
+                {
+                    std::lock_guard<std::mutex> lock(actions_futures_mutex);
+                    actions_futures.erase(actions_futures_id);
+                }
                 try {
                     _gcdobjs.stepping.get()->exec(commands_to_do);
                 } catch (const raspigcd::hardware::execution_terminated& e) {
