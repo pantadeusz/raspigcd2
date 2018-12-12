@@ -33,6 +33,20 @@
 namespace raspigcd {
 namespace gcd {
 
+std::list< std::map<char,double> > gcode_to_maps_of_arguments(const std::string &program_) {
+    // command_to_map_of_arguments
+    std::list< std::map<char,double> > ret;
+    std::regex re("[\r\n]");
+    std::sregex_token_iterator
+        first{program_.begin(), program_.end(), re, -1},
+        last;
+    for (auto line : std::vector<std::string>(first, last)) {
+        auto cm = command_to_map_of_arguments(line);
+        if (cm.size()) ret.push_back(cm);
+    }
+    return ret;
+}
+
 
 std::map<char, double> command_to_map_of_arguments(const std::string& command__)
 {

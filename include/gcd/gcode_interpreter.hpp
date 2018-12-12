@@ -28,11 +28,13 @@
 
 #include <string>
 #include <map>
+#include <list>
 
 namespace raspigcd {
 namespace gcd {
 
 
+std::list< std::map<char,double> > gcode_to_maps_of_arguments(const std::string &program_);
 std::map<char,double> command_to_map_of_arguments(const std::string &command_);
 
 } // namespace hardware

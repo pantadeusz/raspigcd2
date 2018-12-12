@@ -23,10 +23,14 @@ int main(int argc, char **argv)
     configuration::global cfg;
     cfg.load_defaults();
     
-    for (int i = 1; i < args.size();i++) {
+    for (unsigned i = 1; i < args.size();i++) {
         if (args.at(i) == "-c") {
             i++;
             cfg.load(args.at(i));
+        } else if (args.at(i) == "-f") {
+            i++;
+            std::cout << "i should run " << args.at(i) << " but it is unimplemented..." << std::endl;
+            // args.at(i);
         }
     }
     /*raspigcd::gcd::gcode_interpreter_objects_t objs{};
