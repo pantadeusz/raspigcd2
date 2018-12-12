@@ -52,6 +52,7 @@ TEST_CASE("gcode_interpreter_test - command_to_map_of_arguments", "[gcd][gcode_i
         REQUIRE((int)(ret.at('X')) == 10);
         REQUIRE((int)(ret.at('Y')) == 20);
     }
+
     SECTION("Spaces in data")
     {
         std::map<char,double> ret = command_to_map_of_arguments("G0 x 10 Y - 20.5");
@@ -69,6 +70,17 @@ TEST_CASE("gcode_interpreter_test - command_to_map_of_arguments", "[gcd][gcode_i
         REQUIRE((int)(ret.at('X')) == 10);
     }
     
+    SECTION("Incorrect number should be reported")
+    {
+        REQUIRE_THROWS(command_to_map_of_arguments("G1XT0"));
+        REQUIRE_THROWS(command_to_map_of_arguments("G1X-T0"));
+        REQUIRE_THROWS(command_to_map_of_arguments("G1X0$0T0"));
+    }
+    SECTION("gcode cannot start with number")
+    {
+        REQUIRE_THROWS(command_to_map_of_arguments("2G1X0"));
+    }
+
 }
 
 

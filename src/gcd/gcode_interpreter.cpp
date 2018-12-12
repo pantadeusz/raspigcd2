@@ -50,13 +50,13 @@ std::list< std::map<char,double> > gcode_to_maps_of_arguments(const std::string 
 
 std::map<char, double> command_to_map_of_arguments(const std::string& command__)
 {
-    static std::regex command_rex("[^a-zA-Z0-9.\\-;]");
+    //static std::regex command_rex("[^a-zA-Z0-9.\\-;]");
+    static std::regex command_rex("[ \r\n\t]");
     for (auto c : command__)
         if (c == '\n') throw std::invalid_argument("new line is not allowed");
-    std::map<char, double> ret;
-    char cmndname = 0;
+    std::map<char, std::string> ret_0;
+    char cmndname = 0; // current command name
     std::string v = "";
-
     // write the results to an output iterator
     for (char c : std::regex_replace(command__, command_rex, "")) {
         if (c == ';') break;
@@ -64,14 +64,19 @@ std::map<char, double> command_to_map_of_arguments(const std::string& command__)
         if ((c >= 'A') && (c <= 'Z')) {
             cmndname = c;
             v = "";
+            ret_0[cmndname] = v;
         } else {
             v = v + c;
-            if ((cmndname != 0) && (v.size()>0)) {
-                try{
-                ret[cmndname] = std::stod(v);
-                } catch (...){}
-            }
+            if (cmndname == 0) throw std::invalid_argument("gcode line cannot start with number");
+            ret_0[cmndname] = v;//std::stod(v);
         }
+    }
+    std::map<char, double> ret;
+    for(auto it = ret_0.begin(); it != ret_0.end(); ) {
+        size_t _idx = 0;
+        ret[it->first] = std::stod(it->second, &_idx);
+        if (_idx < it->second.size()) throw std::invalid_argument("this is not a number");
+        it = ret_0.erase(it);
     }
     return ret;
 }
