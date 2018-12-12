@@ -16,13 +16,19 @@ using namespace raspigcd;
 using namespace raspigcd::hardware;
 
 
-int main()
+int main(int argc, char **argv)
 {
     using namespace std::chrono_literals;
-
+    std::vector<std::string> args(argv, argv+argc);
     configuration::global cfg;
     cfg.load_defaults();
-
+    
+    for (int i = 1; i < args.size();i++) {
+        if (args.at(i) == "-c") {
+            i++;
+            cfg.load(args.at(i));
+        }
+    }
     /*raspigcd::gcd::gcode_interpreter_objects_t objs{};
     objs.motor_layout = hardware::motor_layout::get_instance(cfg);
     objs.configuration.motion_layout = cfg.motion_layout;

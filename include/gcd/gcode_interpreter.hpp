@@ -33,10 +33,7 @@ namespace raspigcd {
 namespace gcd {
 
 
-class gcode_interpreter{
-public:
-    std::map<char,double> command_to_map_of_arguments(const std::string &command_);
-};
+std::map<char,double> command_to_map_of_arguments(const std::string &command_);
 
 } // namespace hardware
 } // namespace raspigcd
