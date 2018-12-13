@@ -33,6 +33,11 @@
 namespace raspigcd {
 namespace gcd {
 
+movement::path_intent_t generate_path_intent(const std::list< std::map<char,double> > &parsed_program_) {
+    return {};
+}
+
+
 std::list< std::map<char,double> > gcode_to_maps_of_arguments(const std::string &program_) {
     // command_to_map_of_arguments
     std::list< std::map<char,double> > ret;

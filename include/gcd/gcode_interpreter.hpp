@@ -26,13 +26,17 @@
 //#include <gcd/factory.hpp>
 //#include <movement/path_intent_t.hpp>
 
+#include <movement/path_intent_t.hpp>
+
 #include <string>
 #include <map>
 #include <list>
 
+
 namespace raspigcd {
 namespace gcd {
 
+movement::path_intent_t generate_path_intent(const std::list< std::map<char,double> > &parsed_program_);
 
 std::list< std::map<char,double> > gcode_to_maps_of_arguments(const std::string &program_);
 std::map<char,double> command_to_map_of_arguments(const std::string &command_);
