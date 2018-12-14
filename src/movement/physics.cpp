@@ -78,39 +78,37 @@ double acceleration_between(const path_node_t &a, const path_node_t &b) {
     auto s = (b.p-a.p).length();
     auto dv = (b.v-a.v);
     if (dv == 0) return 0;
-    if (s == 0) throw "cannot do infinite accelerations";
-    /*
-    auto t = 2*s/dv;
+    if (s == 0) throw std::invalid_argument("cannot do infinite accelerations");
     
-    auto m = 2*s/(t*t);
-    auto n = 2*(a.v)/t;
-    std::cout << "m: " << m <<" n " << n << " s:" << s  << " t: " << t << std::endl;
-    
-    auto acc = m - n;
-
-    return acc; */
-
-    
-    double a_min = -1000000.0, a_max= 1000000.5;
-    int n = 0;
+    double a_min = -10000000.0, a_max= 10000000.0;
     double tt = 0;
-    for (int n = 0; n < 1000; n++) {
+    for (int n = 0; n < 82; n++) {
         double acc = (a_max + a_min)/2.0;
-        double t = (b.v-a.v)/acc;
-        tt = t;
-        double s1 = a.v * t + acc*t*t/2.0;
-        if (s1 > s) {
+        double t = 0.0;
+        if (acc != 0.0) {
+            t = (b.v-a.v)/acc;
+            tt = t;
+            double s1 = a.v * t + acc*t*t/2.0;
+            
+            if (s1 > s) {
+                a_min = acc;
+            } else if (s1 < s) {
+                a_max = acc;
+            } else if (s1 == s) {
+                //std::cout << "********n = " << n << std::endl;
+                return (a_max + a_min)/2.0;
+            }
+        } else if ((b.v-a.v) > 0) {
             a_min = acc;
-        } else {
+        } else if ((b.v-a.v) > 0) {
             a_max = acc;
+        } else {
+            //std::cout << "********acc = " << 0 << std::endl;
+            return 0.0;
         }
     }
-    std::cout << "s: " << s <<" dv " << dv << "    tt " << tt << std::endl;
+    std::cout << "WARNING: not precise result: double acceleration_between(const path_node_t &a, const path_node_t &b) : s: " << s <<" dv " << dv << "    tt " << tt << std::endl;
     return (a_max + a_min)/2.0;
-    //auto m = 2*s/(t*t);
-    //auto n = 2*(a.v)/t;
-    //
-    //auto acc = m - n;
 }
 
 } // namespace physics

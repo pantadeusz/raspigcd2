@@ -34,7 +34,7 @@ TEST_CASE("Movement physics simple formulas get_next_position", "[movement][phys
     SECTION("trivial next position get_next_position for no acceleration and 0 speed")
     {
         const distance_t s0(10, 11, 12, 13);
-        const distance_t v0(0,0,0,0);
+        const distance_t v0(0, 0, 0, 0);
         const double a = 0;
         const double t = 2;
         distance_t result = get_next_position(s0, v0, a, t);
@@ -44,13 +44,13 @@ TEST_CASE("Movement physics simple formulas get_next_position", "[movement][phys
     {
         for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
             const distance_t s0(10, 11, 12, 13);
-            distance_t v0(0,0,0,0);
+            distance_t v0(0, 0, 0, 0);
             v0[i] = 1.0;
             const double a = 0;
             const double t = 2;
             distance_t result = get_next_position(s0, v0, a, t);
             distance_t expected = s0;
-            expected[i] += v0[i]*t;
+            expected[i] += v0[i] * t;
             REQUIRE(cmp_approx(result, expected));
         }
     }
@@ -58,7 +58,7 @@ TEST_CASE("Movement physics simple formulas get_next_position", "[movement][phys
     {
         for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
             const distance_t s0(10, 11, 12, 13);
-            distance_t v0(0,0,0,0);
+            distance_t v0(0, 0, 0, 0);
             v0[i] = 1.0;
             const double a = 2;
             const double t = 2;
@@ -66,7 +66,7 @@ TEST_CASE("Movement physics simple formulas get_next_position", "[movement][phys
             INFO(a);
             distance_t result = get_next_position(s0, v0, a, t);
             distance_t expected = s0;
-            expected[i] += v0[i]*t + a*t*t/2.0;
+            expected[i] += v0[i] * t + a * t * t / 2.0;
             REQUIRE(cmp_approx(result, expected));
         }
     }
@@ -74,7 +74,7 @@ TEST_CASE("Movement physics simple formulas get_next_position", "[movement][phys
     SECTION("get_next_position for speed of 2mm/s and negative acceleration in all directions")
     {
         const distance_t s0(10, 11, 12, 13);
-        distance_t v0(3.0,4.0,0.0,0.0);
+        distance_t v0(3.0, 4.0, 0.0, 0.0);
         const double a = -1;
         const double t = 5;
         INFO(v0);
@@ -82,7 +82,7 @@ TEST_CASE("Movement physics simple formulas get_next_position", "[movement][phys
         auto end_pos = get_next_position(s0, v0, a, t);
         INFO(end_pos);
         double result = std::sqrt((end_pos - s0).length2());
-        double expected = std::sqrt(v0.length2())*t + a*t*t/2.0;
+        double expected = std::sqrt(v0.length2()) * t + a * t * t / 2.0;
         REQUIRE(result == Approx(expected));
     }
 }
@@ -93,18 +93,18 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
     SECTION("trivial next position get_next_velocity for no acceleration and 0 speed")
     {
         const distance_t s0(10, 11, 12, 13);
-        const distance_t v0(0,0,0,0);
+        const distance_t v0(0, 0, 0, 0);
         const double a = 0;
         const double t = 2;
         distance_t result = get_next_velocity(s0, v0, a, t);
         REQUIRE(cmp_approx(result, v0));
     }
-    
+
     SECTION("get_next_velocity for no acceleration and speed of 2mm/s in one direction")
     {
         for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
             const distance_t s0(10, 11, 12, 13);
-            distance_t v0(0,0,0,0);
+            distance_t v0(0, 0, 0, 0);
             v0[i] = 1.0;
             const double a = 0;
             const double t = 2;
@@ -113,12 +113,12 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
             REQUIRE(cmp_approx(result, expected));
         }
     }
-    
+
     SECTION("get_next_velocity for speed of 2mm/s and acceleration in one direction")
     {
         for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
             const distance_t s0(10, 11, 12, 13);
-            distance_t v0(0,0,0,0);
+            distance_t v0(0, 0, 0, 0);
             v0[i] = 10.0;
             const double a = -5;
             const double t = 2;
@@ -126,7 +126,7 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
             INFO(a);
             distance_t result = get_next_velocity(s0, v0, a, t);
             distance_t expected = v0;
-            expected[i] +=  a*t;
+            expected[i] += a * t;
             REQUIRE(cmp_approx(result, expected));
         }
     }
@@ -134,7 +134,7 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
     SECTION("get_next_velocity for speed of 2mm/s and negative acceleration in all directions")
     {
         const distance_t s0(10, 11, 12, 13);
-        distance_t v0(3.0,4.0,0.0,0.0);
+        distance_t v0(3.0, 4.0, 0.0, 0.0);
         const double a = -1;
         const double t = 5;
         INFO(v0);
@@ -153,7 +153,7 @@ TEST_CASE("Movement physics simple formulas get_next_node", "[movement][physics]
     {
         for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
             const distance_t s0(10, 11, 12, 13);
-            distance_t v0(0,0,0,0);
+            distance_t v0(0, 0, 0, 0);
             v0[i] = 10.0;
             const double a = -5;
             const double t = 2;
@@ -161,10 +161,10 @@ TEST_CASE("Movement physics simple formulas get_next_node", "[movement][physics]
             INFO(a);
             path_node_t node = get_next_node(s0, v0, a, t);
             distance_t expected_v1 = v0;
-            expected_v1[i] +=  a*t;
+            expected_v1[i] += a * t;
             REQUIRE(node.v == std::sqrt(expected_v1.length2()));
             distance_t expected_s1 = s0;
-            expected_s1[i] += v0[i]*t + a*t*t/2.0;
+            expected_s1[i] += v0[i] * t + a * t * t / 2.0;
             REQUIRE(cmp_approx(node.p, expected_s1));
         }
     }
@@ -172,7 +172,7 @@ TEST_CASE("Movement physics simple formulas get_next_node", "[movement][physics]
     SECTION("get_next_node for speed of 2mm/s and negative acceleration in all directions")
     {
         const distance_t s0(10, 11, 12, 13);
-        distance_t v0(3.0,4.0,0.0,0.0);
+        distance_t v0(3.0, 4.0, 0.0, 0.0);
         const double a = -1;
         const double t = 5;
         INFO(v0);
@@ -185,7 +185,7 @@ TEST_CASE("Movement physics simple formulas get_next_node", "[movement][physics]
     SECTION("get_next_node for speed of 2mm/s and negative acceleration in all directions")
     {
         const distance_t s0(10, 11, 12, 13);
-        distance_t v0(3.0,4.0,0.0,0.0);
+        distance_t v0(3.0, 4.0, 0.0, 0.0);
         const double a = -1;
         const double t = 2;
         INFO(v0);
@@ -198,7 +198,7 @@ TEST_CASE("Movement physics simple formulas get_next_node", "[movement][physics]
     SECTION("get_next_node for speed of 2mm/s and negative acceleration that results in negative speed")
     {
         const distance_t s0(10, 11, 12, 13);
-        distance_t v0(3.0,4.0,0.0,0.0);
+        distance_t v0(3.0, 4.0, 0.0, 0.0);
         const double a = -1;
         const double t = 10;
         INFO(v0);
@@ -211,16 +211,15 @@ TEST_CASE("Movement physics simple formulas get_next_node", "[movement][physics]
 }
 
 
-
 TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][physics][acceleration_between]")
 {
     SECTION("acceleration_between with no acceleration")
     {
-        distance_t p0 = {3.0,4.0,0.0,0.0}, p1 = {6.0,8.0,0.0,0.0};
-        path_node_t node_a = {.p = p0,1};
+        distance_t p0 = {3.0, 4.0, 0.0, 0.0}, p1 = {6.0, 8.0, 0.0, 0.0};
+        path_node_t node_a = {.p = p0, 1};
         double t = 5;
         double a = 0.0;
-        auto v = ((p1-p0)/(p1-p0).length())*node_a.v;
+        auto v = ((p1 - p0) / (p1 - p0).length()) * node_a.v;
         INFO(v);
         path_node_t node_b = get_next_node(node_a.p, v, a, t);
         INFO(node_a.p);
@@ -234,15 +233,15 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
 
     SECTION("acceleration_between with acceleration")
     {
-        distance_t p0 = {3.0,4.0,0.0,0.0}, p1 = {8.25, 11, 0, 0};
-        path_node_t node_a = {.p = p0,1};
+        distance_t p0 = {3.0, 4.0, 0.0, 0.0}, p1 = {8.25, 11, 0, 0};
+        path_node_t node_a = {.p = p0, 1};
         double t = 2.5;
         double a = 2.0;
         double s = 8.75;
         INFO(p1);
-        p1 = p0 + (p1-p0)*s/(p1-p0).length();
+        p1 = p0 + (p1 - p0) * s / (p1 - p0).length();
         INFO(p1);
-        auto v = ((p1-p0)/(p1-p0).length())*node_a.v;
+        auto v = ((p1 - p0) / (p1 - p0).length()) * node_a.v;
         INFO(v);
         path_node_t node_b = get_next_node(node_a.p, v, a, t);
         INFO(node_a.p);
@@ -256,60 +255,60 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
 
     SECTION("acceleration_between with acceleration on one axis")
     {
-        distance_t p0 = {0.0,0.0,0.0,0.0}, p1 = {50, 0, 0, 0};
-        path_node_t node_a = {.p = p0,0};
+        distance_t p0 = {0.0, 0.0, 0.0, 0.0}, p1 = {50, 0, 0, 0};
+        path_node_t node_a = {.p = p0, 0};
         double t = 10;
         double a = 1.0;
         double s = 50;
         INFO(p1);
-        p1 = p0 + (p1-p0)*s/(p1-p0).length();
+        p1 = p0 + (p1 - p0) * s / (p1 - p0).length();
         INFO(p1);
-        auto v = ((p1-p0)/(p1-p0).length())*node_a.v;
+        auto v = ((p1 - p0) / (p1 - p0).length()) * node_a.v;
         INFO(v);
-        path_node_t node_b = {.p=p1,.v=a*t};
+        path_node_t node_b = {.p = p1, .v = a * t};
         INFO(node_a.p);
         INFO(node_a.v);
         INFO(node_b.p);
         INFO(node_b.v);
         double accel_v = acceleration_between(node_a, node_b);
         REQUIRE(accel_v == Approx(a));
-    }    
-    
+    }
+
     SECTION("acceleration_between with acceleration on one axis from not zero pos")
     {
-        distance_t p0 = {2.0,0.0,0.0,0.0}, p1 = {52, 0, 0, 0};
-        path_node_t node_a = {.p = p0,0};
+        distance_t p0 = {2.0, 0.0, 0.0, 0.0}, p1 = {52, 0, 0, 0};
+        path_node_t node_a = {.p = p0, 0};
         double t = 10;
         double a = 1.0;
         double s = 50;
         INFO(p1);
-        p1 = p0 + (p1-p0)*s/(p1-p0).length();
+        p1 = p0 + (p1 - p0) * s / (p1 - p0).length();
         INFO(p1);
-        auto v = ((p1-p0)/(p1-p0).length())*node_a.v;
+        auto v = ((p1 - p0) / (p1 - p0).length()) * node_a.v;
         INFO(v);
-        path_node_t node_b = {.p=p1,.v=a*t};
+        path_node_t node_b = {.p = p1, .v = a * t};
         INFO(node_a.p);
         INFO(node_a.v);
         INFO(node_b.p);
         INFO(node_b.v);
         double accel_v = acceleration_between(node_a, node_b);
         REQUIRE(accel_v == Approx(a));
-    }    
-    
+    }
+
     SECTION("acceleration_between with acceleration on one axis from not zero vel")
     {
         double u = 1;
         double a = 2.0;
         double t = 3;
         double s = 12;
-        distance_t p0 = {0.0,0.0,0.0,0.0}, p1 = {s, 0, 0, 0};
-        path_node_t node_a = {.p = p0,u};
+        distance_t p0 = {0.0, 0.0, 0.0, 0.0}, p1 = {s, 0, 0, 0};
+        path_node_t node_a = {.p = p0, u};
         INFO(p1);
-        p1 = p0 + (p1-p0)*s/(p1-p0).length();
+        p1 = p0 + (p1 - p0) * s / (p1 - p0).length();
         INFO(p1);
-        auto v = ((p1-p0)/(p1-p0).length())*node_a.v;
+        auto v = ((p1 - p0) / (p1 - p0).length()) * node_a.v;
         INFO(v);
-        path_node_t node_b = {.p=p1,.v=1+a*t};
+        path_node_t node_b = {.p = p1, .v = 1 + a * t};
         INFO(node_a.p);
         INFO(node_a.v);
         INFO(node_b.p);
@@ -318,45 +317,46 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
         {
             double s = 0;
             double v = 1;
-        for (double t_ = 0; t_ < t; t_+= 0.001) {
-            s = s + v*0.001 + 0.5*a*0.001*0.001;
-            v = v + a*0.001; // velocity
+            for (double t_ = 0; t_ < t; t_ += 0.0001) {
+                s = s + v * 0.0001 + 0.5 * a * 0.0001 * 0.0001;
+                v = v + a * 0.0001; // velocity
+            }
+            //std::cout << "s = " << s << " v = " << v << std::endl;
+            REQUIRE(s == Approx(12.0));
+            REQUIRE(v == Approx(7.0));
         }
-        std::cout << "s = " << s << " v = " << v << std::endl;
-        }     
         {
             double s = 0;
             double v = 1;
-        for (double t_ = 0; t_ < t; t_+= 0.001) {
-            s = s + v*0.001 + 0.5*accel_v*0.001*0.001;
-            v = v + accel_v*0.001; // velocity
+            for (double t_ = 0; t_ < t; t_ += 0.0001) {
+                s = s + v * 0.0001 + 0.5 * accel_v * 0.0001 * 0.0001;
+                v = v + accel_v * 0.0001; // velocity
+            }
+            //std::cout << "s = " << s << " v = " << v << std::endl;
+            REQUIRE(s == Approx(12.0));
+            REQUIRE(v == Approx(7.0));
         }
-        std::cout << "s = " << s << " v = " << v << std::endl;
-        }     
-           REQUIRE(accel_v == Approx(a));
-
-
+        REQUIRE(accel_v == Approx(a));
     }
 
     SECTION("acceleration_between with acceleration on one axis 2")
     {
-        distance_t p0 = {0.0,0.0,0.0,0.0}, p1 = {22.5, 0, 0, 0};
-        path_node_t node_a = {.p = p0,0};
+        distance_t p0 = {0.0, 0.0, 0.0, 0.0}, p1 = {22.5, 0, 0, 0};
+        path_node_t node_a = {.p = p0, 0};
         double t = 3;
         double a = 5.0;
         double s = 22.5;
         INFO(p1);
-        p1 = p0 + (p1-p0)*s/(p1-p0).length();
+        p1 = p0 + (p1 - p0) * s / (p1 - p0).length();
         INFO(p1);
-        auto v = ((p1-p0)/(p1-p0).length())*node_a.v;
+        auto v = ((p1 - p0) / (p1 - p0).length()) * node_a.v;
         INFO(v);
-        path_node_t node_b = {.p=p1,.v=a*t};
+        path_node_t node_b = {.p = p1, .v = a * t};
         INFO(node_a.p);
         INFO(node_a.v);
         INFO(node_b.p);
         INFO(node_b.v);
         double accel_v = acceleration_between(node_a, node_b);
         REQUIRE(accel_v == Approx(a));
-    }    
-
+    }
 }
