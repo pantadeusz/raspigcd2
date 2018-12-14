@@ -22,6 +22,7 @@
 #include <array>
 #include <iostream>
 #include <cassert>
+#include <cmath>
 
 #include <hardware_dof_conf.hpp>
 
@@ -48,6 +49,13 @@ public:
                this->operator[](1) * this->operator[](1) +
                this->operator[](2) * this->operator[](2) +
                this->operator[](3) * this->operator[](3);
+    }
+    inline double length() const
+    {
+        return std::sqrt(this->operator[](0) * this->operator[](0) +
+               this->operator[](1) * this->operator[](1) +
+               this->operator[](2) * this->operator[](2) +
+               this->operator[](3) * this->operator[](3));
     }
     inline double sumv() const
     {

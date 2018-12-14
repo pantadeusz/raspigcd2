@@ -34,6 +34,16 @@ namespace raspigcd {
 namespace gcd {
 
 movement::path_intent_t generate_path_intent(const std::list< std::map<char,double> > &parsed_program_) {
+    movement::path_intent_t ret;
+    std::map<char,double> g_state = {
+        {'X',0.0},{'Y',0.0},{'Z',0.0},{'A',0.0}
+    };
+    auto get_pos = [&](){return distance_t{
+        g_state['X'], g_state['Y'], g_state['Z'], g_state['A']
+        }; };
+    for (const auto &elem : parsed_program_) {
+
+    }
     return {};
 }
 
