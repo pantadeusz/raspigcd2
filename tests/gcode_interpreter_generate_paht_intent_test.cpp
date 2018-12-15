@@ -18,12 +18,12 @@ using namespace raspigcd::gcd;
 
 TEST_CASE("gcode_interpreter_test - generate_path_intent", "[gcd][gcode_interpreter][generate_path_intent]")
 {
-    auto to_vector = [](const auto &ret_list_){
-        return std::vector< movement::path_intent_element_t >{ 
-            std::begin(ret_list_),
-            std::end(ret_list_)
-            };
-    };
+    // auto to_vector = [](const auto &ret_list_){
+    //     return std::vector< movement::path_intent_element_t >{ 
+    //         std::begin(ret_list_),
+    //         std::end(ret_list_)
+    //         };
+    // };
     SECTION("empty gives empty")
     {
         auto ret = generate_path_intent({});

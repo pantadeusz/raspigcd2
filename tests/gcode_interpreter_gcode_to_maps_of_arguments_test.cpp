@@ -21,13 +21,13 @@ TEST_CASE("gcode_interpreter_test - gcode_to_maps_of_arguments", "[gcd][gcode_in
     
     SECTION("empty string gives empty map")
     {
-        std::list<std::map<char,double> > ret_list = gcode_to_maps_of_arguments("");
+        program_t ret_list = gcode_to_maps_of_arguments("");
         REQUIRE(ret_list.size() == 0);
     }
 
     SECTION("simple command without enter should result in correct gcode interpretation")
     {
-        std::list<std::map<char,double> > ret_list = gcode_to_maps_of_arguments("G0 x 10 ; Y - 20.5");
+        program_t ret_list = gcode_to_maps_of_arguments("G0 x 10 ; Y - 20.5");
         REQUIRE(ret_list.size() == 1);
         REQUIRE(ret_list.front().size() == 2);
         REQUIRE((int)(ret_list.front().at('G')) == 0);

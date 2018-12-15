@@ -26,22 +26,55 @@
 //#include <gcd/factory.hpp>
 //#include <movement/path_intent_t.hpp>
 
-#include <movement/path_intent_t.hpp>
+#include <movement/path_intent_t.hpp> // TODO: Remove this
+#include <movement/physics.hpp>
 
-#include <string>
-#include <map>
 #include <list>
+#include <map>
+#include <string>
 
 
 namespace raspigcd {
 namespace gcd {
 
-movement::path_intent_t generate_path_intent(const std::list< std::map<char,double> > &parsed_program_);
+using block_t = std::map<char, double>;             // represents N001G0X10Y20
+using program_t = std::vector<block_t>;               // represents whole program without empty lines
+using partitioned_program_t = std::list<program_t>; // represents program partitioned into different sections for optimization and interpretation
 
-std::list< std::map<char,double> > gcode_to_maps_of_arguments(const std::string &program_);
-std::map<char,double> command_to_map_of_arguments(const std::string &command_);
 
-} // namespace hardware
+movement::path_intent_t generate_path_intent(const program_t& parsed_program_);
+
+
+/**
+ * @brief Generates string based on gcode grouped by fragments G1, G0 and M
+ */
+std::string back_to_gcode(partitioned_program_t &btg);
+
+
+/**
+ * @brief Gropus gcode commands so the other parts can focus on the simple interpretation of parts
+ * 
+ * It groups into G0, G1 and M codes
+ */
+partitioned_program_t group_gcode_commands(const program_t& program_states, const block_t & initial_state = {{'F',1}} );
+
+/**
+ * @brief Interprets gcode program to list of gcode state updates
+ * 
+ * for example, for
+ *   G0X10
+ *   G1Y2
+ * will give
+ *   {
+ *     {{'G',0},{'X',10}},
+ *     {{'G',1},{'Y',2}}
+ *   }
+ */
+program_t gcode_to_maps_of_arguments(const std::string& program_);
+
+block_t command_to_map_of_arguments(const std::string& command_);
+
+} // namespace gcd
 } // namespace raspigcd
 
 #endif

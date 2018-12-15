@@ -33,7 +33,8 @@
 namespace raspigcd {
 namespace gcd {
 
-movement::path_intent_t generate_path_intent(const std::list< std::map<char,double> > &parsed_program_) {
+movement::path_intent_t generate_path_intent(const program_t &parsed_program_) {
+    // todo..
     movement::path_intent_t ret;
     std::map<char,double> g_state = {
         {'X',0.0},{'Y',0.0},{'Z',0.0},{'A',0.0}
@@ -47,10 +48,65 @@ movement::path_intent_t generate_path_intent(const std::list< std::map<char,doub
     return {};
 }
 
+std::string back_to_gcode(partitioned_program_t &btg) {
+    std::stringstream strs;
+    for (auto &group : btg) {
+        strs << "; Group of size " << group.size() << std::endl;
+        for (auto &block : group) {
+            for (auto &e: block) {
+                strs << "" << e.first << e.second << " ";
+            }
+            strs << std::endl;
+        }
+    }
+    return strs.str();
+}
 
-std::list< std::map<char,double> > gcode_to_maps_of_arguments(const std::string &program_) {
+partitioned_program_t group_gcode_commands(const program_t& program_states, const block_t & initial_state ) {
+    partitioned_program_t generated_program;
+    block_t current_state = initial_state;
+    for (const auto &e: program_states) {
+        if (generated_program.size() == 0) {
+            generated_program.push_back({e});
+        } else {
+            if (e.count('G')) {
+                if (generated_program.back().back().count('G')) {
+                    if (generated_program.back().back().at('G') == e.at('G')) {
+                        generated_program.back().push_back(e);
+                    } else {
+                        generated_program.push_back({e});
+                    }
+                } else {
+                    generated_program.push_back({e});
+                }
+            } else if (e.count('M')){
+                if (generated_program.back().back().count('M')) {
+                    generated_program.back().push_back(e);
+                } else {
+                    generated_program.push_back({e});
+                }
+            } else {
+                // ERROR? 
+            }
+        }
+        /// check correctness of first command
+        if((generated_program.back().size() == 1) && (generated_program.back()[0].count('G') == 1)){
+            if (((int)generated_program.back()[0].at('G')) == 1) {
+        //        //if (generated_program.back()[0].count('F'))
+        //        // we must provide feedrate for the first command
+                generated_program.back() = {{{'G',1.0},{'F',current_state.at('F')}},e};
+            }
+        }
+    }
+
+
+    return generated_program;
+}
+
+
+program_t gcode_to_maps_of_arguments(const std::string &program_) {
     // command_to_map_of_arguments
-    std::list< std::map<char,double> > ret;
+    program_t ret;
     std::regex re("[\r\n]");
     std::sregex_token_iterator
         first{program_.begin(), program_.end(), re, -1},
