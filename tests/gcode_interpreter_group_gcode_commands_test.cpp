@@ -24,7 +24,7 @@ TEST_CASE("gcode_interpreter_test - group_gcode_commands", "[gcd][gcode_interpre
         G1X0
         G1Y0
     )");
-    auto simple_gcode_five_groups_mg1g0g1m = gcode_to_maps_of_arguments(R"(
+    auto simple_gcode_seven_groups_mg1g0g1m = gcode_to_maps_of_arguments(R"(
         M17
         M3
         G1Z5
@@ -40,7 +40,41 @@ TEST_CASE("gcode_interpreter_test - group_gcode_commands", "[gcd][gcode_interpre
         M5
         M18
     )");
-    
+    auto simple_gcode_one_group_g1_w_error = gcode_to_maps_of_arguments(R"(
+        Y10
+        G1X10
+        G1X0
+        G1Y0
+    )");
+    auto simple_gcode_one_group_g1m_w_error = gcode_to_maps_of_arguments(R"(
+        G0X10
+        M5
+        Y10
+        G1X10
+        G1X0
+        G1Y0
+    )");
+    auto simple_gcode_one_group_g1_wo_error = gcode_to_maps_of_arguments(R"(
+        G0X10
+        Y10
+        G1X10
+        G1X0
+        G1Y0
+    )");    
+    auto simple_gcode_one_group_g1_with_feedrate_set = gcode_to_maps_of_arguments(R"(
+        G1X10F10
+        G1Y10
+        G1X0
+        G1Y0
+    )");
+
+    auto simple_gcode_multiple_groups_feedrate_shold_be_recorded_correctly = gcode_to_maps_of_arguments(R"(
+        G1X10F10
+        G1Y10
+        M5
+        G1X0 ; we expect here to have F10
+        G1Y0
+    )");
 
 
     SECTION("empty gives empty")
@@ -53,10 +87,10 @@ TEST_CASE("gcode_interpreter_test - group_gcode_commands", "[gcd][gcode_interpre
         auto ret = group_gcode_commands(simple_gcode_one_group_g1);
         REQUIRE(ret.size() == 1);
     }
-    SECTION("simple_gcode_five_groups_mg1g0g1m shoulod give five groups")
+    SECTION("simple_gcode_seven_groups_mg1g0g1m shoulod give 7 groups")
     {
-        auto ret = group_gcode_commands(simple_gcode_five_groups_mg1g0g1m);
-        REQUIRE(ret.size() == 5);
+        auto ret = group_gcode_commands(simple_gcode_seven_groups_mg1g0g1m);
+        REQUIRE(ret.size() == 7);
     }
 
     SECTION("Single group simple_gcode_one_group_g1 should result in additional command at start")
@@ -65,8 +99,45 @@ TEST_CASE("gcode_interpreter_test - group_gcode_commands", "[gcd][gcode_interpre
         //INFO(back_to_gcode(ret));
         REQUIRE(ret.size() == 1);
         REQUIRE(ret.front().size() == 5);
-        REQUIRE(ret.front().front().at('F') == Approx(3));
-        REQUIRE(ret.front().front().at('G') == Approx(1));
+        REQUIRE(ret.front().at(0).at('F') == Approx(3));  REQUIRE(ret.front().at(0).at('G') == Approx(1));
+        REQUIRE(ret.front().at(1).at('G') == Approx(1));  REQUIRE(ret.front().at(1).at('X') == Approx(10));
+        REQUIRE(ret.front().at(2).at('G') == Approx(1));  REQUIRE(ret.front().at(2).at('Y') == Approx(10));
+        REQUIRE(ret.front().at(3).at('G') == Approx(1));  REQUIRE(ret.front().at(3).at('X') == Approx(0));
+        REQUIRE(ret.front().at(4).at('G') == Approx(1));  REQUIRE(ret.front().at(4).at('Y') == Approx(0));
+    }
+
+    SECTION("Single group simple_gcode_one_group_g1_with_feedrate_set should have correct F set")
+    {
+        auto ret = group_gcode_commands(simple_gcode_one_group_g1_with_feedrate_set,{{'F',3}});
+        //INFO(back_to_gcode(ret));
+        REQUIRE(ret.size() == 1);
+        REQUIRE(ret.front().size() == 4);
+        REQUIRE(ret.front().at(0).at('F') == Approx(10));  REQUIRE(ret.front().at(0).at('G') == Approx(1)); REQUIRE(ret.front().at(0).at('X') == Approx(10));
+        REQUIRE(ret.front().at(1).at('G') == Approx(1));  REQUIRE(ret.front().at(1).at('Y') == Approx(10));
+        REQUIRE(ret.front().at(2).at('G') == Approx(1));  REQUIRE(ret.front().at(2).at('X') == Approx(0));
+        REQUIRE(ret.front().at(3).at('G') == Approx(1));  REQUIRE(ret.front().at(3).at('Y') == Approx(0));
+    }
+
+    SECTION("Multiple group simple_gcode_multiple_groups_feedrate_shold_be_recorded_correctly should have correct F set")
+    {
+        auto ret = group_gcode_commands(simple_gcode_multiple_groups_feedrate_shold_be_recorded_correctly,{{'F',3}});
+        auto ret_array = std::vector<program_t>(ret.begin(),ret.end());
+        INFO(back_to_gcode(ret));
+        REQUIRE(ret.size() == 3);
+        REQUIRE(ret_array.at(0).size() == 2);
+        REQUIRE(ret_array.at(1).size() == 1);
+        REQUIRE(ret_array.at(2).size() == 3);
+        REQUIRE(ret_array.at(0).at(0).at('F') == Approx(10));
+        REQUIRE(ret_array.at(2).at(0).at('F') == Approx(10));
+    }
+    
+
+    SECTION("unsupported gcode must throw exception when there is no certainity about if G0 or G1 was used")
+    {
+        REQUIRE_THROWS(group_gcode_commands(simple_gcode_one_group_g1_w_error,{{'F',3}}));
+        REQUIRE_THROWS(group_gcode_commands(simple_gcode_one_group_g1m_w_error,{{'F',3}}));
+        
+        REQUIRE_NOTHROW(group_gcode_commands(simple_gcode_one_group_g1_wo_error,{{'F',3}}));
     }
 
 //     SECTION("simple G0 command with movement along X")

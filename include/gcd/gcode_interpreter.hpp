@@ -59,6 +59,14 @@ std::string back_to_gcode(partitioned_program_t &btg);
 partitioned_program_t group_gcode_commands(const program_t& program_states, const block_t & initial_state = {{'F',1}} );
 
 /**
+ * @brief updates values in destination block from source block.
+ * 
+ * For example, in destination there is X10 Y20, and in source is Y1 Z0, then
+ * the result will be X10 Y1 Z0
+ */
+block_t merge_blocks(const block_t &destination, const block_t &source);
+
+/**
  * @brief Interprets gcode program to list of gcode state updates
  * 
  * for example, for

@@ -62,12 +62,21 @@ std::string back_to_gcode(partitioned_program_t &btg) {
     return strs.str();
 }
 
+block_t merge_blocks(const block_t &destination, const block_t &source) {
+    block_t merged = destination;
+    for (const auto &sb : source) {
+        merged[sb.first] = sb.second;
+    }
+    return merged;
+}
+
 partitioned_program_t group_gcode_commands(const program_t& program_states, const block_t & initial_state ) {
     partitioned_program_t generated_program;
-    block_t current_state = initial_state;
+    block_t current_state = merge_blocks({{'X',0},{'Y',0},{'Z',0}},initial_state);
     for (const auto &e: program_states) {
         if (generated_program.size() == 0) {
-            generated_program.push_back({e});
+            if ((e.count('G') > 0) || (e.count('M'))) generated_program.push_back({e});
+            else throw std::invalid_argument("the first command must be G or M");
         } else {
             if (e.count('G')) {
                 if (generated_program.back().back().count('G')) {
@@ -80,19 +89,19 @@ partitioned_program_t group_gcode_commands(const program_t& program_states, cons
                     generated_program.push_back({e});
                 }
             } else if (e.count('M')){
-                if (generated_program.back().back().count('M')) {
-                    generated_program.back().push_back(e);
-                } else {
                     generated_program.push_back({e});
-                }
             } else {
-                // ERROR? 
+                if (generated_program.back().front().count('G')) generated_program.back().push_back(e);
+                else throw std::invalid_argument("It is not clear if the command is about G or M");
             }
         }
+        current_state = merge_blocks(current_state,e);
         /// check correctness of first command
-        if((generated_program.back().size() == 1) && (generated_program.back()[0].count('G') == 1)){
-            if (((int)generated_program.back()[0].at('G')) == 1) {
-        //        //if (generated_program.back()[0].count('F'))
+        if((generated_program.back().size() == 1) 
+            && (generated_program.back()[0].count('G') == 1)
+            ){
+            if ((((int)generated_program.back()[0].at('G')) == 1) &&
+                (((int)generated_program.back()[0].count('F')) == 0)) {
         //        // we must provide feedrate for the first command
                 generated_program.back() = {{{'G',1.0},{'F',current_state.at('F')}},e};
             }
