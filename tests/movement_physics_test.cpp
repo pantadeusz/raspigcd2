@@ -351,7 +351,7 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
         INFO(p1);
         auto v = ((p1 - p0) / (p1 - p0).length()) * node_a.v;
         INFO(v);
-        path_node_t node_b = {.p = p1, .v = a * t};
+        path_node_t node_b = {.p = p1, .v = node_a.v + a * t};
         INFO(node_a.p);
         INFO(node_a.v);
         INFO(node_b.p);
@@ -359,6 +359,27 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
         double accel_v = acceleration_between(node_a, node_b);
         REQUIRE(accel_v == Approx(a));
     }
+    // TODO: Negative accelerations!
+    // SECTION("acceleration_between with acceleration on one axis 2 - breaks")
+    // {
+    //     distance_t p0 = {0.0, 0.0, 0.0, 0.0}, p1 = {22.5, 0, 0, 0};
+    //     path_node_t node_a = {.p = p0, 20};
+    //     double t = 3;
+    //     double a = -5.0;
+    //     double s = 22.5;
+    //     INFO(p1);
+    //     p1 = p0 + (p1 - p0)/(p1 - p0).length()) //* s / (p1 - p0).length();
+    //     // INFO(p1);
+    //     // auto v = ((p1 - p0) / (p1 - p0).length()) * node_a.v;
+    //     // INFO(v);
+    //     path_node_t node_b = {.p = p1, .v = node_a.v + a * t};
+    //     INFO(node_a.p);
+    //     INFO(node_a.v);
+    //     INFO(node_b.p);
+    //     INFO(node_b.v);
+    //     double accel_v = acceleration_between(node_a, node_b);
+    //     REQUIRE(accel_v == Approx(a));
+    // }
 }
 
 TEST_CASE("Get final velocity for limits", "[movement][physics][final_velocity_for_accel]")
@@ -391,6 +412,21 @@ TEST_CASE("Get final velocity for limits", "[movement][physics][final_velocity_f
             REQUIRE(ret.p[i] == Approx(b.p[i]));
         REQUIRE(ret.v < b.v);
         REQUIRE(ret.v > a.v);
+
+        double accel_v = acceleration_between(a, ret);
+        REQUIRE(accel_v == Approx(acceleration));
+    }
+    SECTION("acceleration slow enough should return second node with final velocity and negative acceleration")
+    {
+        const path_node_t a = {.p = {1,2,3,4}, .v = 10.0};
+        const path_node_t b = {.p = {5,2,3,4}, .v = 2.0};
+        double acceleration = -1.0;
+        path_node_t ret = final_velocity_for_accel(a,b,acceleration);
+        
+        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++)
+            REQUIRE(ret.p[i] == Approx(b.p[i]));
+        //REQUIRE(ret.v < b.v);
+        //REQUIRE(ret.v > a.v);
 
         double accel_v = acceleration_between(a, ret);
         REQUIRE(accel_v == Approx(acceleration));

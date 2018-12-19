@@ -86,13 +86,17 @@ double acceleration_between(const path_node_t &a, const path_node_t &b) {
         double acc = (a_max + a_min)/2.0;
         double t = 0.0;
         if (acc != 0.0) {
-            t = (b.v-a.v)/acc;
+            t = std::abs((b.v-a.v)/acc);
             tt = t;
             double s1 = a.v * t + acc*t*t/2.0;
-            
-            if (s1 > s) {
+            //std::cout << "********s1 = " << s1 << " ?? " << s  << "  acc: " << acc << std::endl;
+            double mx = 1;
+            if (dv < 0) {
+                mx = -1;
+            }
+            if (mx*s1 > mx*s) {
                 a_min = acc;
-            } else if (s1 < s) {
+            } else if (mx*s1 < mx*s) {
                 a_max = acc;
             } else if (s1 == s) {
                 //std::cout << "********n = " << n << std::endl;
@@ -100,7 +104,7 @@ double acceleration_between(const path_node_t &a, const path_node_t &b) {
             }
         } else if ((b.v-a.v) > 0) {
             a_min = acc;
-        } else if ((b.v-a.v) > 0) {
+        } else if ((b.v-a.v) < 0) {
             a_max = acc;
         } else {
             //std::cout << "********acc = " << 0 << std::endl;
@@ -116,32 +120,11 @@ path_node_t final_velocity_for_accel(const path_node_t &a, const path_node_t &b,
     auto road_vect = b.p-a.p;
     auto s_target = (road_vect).length();
     //if (s_target == 0) throw std::invalid_argument("distance should be not 0");
-    //double t = 0;
-    //s_final = a.v * t + 0.5 * acceleration * t * t;
-
-    //double vf_min = 0.0, vf_max= 100000.0;
-    //double vi;
-    //double s1 = 0;
-    //for (int n = 0; n < 82; n++) {
-    //    vi = (vf_max + vf_min)/2.0;
-        double vf2 = a.v * a.v + 2*acceleration*s_target;
-    //    std::cout <<  s1 << " = " << a.v << " * " << std::sqrt(vf2) << " + " << acceleration << " * " << (t*t/2.0) << std::endl;
-    //    if (s1 > s_target) {
-    //        t_min = t;
-    //    } else if (s1 < s_target) {
-    //        t_max = t;
-    //    } else if (s1 == s_target) {
-    //        //std::cout << "********n = " << n << std::endl;
-    //        //return t;
-    //        break; // we have t
-    //    }
-    //    //std::cout << "t = " << t << " s " << s1 << "  vs: " << s_target << std::endl;
-    //}
+    double vf2 = a.v * a.v + 2*acceleration*s_target;
     path_node_t ret = b;
-    //ret.v = a.v + acceleration * t;
     ret.v = std::sqrt(vf2);
 
-    std::cout << "v final " << (ret.v) << " pos: " <<ret.p << std::endl;
+//    std::cout << "v final " << (ret.v) << " pos: " <<ret.p << std::endl;
     return ret;
 }
 
