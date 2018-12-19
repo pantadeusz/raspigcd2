@@ -90,17 +90,14 @@ double acceleration_between(const path_node_t &a, const path_node_t &b) {
             tt = t;
             double s1 = a.v * t + acc*t*t/2.0;
             //std::cout << "********s1 = " << s1 << " ?? " << s  << "  acc: " << acc << std::endl;
-            double mx = 1;
-            if (dv < 0) {
-                mx = -1;
-            }
+            double mx = (dv >= 0)?1:-1;
             if (mx*s1 > mx*s) {
                 a_min = acc;
             } else if (mx*s1 < mx*s) {
                 a_max = acc;
             } else if (s1 == s) {
                 //std::cout << "********n = " << n << std::endl;
-                return (a_max + a_min)/2.0;
+                return acc;
             }
         } else if ((b.v-a.v) > 0) {
             a_min = acc;
@@ -115,16 +112,28 @@ double acceleration_between(const path_node_t &a, const path_node_t &b) {
     return (a_max + a_min)/2.0;
 }
 
-path_node_t final_velocity_for_accel(const path_node_t &a, const path_node_t &b, const double acceleration) {
+path_node_t calculate_transition_point(const path_node_t &a, const path_node_t &b, const double acceleration) {
     if (acceleration == 0) return a;
+    // TODO - 0 distance
     auto road_vect = b.p-a.p;
     auto s_target = (road_vect).length();
     //if (s_target == 0) throw std::invalid_argument("distance should be not 0");
     double vf2 = a.v * a.v + 2*acceleration*s_target;
     path_node_t ret = b;
-    ret.v = std::sqrt(vf2);
-
-//    std::cout << "v final " << (ret.v) << " pos: " <<ret.p << std::endl;
+    if (vf2 > 0) ret.v = std::sqrt(vf2);
+    if (((ret.v > b.v) && (acceleration > 0)) ||
+       ((vf2 < 0) && (acceleration < 0))) {
+        //std::cout << "A: v final " << (ret.v) << " pos: " <<ret.p << std::endl;
+        // v=s/t
+        // a = v2-v1/t => t = v2-v1/a
+        double t = (b.v-a.v)/acceleration;
+//        std::cout << t << std::endl;
+        double s = a.v * t + acceleration*t*t/2.0;
+        ret.v = b.v;
+        ret.p = a.p + (b.p-a.p)/(b.p-a.p).length() *s;
+        
+    }
+//    std::cout << "B: v final " << (ret.v) << " pos: " <<ret.p << std::endl;
     return ret;
 }
 
