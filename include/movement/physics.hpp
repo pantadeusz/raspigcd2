@@ -65,7 +65,15 @@ path_node_t get_next_node(const distance_t &s0, const distance_t &v0, const doub
 
 std::pair<distance_t,distance_t> get_next_s_v(const distance_t &s0, const distance_t &v0, const double &a, const double &t);
 
+/**
+ * @brief calculates acceleration for given points and speeds
+ */
 double acceleration_between(const path_node_t &a, const path_node_t &b);
+
+path_node_t final_velocity_for_accel(const path_node_t &a, const path_node_t &b, const double acceleration);
+
+
+bool operator==(const path_node_t &lhs,const path_node_t &rhs);
 
 } // namespace physics
 

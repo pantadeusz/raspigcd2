@@ -360,3 +360,39 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
         REQUIRE(accel_v == Approx(a));
     }
 }
+
+TEST_CASE("Get final velocity for limits", "[movement][physics][final_velocity_for_accel]")
+{
+    
+    SECTION("no acceleration should return the first node 1")
+    {
+        const path_node_t a = {.p = {1,2,3,4}, .v = 10.0};
+        const path_node_t b = {.p = {5,2,3,4}, .v = 10.0};
+        double acceleration = 0.0;
+        path_node_t ret = final_velocity_for_accel(a,b,acceleration);
+        REQUIRE(ret == a);
+    }
+    SECTION("no acceleration should return the first node 2")
+    {
+        const path_node_t a = {.p = {1,2,3,4}, .v = 10.0};
+        const path_node_t b = {.p = {5,2,3,4}, .v = 15.0};
+        double acceleration = 0.0;
+        path_node_t ret = final_velocity_for_accel(a,b,acceleration);
+        REQUIRE(ret == a);
+    }
+    SECTION("acceleration slow enough should return second node with final velocity")
+    {
+        const path_node_t a = {.p = {1,2,3,4}, .v = 10.0};
+        const path_node_t b = {.p = {5,2,3,4}, .v = 50.0};
+        double acceleration = 1.0;
+        path_node_t ret = final_velocity_for_accel(a,b,acceleration);
+        
+        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++)
+            REQUIRE(ret.p[i] == Approx(b.p[i]));
+        REQUIRE(ret.v < b.v);
+        REQUIRE(ret.v > a.v);
+
+        double accel_v = acceleration_between(a, ret);
+        REQUIRE(accel_v == Approx(acceleration));
+    }
+}

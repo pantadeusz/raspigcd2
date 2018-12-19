@@ -111,6 +111,46 @@ double acceleration_between(const path_node_t &a, const path_node_t &b) {
     return (a_max + a_min)/2.0;
 }
 
+path_node_t final_velocity_for_accel(const path_node_t &a, const path_node_t &b, const double acceleration) {
+    if (acceleration == 0) return a;
+    auto road_vect = b.p-a.p;
+    auto s_target = (road_vect).length();
+    //if (s_target == 0) throw std::invalid_argument("distance should be not 0");
+    //double t = 0;
+    //s_final = a.v * t + 0.5 * acceleration * t * t;
+
+    //double vf_min = 0.0, vf_max= 100000.0;
+    //double vi;
+    //double s1 = 0;
+    //for (int n = 0; n < 82; n++) {
+    //    vi = (vf_max + vf_min)/2.0;
+        double vf2 = a.v * a.v + 2*acceleration*s_target;
+    //    std::cout <<  s1 << " = " << a.v << " * " << std::sqrt(vf2) << " + " << acceleration << " * " << (t*t/2.0) << std::endl;
+    //    if (s1 > s_target) {
+    //        t_min = t;
+    //    } else if (s1 < s_target) {
+    //        t_max = t;
+    //    } else if (s1 == s_target) {
+    //        //std::cout << "********n = " << n << std::endl;
+    //        //return t;
+    //        break; // we have t
+    //    }
+    //    //std::cout << "t = " << t << " s " << s1 << "  vs: " << s_target << std::endl;
+    //}
+    path_node_t ret = b;
+    //ret.v = a.v + acceleration * t;
+    ret.v = std::sqrt(vf2);
+
+    std::cout << "v final " << (ret.v) << " pos: " <<ret.p << std::endl;
+    return ret;
+}
+
+
+bool operator==(const path_node_t &lhs,const path_node_t &rhs) {
+    if ((lhs.p == rhs.p) && (lhs.v == rhs.v)) return true;
+    return false;
+}
+
 } // namespace physics
 
 } // namespace movement
