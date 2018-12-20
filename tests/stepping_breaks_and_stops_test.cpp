@@ -130,7 +130,6 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
     {
         multistep_commands_t commands_to_do;
         for (int i = 0; i < 4; i++) {
-            int n = 0;
             multistep_command cmnd;
             cmnd.count = 1;
             cmnd.b[0].step = 0;

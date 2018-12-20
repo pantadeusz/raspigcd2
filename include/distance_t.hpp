@@ -57,6 +57,9 @@ public:
                this->operator[](2) * this->operator[](2) +
                this->operator[](3) * this->operator[](3));
     }
+    
+    double angle(const distance_t & a, const distance_t & b) const;
+
     inline double sumv() const
     {
         return this->operator[](0) +

@@ -120,7 +120,6 @@ path_node_t calculate_transition_point(const path_node_t &a, const path_node_t &
     }
     auto road_vect = b.p-a.p;
     auto s_target = (road_vect).length();
-    //if (s_target == 0) throw std::invalid_argument("distance should be not 0");
     double vf2 = a.v * a.v + 2*acceleration*s_target;
     path_node_t ret = b;
     if (vf2 > 0) ret.v = std::sqrt(vf2);
