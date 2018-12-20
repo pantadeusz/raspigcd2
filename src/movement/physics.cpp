@@ -114,7 +114,10 @@ double acceleration_between(const path_node_t &a, const path_node_t &b) {
 
 path_node_t calculate_transition_point(const path_node_t &a, const path_node_t &b, const double acceleration) {
     if (acceleration == 0) return a;
-    // TODO - 0 distance
+    if (a.p == b.p) {
+        if (a.v != b.v) throw std::invalid_argument("cannot calculate transition point for two same points");
+        else return a;
+    }
     auto road_vect = b.p-a.p;
     auto s_target = (road_vect).length();
     //if (s_target == 0) throw std::invalid_argument("distance should be not 0");
@@ -142,6 +145,8 @@ bool operator==(const path_node_t &lhs,const path_node_t &rhs) {
     if ((lhs.p == rhs.p) && (lhs.v == rhs.v)) return true;
     return false;
 }
+
+
 
 } // namespace physics
 

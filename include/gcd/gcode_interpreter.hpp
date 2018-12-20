@@ -51,6 +51,12 @@ movement::path_intent_t generate_path_intent(const program_t& parsed_program_);
 std::string back_to_gcode(partitioned_program_t &btg);
 
 
+//partitioned_program_t apply_machine_limits(
+//    const partitioned_program_t& program_states,
+//    // limits: acceleration, max_velocity, min_velocity_no_accel
+//    const block_t & initial_state = {{'F',1}} );
+
+
 /**
  * @brief Gropus gcode commands so the other parts can focus on the simple interpretation of parts
  * 
