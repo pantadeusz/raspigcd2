@@ -462,12 +462,12 @@ TEST_CASE("Get final velocity for limits", "[movement][physics][calculate_transi
         double acceleration = -100.0;
         REQUIRE_THROWS(calculate_transition_point(a,b,acceleration));
     }
-   // SECTION("exception when both points are the same and there is difference in velocity")
-   // {
-   //     const path_node_t a = {.p = {1,2,3,4}, .v = 15.0};
-   //     const path_node_t b = {.p = {1,2,3,4}, .v = 10.0};
-   //     double acceleration = -100.0;
-   //     REQUIRE_THROWS(calculate_transition_point(a,b,acceleration));
-   // }
+   SECTION("exception when both points are the same and there is difference in velocity")
+   {
+       const path_node_t a = {.p = {1,2,3,4}, .v = 15.0};
+       const path_node_t b = {.p = {1,2,3,4}, .v = 10.0};
+       double acceleration = -100.0;
+       REQUIRE_THROWS(calculate_transition_point(a,b,acceleration));
+   }
 
 }
