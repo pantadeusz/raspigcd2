@@ -31,6 +31,12 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns", "[gcd][gcode_interp
             {'Y', -20},
             {'F', 100}}};
 
+    program_t g1x10y20f1_program = {
+        {{'G', 1},
+            {'X', 10},
+            {'Y', -20},
+            {'F', 1}}};
+
     auto x_axis_move_program = gcode_to_maps_of_arguments("G1X0Y0Z0A0F100\nG1X10Y0Z0A0F100\n");
     auto y_axis_move_program = gcode_to_maps_of_arguments("G1X0Y0Z0A0F100\nG1X0Y10Z0A0F100\n");
     auto z_axis_move_program = gcode_to_maps_of_arguments("G1X0Y0Z0A0F100\nG1X0Y0Z10A0F100\n");
@@ -62,6 +68,12 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns", "[gcd][gcode_interp
                                   machine_limits.max_no_accel_velocity_mm_s[3]) /
                               4;
         REQUIRE(ret[0].at('F') == Approx(ret_feedrate));
+    }
+
+    SECTION("when there is only one step")
+    {
+        auto ret = apply_limits_for_turns(g1x10y20f1_program, machine_limits);
+        REQUIRE(ret[0]['F'] == Approx(1));
     }
 
     SECTION("two steps along X axis - size should be the same")

@@ -70,8 +70,25 @@ std::string back_to_gcode(partitioned_program_t &btg);
 // program_t apply_machine_limits (const program_t& program_states,
 //                const configuration::limits &machine_limits);
 
+
+/**
+ * @brief Adds limits to the machine turns based on the maximal speeds and angles
+ * the states receives the minimum of feedrate based on intended feedrate and the
+ * maximal feedrate based on turn angle and limits
+ */
 program_t apply_limits_for_turns (const program_t& program_states,
                 const configuration::limits &machine_limits);
+
+
+/**
+ * @brief enrich gcode that the moves can accelerate and break based on the limits
+ * 
+ * adds blocks that allow to have A->accelerate->A'->const_speed->B'->break->B
+ * 
+ * this itself allow for the more precise movements
+ */
+//program_t enrich_program_with_limits (const program_t& program_states,
+//                const configuration::limits &machine_limits);
 
 
 /**

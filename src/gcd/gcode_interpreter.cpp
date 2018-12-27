@@ -72,12 +72,12 @@ program_t apply_limits_for_turns(const program_t& program_states,
     }
     if (ret_states.size() == 1) {
         auto& state = ret_states[0];
-        if ((state.count('F') > 0) && (state.at('F') > 0)) {
-            state['F'] = (machine_limits.max_no_accel_velocity_mm_s[0] +
+        if (state['F'] > 0) {
+            state['F'] = std::min((machine_limits.max_no_accel_velocity_mm_s[0] +
                              machine_limits.max_no_accel_velocity_mm_s[1] +
                              machine_limits.max_no_accel_velocity_mm_s[2] +
                              machine_limits.max_no_accel_velocity_mm_s[3]) /
-                         4;
+                         4,state['F']);
         }
         return ret_states;
     }
@@ -123,8 +123,6 @@ program_t apply_limits_for_turns(const program_t& program_states,
 
                 ret_states[i]['F'] = result_f;
             }
-//            ret_states[i] = diff_blocks(ret_states[i-1], ret_states[i]);
-
             tristate.pop_front();
         }
     }
