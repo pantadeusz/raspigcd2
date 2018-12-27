@@ -90,6 +90,13 @@ partitioned_program_t group_gcode_commands(const program_t& program_states, cons
 block_t merge_blocks(const block_t &destination, const block_t &source);
 
 /**
+ * @brief reduces gcode that only difference is left
+ * 
+ * @untested
+ */
+block_t diff_blocks(const block_t& destination, const block_t& source);
+
+/**
  * @brief Interprets gcode program to list of gcode state updates
  * 
  * for example, for

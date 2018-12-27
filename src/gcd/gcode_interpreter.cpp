@@ -123,7 +123,7 @@ program_t apply_limits_for_turns(const program_t& program_states,
 
                 ret_states[i]['F'] = result_f;
             }
-            ret_states[i] = diff_blocks(ret_states[i-1], ret_states[i]);
+//            ret_states[i] = diff_blocks(ret_states[i-1], ret_states[i]);
 
             tristate.pop_front();
         }
