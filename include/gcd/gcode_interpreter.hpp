@@ -44,6 +44,17 @@ using partitioned_program_t = std::vector<program_t>; // represents program part
 
 //movement::path_intent_t generate_path_intent(const program_t& parsed_program_);
 
+/**
+ * @brief  generates coordinates from block
+ * 
+ */
+distance_t block_to_distance_t(const block_t & block);
+
+/**
+ * @brief returns the movement vector out of the two consecutive blocks
+ */
+distance_t blocks_to_vector_move(const block_t & block_a, const block_t & block_b);
+
 
 /**
  * @brief Generates string based on gcode grouped by fragments G1, G0 and M
