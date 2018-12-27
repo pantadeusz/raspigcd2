@@ -33,7 +33,7 @@
 namespace raspigcd {
 namespace gcd {
 
-movement::path_intent_t generate_path_intent(const program_t &parsed_program_) {
+/* movement::path_intent_t generate_path_intent(const program_t &parsed_program_) {
     // todo..
     movement::path_intent_t ret;
     std::map<char,double> g_state = {
@@ -46,7 +46,38 @@ movement::path_intent_t generate_path_intent(const program_t &parsed_program_) {
 
     }
     return {};
+} */
+
+
+program_t apply_limits_for_turns (const program_t& program_states,
+                const configuration::limits &machine_limits) {
+    auto ret_states = program_states;
+    if (ret_states.size() == 0) { return {}; }
+    if (ret_states.size() == 1) {
+        auto &state = ret_states[0];
+        if ((state.count('F') > 0) && (state.at('F') > 0)) {
+            state['F'] = (
+            machine_limits.max_no_accel_velocity_mm_s[0]+
+            machine_limits.max_no_accel_velocity_mm_s[1]+
+            machine_limits.max_no_accel_velocity_mm_s[2]+
+            machine_limits.max_no_accel_velocity_mm_s[3])/4;
+        }
+        return ret_states;
+    }
+    // first block, and last block
+    //auto first_diff = ret_states[1] - ret_states[0];
+    //block_t previous_block;
+    // for (::size_t i = 1; i < ret_states.size(); i++) {
+    //     if (previous_block.size() == 0) {
+
+    //     } else {
+
+    //     }
+    //     previous_block = state;
+    // }
+    return ret_states;
 }
+
 
 std::string back_to_gcode(partitioned_program_t &btg) {
     std::stringstream strs;

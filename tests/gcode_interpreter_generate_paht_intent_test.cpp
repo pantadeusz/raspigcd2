@@ -24,11 +24,11 @@ TEST_CASE("gcode_interpreter_test - generate_path_intent", "[gcd][gcode_interpre
     //         std::end(ret_list_)
     //         };
     // };
-    SECTION("empty gives empty")
-    {
-        auto ret = generate_path_intent({});
-        REQUIRE(ret.size() == 0);
-    }
+    // SECTION("empty gives empty")
+    // {
+    //     auto ret = generate_path_intent({});
+    //     REQUIRE(ret.size() == 0);
+    // }
 
 //     SECTION("simple G0 command with movement along X")
 //     {

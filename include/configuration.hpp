@@ -19,10 +19,10 @@
 #ifndef __RASPIGCD_CONFIGURATION_T_HPP__
 #define __RASPIGCD_CONFIGURATION_T_HPP__
 
-#include <string>
 #include <array>
-#include <vector>
 #include <hardware_dof_conf.hpp>
+#include <string>
+#include <vector>
 
 
 namespace raspigcd {
@@ -81,7 +81,7 @@ public:
 class sync_laser
 {
 public:
-    int pin; // laser pin
+    int pin;        // laser pin
     bool hi_is_off; // false - 0 sets laser off. true - 1 sets laser off
     inline sync_laser(const int& _pin = 0, const bool& _hi_is_off = false) : pin(_pin), hi_is_off(_hi_is_off)
     {
@@ -89,15 +89,28 @@ public:
 };
 
 
-class limits {
+class limits
+{
 public:
-    std::array<double,RASPIGCD_HARDWARE_DOF> max_accelerations_mm_s2;    ///<maximal acceleration on given axis (x, y, z, a) in mm/s2
-    std::array<double,RASPIGCD_HARDWARE_DOF> max_velocity_mm_s;          ///<maximal velocity on axis in mm/s
-    std::array<double,RASPIGCD_HARDWARE_DOF> max_no_accel_velocity_mm_s; ///<maximal velocity on axis in mm/s
+    std::array<double, RASPIGCD_HARDWARE_DOF> max_accelerations_mm_s2;    ///<maximal acceleration on given axis (x, y, z, a) in mm/s2
+    std::array<double, RASPIGCD_HARDWARE_DOF> max_velocity_mm_s;          ///<maximal velocity on axis in mm/s
+    std::array<double, RASPIGCD_HARDWARE_DOF> max_no_accel_velocity_mm_s; ///<maximal velocity on axis in mm/s
 
-    virtual double proportional_max_accelerations_mm_s2(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
-    virtual double proportional_max_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
-    virtual double proportional_max_no_accel_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    virtual double proportional_max_accelerations_mm_s2(const std::array<double, RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    virtual double proportional_max_velocity_mm_s(const std::array<double, RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    virtual double proportional_max_no_accel_velocity_mm_s(const std::array<double, RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+
+    limits(
+        std::array<double, RASPIGCD_HARDWARE_DOF> _max_accelerations_mm_s2,
+        std::array<double, RASPIGCD_HARDWARE_DOF> _max_velocity_mm_s,
+        std::array<double, RASPIGCD_HARDWARE_DOF> _max_no_accel_velocity_mm_s) : max_accelerations_mm_s2(_max_accelerations_mm_s2),
+                                                                                 max_velocity_mm_s(_max_velocity_mm_s),
+                                                                                 max_no_accel_velocity_mm_s(_max_no_accel_velocity_mm_s) {}
+    limits() {
+        max_accelerations_mm_s2 = {0,0,0,0};
+        max_velocity_mm_s = {0,0,0,0};
+        max_no_accel_velocity_mm_s = {0,0,0,0};
+    }
 };
 
 enum motion_layouts {
@@ -105,10 +118,11 @@ enum motion_layouts {
     CARTESIAN
 };
 
-class actuators_organization {
+class actuators_organization
+{
 public:
-    std::array<double,RASPIGCD_HARDWARE_DOF> scale;                      ///< scale along each axis (can be negative)
-    motion_layouts motion_layout;                   ///< name of layout selected: 'corexy' 'cartesian'
+    std::array<double, RASPIGCD_HARDWARE_DOF> scale; ///< scale along each axis (can be negative)
+    motion_layouts motion_layout;                    ///< name of layout selected: 'corexy' 'cartesian'
     std::vector<stepper> steppers;
 };
 

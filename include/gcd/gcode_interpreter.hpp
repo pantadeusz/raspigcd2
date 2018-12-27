@@ -39,10 +39,10 @@ namespace gcd {
 
 using block_t = std::map<char, double>;             // represents N001G0X10Y20
 using program_t = std::vector<block_t>;               // represents whole program without empty lines
-using partitioned_program_t = std::list<program_t>; // represents program partitioned into different sections for optimization and interpretation
+using partitioned_program_t = std::vector<program_t>; // represents program partitioned into different sections for optimization and interpretation
 
 
-movement::path_intent_t generate_path_intent(const program_t& parsed_program_);
+//movement::path_intent_t generate_path_intent(const program_t& parsed_program_);
 
 
 /**
@@ -55,6 +55,12 @@ std::string back_to_gcode(partitioned_program_t &btg);
 //    const partitioned_program_t& program_states,
 //    // limits: acceleration, max_velocity, min_velocity_no_accel
 //    const block_t & initial_state = {{'F',1}} );
+
+// program_t apply_machine_limits (const program_t& program_states,
+//                const configuration::limits &machine_limits);
+
+program_t apply_limits_for_turns (const program_t& program_states,
+                const configuration::limits &machine_limits);
 
 
 /**

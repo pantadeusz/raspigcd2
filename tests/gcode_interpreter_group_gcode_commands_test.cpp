@@ -92,6 +92,20 @@ TEST_CASE("gcode_interpreter_test - group_gcode_commands", "[gcd][gcode_interpre
         auto ret = group_gcode_commands(simple_gcode_seven_groups_mg1g0g1m);
         REQUIRE(ret.size() == 7);
     }
+    SECTION("simple_gcode_seven_groups_mg1g0g1m groups should not be mixed")
+    {
+        auto ret_a = group_gcode_commands(simple_gcode_seven_groups_mg1g0g1m);
+        auto ret = std::vector<program_t>(ret_a.begin(), ret_a.end());
+        INFO(back_to_gcode(ret_a));
+        REQUIRE(ret[0].size() == 1);
+        REQUIRE(ret[1].size() == 1);
+        REQUIRE(ret[2].size() == 6);
+        REQUIRE(ret[3].size() == 1);
+        REQUIRE(ret[4].size() == 5);
+        REQUIRE(ret[5].size() == 1);
+        REQUIRE(ret[6].size() == 1);
+    }
+    // simple_gcode_seven_groups_mg1g0g1m
 
     SECTION("Single group simple_gcode_one_group_g1 should result in additional command at start")
     {
