@@ -98,7 +98,6 @@ program_t apply_limits_for_turns(const program_t& program_states,
         auto B = block_to_distance_t(ret_states[i]);
         auto C = block_to_distance_t(ret_states[i + 1]);
         double angle = B.angle(A, C);
-
         if (angle <= (M_PI/2.0)) {
             double y0 = 0.25;
             double y1 = 1;
@@ -128,7 +127,7 @@ program_t apply_limits_for_turns(const program_t& program_states,
             double x0 = (M_PI/2.0);
             double x1 = M_PI;
             double x = angle;
-            double y = y0 * (1- (x - x0) / (x1-x0) ) + y1 * ( (x - x0) / (x1 - x0)); // percentage of the max_no_accel_speed
+            double y = y0 * (1.0 - (x - x0) / (x1-x0) ) + y1 * ( (x - x0) / (x1 - x0)); // percentage of the max_no_accel_speed
             if (ret_states[i]['F'] == 0.0) throw std::invalid_argument("feedrate cannot be 0");
             double result_f = 
             std::min(y,

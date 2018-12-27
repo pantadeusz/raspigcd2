@@ -28,7 +28,7 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns", "[gcd][gcode_interp
     program_t g1x10y20f100_program = {
         {{'G', 1},
             {'X', 10},
-            {'Y', 20},
+            {'Y', -20},
             {'F', 100}}};
 
     auto x_axis_move_program = gcode_to_maps_of_arguments("G1X0Y0Z0A0F100\nG1X10Y0Z0A0F100\n");
@@ -129,10 +129,20 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program", 
         G1X10Y0Z0A0F100
         G1X10Y10Z0A0F100
         )");
+    auto turn_45_program = gcode_to_maps_of_arguments(R"(
+        G1X0Y0Z0A0F100
+        G1X10Y0Z0A0F100
+        G1X0Y10Z0A0F100
+        )");
     auto turn_180_program = gcode_to_maps_of_arguments(R"(
         G1X0Y0Z0A0F200
         G1X10Y0Z0A0F300
         G1X20Y00Z0A0F400
+        )");
+    auto turn_135_program = gcode_to_maps_of_arguments(R"(
+        G1X0Y0Z0A0F200
+        G1X10Y0Z0A0F300
+        G1X20Y-10Z0A0F400
         )");
     //auto turn_90_program = gcode_to_maps_of_arguments("G1X0Y0Z0A0F100\nG1X0Y10Z0A0F100\n");
     //auto turn_180_program = gcode_to_maps_of_arguments("G1X0Y0Z0A0F100\nG1X0Y0Z10A0F100\n");
@@ -166,7 +176,38 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program", 
                 machine_limits.max_velocity_mm_s[1]
                 )));
     }
-    
+    SECTION("turn of 45 deg along XY axis. The speed should be the lower of the two x and y of the no accel velocity div 2")
+    {
+        auto ret = apply_limits_for_turns(turn_45_program, machine_limits);
+        partitioned_program_t pp = {ret};
+        INFO(back_to_gcode(pp));
+        double target_feedrate = (std::min(
+                machine_limits.max_no_accel_velocity_mm_s[0],
+                machine_limits.max_no_accel_velocity_mm_s[1]
+        )*0.25+std::min(
+                machine_limits.max_no_accel_velocity_mm_s[0],
+                machine_limits.max_no_accel_velocity_mm_s[1]
+                ))*0.5;
+        REQUIRE(ret[1].at('F') == 
+            Approx (target_feedrate));
+    }
+
+    SECTION("turn of 135 deg along XY axis. The speed should be the lower of the two x and y of the no accel velocity")
+    {
+        partitioned_program_t p0 = {turn_135_program};
+        auto ret = apply_limits_for_turns(turn_135_program, machine_limits);
+        INFO(back_to_gcode(p0));
+        partitioned_program_t pp = {ret};
+        INFO(back_to_gcode(pp));
+        double target_feedrate = (std::min(
+                machine_limits.max_velocity_mm_s[0],
+                machine_limits.max_velocity_mm_s[1]
+                ) + std::min(
+                machine_limits.max_no_accel_velocity_mm_s[0],
+                machine_limits.max_no_accel_velocity_mm_s[1]
+                ))/2;
+        REQUIRE(ret[1].at('F') == Approx (target_feedrate));
+    }
 }
 
 TEST_CASE("gcode_interpreter_test - block_to_distance_t", "[gcd][gcode_interpreter][block_to_distance_t]")

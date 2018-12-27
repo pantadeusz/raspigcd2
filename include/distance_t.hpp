@@ -52,10 +52,7 @@ public:
     }
     inline double length() const
     {
-        return std::sqrt(this->operator[](0) * this->operator[](0) +
-               this->operator[](1) * this->operator[](1) +
-               this->operator[](2) * this->operator[](2) +
-               this->operator[](3) * this->operator[](3));
+        return std::sqrt(length2());
     }
     
     double angle(const distance_t & a, const distance_t & b) const;
@@ -148,8 +145,8 @@ auto calculate_linear_coefficient_from_limits = [](const auto& limits_for_axes, 
     double average_max_accel = 0;
     double average_max_accel_sum = 0;
     for (unsigned int i = 0; i < limits_for_axes.size(); i++) {
-        average_max_accel += limits_for_axes.at(i) * norm_vect.at(i);
-        average_max_accel_sum += norm_vect.at(i);
+        average_max_accel += limits_for_axes.at(i) * std::abs(norm_vect.at(i));
+        average_max_accel_sum += std::abs(norm_vect.at(i));
     }
     average_max_accel = average_max_accel / average_max_accel_sum;
     return average_max_accel;
