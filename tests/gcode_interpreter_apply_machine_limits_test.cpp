@@ -129,6 +129,11 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program", 
         G1X10Y0Z0A0F100
         G1X10Y10Z0A0F100
         )");
+    auto turn_90_shorter_program = gcode_to_maps_of_arguments(R"(
+        G1X0Y0Z0A0F100
+        G1X10F100
+        G1Y10F100
+        )");
     auto turn_45_program = gcode_to_maps_of_arguments(R"(
         G1X0Y0Z0A0F100
         G1X10Y0Z0A0F100
@@ -144,8 +149,18 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program", 
         G1X10Y0Z0A0F300
         G1X20Y-10Z0A0F400
         )");
-    //auto turn_90_program = gcode_to_maps_of_arguments("G1X0Y0Z0A0F100\nG1X0Y10Z0A0F100\n");
-    //auto turn_180_program = gcode_to_maps_of_arguments("G1X0Y0Z0A0F100\nG1X0Y0Z10A0F100\n");
+
+    auto turn_90_4x_program = gcode_to_maps_of_arguments(R"(
+        G1X0Y0Z0A0F100
+        G1X10F100
+        G1Y-10F100
+        G1Z-10F100
+        G1A10F100
+        G1X0F100
+        G1Y0F1
+        G1Z0F100
+        G1A0F100
+        )");
     SECTION("turn of 0 deg (go back) along X axis. The speed should be 0.25 of the no accel velocity")
     {
         auto ret = apply_limits_for_turns(turn_0_program, machine_limits);
@@ -157,6 +172,17 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program", 
     SECTION("turn of 90 deg along XY axis. The speed should be the lower of the two x and y of the no accel velocity")
     {
         auto ret = apply_limits_for_turns(turn_90_program, machine_limits);
+        partitioned_program_t pp = {ret};
+        INFO(back_to_gcode(pp));
+        REQUIRE(ret[1].at('F') == 
+            Approx (std::min(
+                machine_limits.max_no_accel_velocity_mm_s[0],
+                machine_limits.max_no_accel_velocity_mm_s[1]
+                )));
+    }
+    SECTION("turn of 90 deg along XY axis - shorter gcode")
+    {
+        auto ret = apply_limits_for_turns(turn_90_shorter_program, machine_limits);
         partitioned_program_t pp = {ret};
         INFO(back_to_gcode(pp));
         REQUIRE(ret[1].at('F') == 
@@ -207,6 +233,23 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program", 
                 machine_limits.max_no_accel_velocity_mm_s[1]
                 ))/2;
         REQUIRE(ret[1].at('F') == Approx (target_feedrate));
+    }
+
+    SECTION("turn of 90 deg 4x")
+    {
+        auto ret = apply_limits_for_turns(turn_90_4x_program, machine_limits);
+        partitioned_program_t pp = {ret};
+        INFO(back_to_gcode(pp));
+        REQUIRE(ret.size() == 9);
+        REQUIRE(ret[0].at('F') ==  Approx(2.0));
+        REQUIRE(ret[1].at('F') ==  Approx(2.0));
+        REQUIRE(ret[2].at('F') ==  Approx(3.0));
+        REQUIRE(ret[3].at('F') ==  Approx(4.0));
+        REQUIRE(ret[4].at('F') ==  Approx(2.0));
+        REQUIRE(ret[5].at('F') ==  Approx(2.0));
+        REQUIRE(ret[6].at('F') ==  Approx(1.0));
+        REQUIRE(ret[7].at('F') ==  Approx(4.0));
+        REQUIRE(ret[8].at('F') ==  Approx(5.0));
     }
 }
 

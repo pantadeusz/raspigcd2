@@ -87,39 +87,50 @@ program_t apply_limits_for_turns(const program_t& program_states,
         ret_states[0]['F'] = std::min(
             machine_limits.proportional_max_no_accel_velocity_mm_s(first_diff / first_diff.length()),
             ret_states[0]['F']);
+    }
+    //block_t previous_block;
+    if (ret_states.size() > 2) {
+        std::list < block_t > tristate;
+        tristate.push_back(ret_states[0]);
+        tristate.push_back(merge_blocks(tristate.back(),ret_states[1]));
+        for (::size_t i = 1; i < ret_states.size() - 1; i++) {
+            ret_states[i] = tristate.back();
+            tristate.push_back(merge_blocks(tristate.back(),ret_states[i+1]));
+            // 0-90 - 0.25 of the min speed no accel to the 1.0 of the min speed no accel
+            // 90-180 - linear scale from min speed no accel to max speed
+            // merge_blocks
+            auto A = block_to_distance_t(tristate.front());
+            auto B = block_to_distance_t(*(++tristate.begin()));
+            auto C = block_to_distance_t(tristate.back());
+
+            // get minimum of the values for first vector and second vector
+            double angle = B.angle(A, C);
+            if (angle <= (M_PI / 2.0)) {
+                auto y = linear_interpolation(angle, 0, 0.25, M_PI / 2.0, 1);
+                if (ret_states[i]['F'] == 0.0) throw std::invalid_argument("feedrate cannot be 0");
+                double result_f = std::min(y * std::min(
+                                                   machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / (B - A).length()),
+                                                   machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / (C - B).length())),
+                    ret_states[i]['F']);
+
+                ret_states[i]['F'] = result_f;
+            } else {
+                auto y = linear_interpolation(angle, M_PI / 2.0, std::min(machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / (B - A).length()), machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / (C - B).length())), M_PI, std::min(machine_limits.proportional_max_velocity_mm_s((B - A) / (B - A).length()), machine_limits.proportional_max_velocity_mm_s((C - B) / (C - B).length())));
+                if (ret_states[i]['F'] == 0.0) throw std::invalid_argument("feedrate cannot be 0");
+                double result_f =
+                    std::min(y,
+                        ret_states[i]['F']);
+
+                ret_states[i]['F'] = result_f;
+            }
+            tristate.pop_front();
+        }
+    }
+    {
         auto second_diff = blocks_to_vector_move(*(--(--ret_states.end())), *(--ret_states.end()));
         (*(--ret_states.end()))['F'] = std::min(
             machine_limits.proportional_max_no_accel_velocity_mm_s(second_diff / second_diff.length()),
             (*(--ret_states.end()))['F']);
-    }
-    //block_t previous_block;
-    for (::size_t i = 1; i < ret_states.size() - 1; i++) {
-        // 0-90 - 0.25 of the min speed no accel to the 1.0 of the min speed no accel
-        // 90-180 - linear scale from min speed no accel to max speed
-
-        // get minimum of the values for first vector and second vector
-        auto A = block_to_distance_t(ret_states[i - 1]);
-        auto B = block_to_distance_t(ret_states[i]);
-        auto C = block_to_distance_t(ret_states[i + 1]);
-        double angle = B.angle(A, C);
-        if (angle <= (M_PI / 2.0)) {
-            auto y = linear_interpolation(angle, 0, 0.25, M_PI / 2.0, 1);
-            if (ret_states[i]['F'] == 0.0) throw std::invalid_argument("feedrate cannot be 0");
-            double result_f = std::min(y * std::min(
-                                               machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / (B - A).length()),
-                                               machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / (C - B).length())),
-                ret_states[i]['F']);
-
-            ret_states[i]['F'] = result_f;
-        } else {
-            auto y = linear_interpolation(angle, M_PI / 2.0, std::min(machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / (B - A).length()), machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / (C - B).length())), M_PI, std::min(machine_limits.proportional_max_velocity_mm_s((B - A) / (B - A).length()), machine_limits.proportional_max_velocity_mm_s((C - B) / (C - B).length())));
-            if (ret_states[i]['F'] == 0.0) throw std::invalid_argument("feedrate cannot be 0");
-            double result_f =
-                std::min(y,
-                    ret_states[i]['F']);
-
-            ret_states[i]['F'] = result_f;
-        }
     }
     return ret_states;
 }
