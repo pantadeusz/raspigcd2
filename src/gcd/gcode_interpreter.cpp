@@ -123,6 +123,8 @@ program_t apply_limits_for_turns(const program_t& program_states,
 
                 ret_states[i]['F'] = result_f;
             }
+            ret_states[i] = diff_blocks(ret_states[i-1], ret_states[i]);
+
             tristate.pop_front();
         }
     }
@@ -159,6 +161,17 @@ block_t merge_blocks(const block_t& destination, const block_t& source)
     }
     return merged;
 }
+
+// UNTESTED:
+block_t diff_blocks(const block_t& destination, const block_t& source)
+{
+    block_t merged = destination;
+    for (const auto& sb : source) {
+        if (merged[sb.first] == sb.second) merged.erase(sb.first);
+    }
+    return merged;
+}
+
 
 partitioned_program_t group_gcode_commands(const program_t& program_states, const block_t& initial_state)
 {
