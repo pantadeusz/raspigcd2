@@ -41,6 +41,15 @@ using block_t = std::map<char, double>;             // represents N001G0X10Y20
 using program_t = std::vector<block_t>;               // represents whole program without empty lines
 using partitioned_program_t = std::vector<program_t>; // represents program partitioned into different sections for optimization and interpretation
 
+/**
+ * convert block to position
+ * */
+distance_t block_to_distance_t(const block_t& block);
+/**
+ * calculates movement vector from block a to block b
+ * */
+distance_t blocks_to_vector_move(const block_t& block_a, const block_t& block_b);
+
 
 //movement::path_intent_t generate_path_intent(const program_t& parsed_program_);
 

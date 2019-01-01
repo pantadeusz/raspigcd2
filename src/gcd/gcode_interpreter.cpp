@@ -47,12 +47,14 @@ namespace gcd {
     }
     return {};
 } */
+/// UNTESTED
 distance_t block_to_distance_t(const block_t& block)
 {
     auto blk = block;
     return {blk['X'], blk['Y'], blk['Z'], blk['A']};
 }
 
+/// UNTESTED
 distance_t blocks_to_vector_move(const block_t& block_a, const block_t& block_b)
 {
     return block_to_distance_t(block_b) - block_to_distance_t(block_a);

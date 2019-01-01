@@ -22,7 +22,7 @@ double limits::proportional_max_no_accel_velocity_mm_s(const std::array<double,R
 
 double global::tick_duration() const
 { // czas ticku w sekundach. 0.00005 = 50mikrosekund
-    return 0.000001 * (double)tick_duration_us;
+    return ((double) tick_duration_us)/1000000.0; // 0.000001 * (double)tick_duration_us;
 }
 
 global& global::load_defaults()

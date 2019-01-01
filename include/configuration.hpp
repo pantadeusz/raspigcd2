@@ -124,6 +124,7 @@ public:
     std::array<double, RASPIGCD_HARDWARE_DOF> scale; ///< scale along each axis (can be negative)
     motion_layouts motion_layout;                    ///< name of layout selected: 'corexy' 'cartesian'
     std::vector<stepper> steppers;
+    int tick_duration_us;         // microseconds tick time
 };
 
 
@@ -136,7 +137,6 @@ public:
  * @return double tick duration in seconds
  */
     double tick_duration() const; // czas ticku w sekundach. 0.00005 = 50mikrosekund
-    int tick_duration_us;         // microseconds tick time
     bool simulate_execution;      // should I use simulator by default
 
     std::vector<spindle_pwm> spindles;
