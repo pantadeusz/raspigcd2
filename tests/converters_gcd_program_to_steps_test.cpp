@@ -142,8 +142,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         double t = 1;
         double a = -10;
         double v0 = 10;
-        double v1 = v0 - a*t;
-        std::cout <<"v1:" << v1 << std::endl;
+        double v1 = v0 + a*t;
         v1 = 0;
         double s = v0 + a*t*t/2.0;
         auto program = gcode_to_maps_of_arguments(
@@ -163,7 +162,6 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         REQUIRE(steps == steps_t{(int)(s*100),0,0,0});
         double dt = ((double) test_config.tick_duration_us)/1000000.0;
         REQUIRE(result.size() == (int)(t/dt));
-//        REQUIRE(result.size() == (1000000/test_config.tick_duration_us));
     }
     
     //SECTION("program that stays in the same place should result in empty result")
