@@ -46,6 +46,7 @@ hardware::multistep_commands_t program_to_steps(
         double l = (pos_to - pos_from).length(); // distance to travel
         double v0 = state['F'];                  // velocity
         double v1 = next_state['F'];             // velocity
+        std::list <multistep_command> fragment; // fraagment of the commands list generated in this stage
         if ((l > 0) && (v0 == v1)) {
             if (v1 == 0) throw std::invalid_argument("the feedrate should not be 0 for non zero distance");
             auto pos = pos_from;
@@ -56,14 +57,14 @@ hardware::multistep_commands_t program_to_steps(
                 auto np = direction * s;
                 auto pos_to_steps = ml_.cartesian_to_steps(np); //gcd::block_to_distance_t(next_state);
                 multistep_commands_t steps_todo = chase_steps(pos_from_steps, pos_to_steps);
-                result.insert(result.end(), steps_todo.begin(), steps_todo.end());
+                fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
                 pos = np;
                 pos_from_steps = pos_to_steps;
             }
             auto pos_to_steps = ml_.cartesian_to_steps(pos_to);
             if (!(pos_from_steps == pos_to_steps)) {
                 multistep_commands_t steps_todo = chase_steps(pos_from_steps, pos_to_steps);
-                result.insert(result.end(), steps_todo.begin(), steps_todo.end());
+                fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
             }
         } else if ((v1 != v0) && (l > 0)) {
             auto direction = (pos_to - pos_from) / l;
@@ -78,15 +79,17 @@ hardware::multistep_commands_t program_to_steps(
             for (int i = 1; l() < s; ++i, t = dt * i) {
                 auto pos = ml_.cartesian_to_steps(pos_from + direction * l());
                 multistep_commands_t steps_to_add = chase_steps(p_steps, pos);
-                result.insert(result.end(), steps_to_add.begin(), steps_to_add.end());
+                fragment.insert(fragment.end(), steps_to_add.begin(), steps_to_add.end());
                 p_steps = pos;
             }
             auto pos_to_steps = ml_.cartesian_to_steps(pos_to);
             if (!(p_steps == pos_to_steps)) {
                 multistep_commands_t steps_todo = chase_steps(p_steps, pos_to_steps);
-                result.insert(result.end(), steps_todo.begin(), steps_todo.end());
+                fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
             }
         }
+        auto collapsed = collapse_repeated_steps(fragment); 
+        result.insert(result.end(), collapsed.begin(), collapsed.end());
         state = next_state;
     }
     return collapse_repeated_steps(result);

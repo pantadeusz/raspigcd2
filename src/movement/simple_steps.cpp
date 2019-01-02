@@ -36,7 +36,9 @@ int steps_remaining(const steps_t& steps_, const steps_t& destination_steps_)
     return ret;
 }
 
-hardware::multistep_commands_t collapse_repeated_steps(const std::list<hardware::multistep_command>& ret) 
+hardware::multistep_commands_t collapse_repeated_steps(
+    const std::list<hardware::multistep_command>& ret
+    ) 
 {
     if (ret.size() == 0) return {};
     hardware::multistep_commands_t ret_vect;
