@@ -34,7 +34,7 @@ hardware::multistep_commands_t program_to_steps(
     using namespace raspigcd::movement::simple_steps;
     using namespace movement::physics;
     auto state = initial_state_;
-    multistep_commands_t result;
+    std::list<multistep_command> result;
     //double dt = 0.000001 * (double)conf_.tick_duration_us;//
     double dt = ((double)conf_.tick_duration_us) / 1000000.0;
     // std::cout << "dt = " << dt << std::endl;
@@ -89,7 +89,7 @@ hardware::multistep_commands_t program_to_steps(
         }
         state = next_state;
     }
-    return result;
+    return collapse_repeated_steps(result);
 }
 
 } // namespace converters

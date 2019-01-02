@@ -46,9 +46,10 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
         //REQUIRE(result.size() == 200); // empty+step * 100
         steps_t steps = {0,0,0,0};
+        int commands_count = 0; 
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
-                //std::cout << "m: ";
+                commands_count++;
                 for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
                     auto m = e.b[i];
                     //std::cout << "s:" << m.step << " " << m.dir;
@@ -70,9 +71,10 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
         //REQUIRE(result.size() == 200); // empty+step * 100
         steps_t steps = {0,0,0,0};
+        int commands_count = 0; 
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
-                //std::cout << "m: ";
+                commands_count++;
                 for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
                     auto m = e.b[i];
                     //std::cout << "s:" << m.step << " " << m.dir;
@@ -82,7 +84,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
             }
         }
         REQUIRE(steps == steps_t{100,0,0,0});
-        REQUIRE(result.size() == (1000000/test_config.tick_duration_us));
+        REQUIRE(commands_count == (1000000/test_config.tick_duration_us));
     }
     SECTION("if the speed is 0 and the distance is not 0, then the exception should be throwned")
     {
@@ -100,8 +102,10 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         )");
         auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
         steps_t steps = {0,0,0,0};
+        int commands_count = 0; 
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
+                commands_count++;
                 for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
                     auto m = e.b[i];
                     if (m.step) steps[i] += ((int)(m.dir)*2)-1;
@@ -124,8 +128,10 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         );
         auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
         steps_t steps = {0,0,0,0};
+        int commands_count = 0; 
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
+                commands_count++;
                 for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
                     auto m = e.b[i];
                     if (m.step) steps[i] += ((int)(m.dir)*2)-1;
@@ -134,7 +140,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         }
         REQUIRE(steps == steps_t{(int)(s*100),0,0,0});
         double dt = ((double) test_config.tick_duration_us)/1000000.0;
-        REQUIRE(result.size() == (int)(t/dt));
+        REQUIRE(commands_count == (int)(t/dt));
 //        REQUIRE(result.size() == (1000000/test_config.tick_duration_us));
     }
     SECTION("break from F1 to F0 should result in correct time")
@@ -151,8 +157,10 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         );
         auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
         steps_t steps = {0,0,0,0};
+        int commands_count = 0; 
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
+                commands_count++;
                 for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
                     auto m = e.b[i];
                     if (m.step) steps[i] += ((int)(m.dir)*2)-1;
@@ -161,7 +169,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         }
         REQUIRE(steps == steps_t{(int)(s*100),0,0,0});
         double dt = ((double) test_config.tick_duration_us)/1000000.0;
-        REQUIRE(result.size() == (int)(t/dt));
+        REQUIRE(commands_count == (int)(t/dt));
     }
     
     //SECTION("program that stays in the same place should result in empty result")
