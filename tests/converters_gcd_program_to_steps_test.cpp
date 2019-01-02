@@ -41,7 +41,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
     SECTION("simple move along x axis for 100 steps should result in correct distance generated")
     {
         auto program = gcode_to_maps_of_arguments(R"(
-           G0X1F10
+           G1X1F10
         )");
         auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
         //REQUIRE(result.size() == 200); // empty+step * 100
@@ -62,8 +62,8 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
     SECTION("simple move along x axis for 100 steps should result in correct speed")
     {
         auto program = gcode_to_maps_of_arguments(R"(
-           G0F1
-           G0X1F1
+           G1F1
+           G1X1F1
         )");
         // 1mm/s, 
         // 1s is  1000000/test_config.tick_duration_us -> this is the time of the movement
@@ -87,16 +87,16 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
     SECTION("if the speed is 0 and the distance is not 0, then the exception should be throwned")
     {
         auto program = gcode_to_maps_of_arguments(R"(
-           G0F0
-           G0X1F0
+           G1F0
+           G1X1F0
         )");
         REQUIRE_THROWS( program_to_steps(program,test_config, *(motor_layot_p.get()) ));
     }
     SECTION("acceleration from F0 to F1 should result in correct distance")
     {
         auto program = gcode_to_maps_of_arguments(R"(
-           G0F0
-           G0X1F1
+           G1F0
+           G1X1F1
         )");
         auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
         steps_t steps = {0,0,0,0};
@@ -118,9 +118,37 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         double s = a*t*t/2.0;
         double v1 = a*t;
         auto program = gcode_to_maps_of_arguments(R"(
-           G0F0
+           G1F0
            )" +
-           std::string("G0X") + std::to_string(s) + "F" + std::to_string(v1)
+           std::string("G1X") + std::to_string(s) + "F" + std::to_string(v1)
+        );
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
+        steps_t steps = {0,0,0,0};
+        for (auto &e : result) {
+            for (int i = 0; i < e.count; i++) {
+                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                    auto m = e.b[i];
+                    if (m.step) steps[i] += ((int)(m.dir)*2)-1;
+                }
+            }
+        }
+        REQUIRE(steps == steps_t{(int)(s*100),0,0,0});
+        double dt = ((double) test_config.tick_duration_us)/1000000.0;
+        REQUIRE(result.size() == (int)(t/dt));
+//        REQUIRE(result.size() == (1000000/test_config.tick_duration_us));
+    }
+    SECTION("break from F1 to F0 should result in correct time")
+    {
+        double t = 1;
+        double a = -10;
+        double v0 = 10;
+        double v1 = v0 - a*t;
+        std::cout <<"v1:" << v1 << std::endl;
+        v1 = 0;
+        double s = v0 + a*t*t/2.0;
+        auto program = gcode_to_maps_of_arguments(
+           std::string("G1X") + std::to_string(0) + "F" + std::to_string(v0) + "\n" +
+           std::string("G1X") + std::to_string(s) + "F" + std::to_string(v1)
         );
         auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
         steps_t steps = {0,0,0,0};
