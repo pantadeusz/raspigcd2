@@ -81,63 +81,6 @@ TEST_CASE("Movement constant speed", "[movement][steps_generator]")
         steps_t expected_steps = motor_layout_.get()->cartesian_to_steps({-1, 1, 2, 0});
         REQUIRE(steps == expected_steps);
     }
-
-    SECTION("steps_generator::collapse_repeated_steps")
-    {
-        auto result = steps_generator::collapse_repeated_steps({});
-        REQUIRE(result.size() == 0);
-
-        result = steps_generator::collapse_repeated_steps({{
-                                                                .b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}},
-                                                                .count = 1}});
-        REQUIRE(result.size() == 1);
-
-        result = steps_generator::collapse_repeated_steps(
-            {
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}
-            }
-            );
-        REQUIRE(result.size() == 1);
-        REQUIRE(result[0].count == 2);
-
-        result = steps_generator::collapse_repeated_steps(
-            {
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}
-            }
-            );
-        REQUIRE(result.size() == 1);
-        REQUIRE(result[0].count == 1);
-
-        result = steps_generator::collapse_repeated_steps(
-            {
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0},
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}
-            }
-            );
-        REQUIRE(result.size() == 0);
-
-        result = steps_generator::collapse_repeated_steps(
-            {
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}
-            }
-            );
-        REQUIRE(result.size() == 1);
-        REQUIRE(result[0].count == 3);
-
-        result = steps_generator::collapse_repeated_steps(
-            {
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2},
-            {.b = {{.step = 1, .dir = 0}, {.step = 1, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}
-            }
-            );
-        REQUIRE(result.size() == 2);
-        REQUIRE(result[0].count == 3);
-        REQUIRE(result[1].count == 2);
-    }
 }
 
 

@@ -42,7 +42,7 @@ protected:
     std::shared_ptr<hardware::motor_layout> _motor_layout_ptr;
 
 public:
-    static hardware::multistep_commands_t collapse_repeated_steps(const std::list<hardware::multistep_command>& commands);
+//    static hardware::multistep_commands_t collapse_repeated_steps(const std::list<hardware::multistep_command>& commands);
 
     void set_motor_layout(std::shared_ptr<hardware::motor_layout> ml);
 

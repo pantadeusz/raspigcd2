@@ -40,7 +40,7 @@ steps_generator::steps_generator(std::shared_ptr<hardware::motor_layout> ml)
     set_motor_layout(ml);
 }
 
-
+/*
 hardware::multistep_commands_t steps_generator::collapse_repeated_steps(const std::list<hardware::multistep_command>& ret) 
 {
     if (ret.size() == 0) return {};
@@ -70,7 +70,7 @@ hardware::multistep_commands_t steps_generator::collapse_repeated_steps(const st
     ret_vect.shrink_to_fit();
     return ret_vect;
 }
-
+*/
 
 hardware::multistep_commands_t steps_generator::movement_from_to(const distance_t& p0, const transition_t& transition, const distance_t& p1, const double dt) const
 {
@@ -103,7 +103,7 @@ hardware::multistep_commands_t steps_generator::movement_from_to(const distance_
     hardware::multistep_commands_t steps_to_add = simple_steps::chase_steps(p_steps, p1steps);
     ret.insert(ret.end(), steps_to_add.begin(), steps_to_add.end());
 
-    return collapse_repeated_steps(ret);
+    return simple_steps::collapse_repeated_steps(ret);
 }
 
 double steps_generator::velocity_after_from_to(const distance_t& p0, const transition_t& transition, const distance_t& p1, const double dt) const

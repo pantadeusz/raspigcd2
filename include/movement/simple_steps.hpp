@@ -31,6 +31,9 @@ namespace simple_steps {
 
 int steps_remaining( const steps_t& steps_, const steps_t& destination_steps_ );
 
+
+hardware::multistep_commands_t collapse_repeated_steps(const std::list<hardware::multistep_command>& ret);
+
 /**
  * @brief generates steps to reach given destination steps
  * @arg steps_ current steps count
