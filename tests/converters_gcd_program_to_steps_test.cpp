@@ -171,6 +171,32 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         double dt = ((double) test_config.tick_duration_us)/1000000.0;
         REQUIRE(commands_count == (int)(t/dt));
     }
+    SECTION("program_to_steps should optimize the commands count - reduce it")
+    {
+        double t = 1;
+        double a = -10;
+        double v0 = 10;
+        double v1 = v0 + a*t;
+        v1 = 0;
+        double s = v0 + a*t*t/2.0;
+        auto program = gcode_to_maps_of_arguments(
+           std::string("G1X") + std::to_string(0) + "F" + std::to_string(v0) + "\n" +
+           std::string("G1X") + std::to_string(s) + "F" + std::to_string(v1)
+        );
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
+        steps_t steps = {0,0,0,0};
+        int commands_count = 0; 
+        for (auto &e : result) {
+            for (int i = 0; i < e.count; i++) {
+                commands_count++;
+                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                    auto m = e.b[i];
+                    if (m.step) steps[i] += ((int)(m.dir)*2)-1;
+                }
+            }
+        }
+        REQUIRE(commands_count > result.size() );
+    }
     
     //SECTION("program that stays in the same place should result in empty result")
     //{
