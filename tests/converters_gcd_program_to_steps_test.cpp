@@ -84,6 +84,59 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         REQUIRE(steps == steps_t{100,0,0,0});
         REQUIRE(result.size() == (1000000/test_config.tick_duration_us));
     }
+    SECTION("if the speed is 0 and the distance is not 0, then the exception should be throwned")
+    {
+        auto program = gcode_to_maps_of_arguments(R"(
+           G0F0
+           G0X1F0
+        )");
+        REQUIRE_THROWS( program_to_steps(program,test_config, *(motor_layot_p.get()) ));
+    }
+    SECTION("acceleration from F0 to F1 should result in correct distance")
+    {
+        auto program = gcode_to_maps_of_arguments(R"(
+           G0F0
+           G0X1F1
+        )");
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
+        steps_t steps = {0,0,0,0};
+        for (auto &e : result) {
+            for (int i = 0; i < e.count; i++) {
+                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                    auto m = e.b[i];
+                    if (m.step) steps[i] += ((int)(m.dir)*2)-1;
+                }
+            }
+        }
+        REQUIRE(steps == steps_t{100,0,0,0});
+    }
+
+    SECTION("acceleration from F0 to F1 should result in correct time")
+    {
+        double t = 1;
+        double a = 100;
+        double s = a*t*t/2.0;
+        double v1 = a*t;
+        auto program = gcode_to_maps_of_arguments(R"(
+           G0F0
+           )" +
+           std::string("G0X") + std::to_string(s) + "F" + std::to_string(v1)
+        );
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
+        steps_t steps = {0,0,0,0};
+        for (auto &e : result) {
+            for (int i = 0; i < e.count; i++) {
+                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                    auto m = e.b[i];
+                    if (m.step) steps[i] += ((int)(m.dir)*2)-1;
+                }
+            }
+        }
+        REQUIRE(steps == steps_t{(int)(s*100),0,0,0});
+        double dt = ((double) test_config.tick_duration_us)/1000000.0;
+        REQUIRE(result.size() == (int)(t/dt));
+//        REQUIRE(result.size() == (1000000/test_config.tick_duration_us));
+    }
     
     //SECTION("program that stays in the same place should result in empty result")
     //{
