@@ -1,36 +1,54 @@
 #include <configuration.hpp>
-#include <hardware/motor_layout.hpp>
-#include <hardware/driver/raspberry_pi.hpp>
+#include <converters/gcd_program_to_steps.hpp>
+#include <gcd/factory.hpp>
+#include <gcd/path_intent_executor.hpp>
 #include <hardware/driver/inmem.hpp>
+#include <hardware/driver/low_buttons_fake.hpp>
+#include <hardware/driver/low_spindles_pwm_fake.hpp>
+#include <hardware/driver/low_timers_busy_wait.hpp>
+#include <hardware/driver/low_timers_fake.hpp>
+#include <hardware/driver/raspberry_pi.hpp>
+#include <hardware/motor_layout.hpp>
 #include <hardware/stepping.hpp>
 #include <movement/steps_generator.hpp>
 #include <movement/variable_speed.hpp>
-#include <gcd/path_intent_executor.hpp>
-#include <hardware/driver/low_buttons_fake.hpp>
-#include <hardware/driver/low_spindles_pwm_fake.hpp>
-#include <hardware/driver/low_timers_fake.hpp>
-#include <hardware/driver/low_timers_busy_wait.hpp>
-#include <gcd/factory.hpp>
+
+
+#include <fstream>
+#include <streambuf>
+#include <string>
 
 using namespace raspigcd;
 using namespace raspigcd::hardware;
+using namespace raspigcd::gcd;
 
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     using namespace std::chrono_literals;
-    std::vector<std::string> args(argv, argv+argc);
+    std::vector<std::string> args(argv, argv + argc);
     configuration::global cfg;
     cfg.load_defaults();
-    
-    for (unsigned i = 1; i < args.size();i++) {
+
+    for (unsigned i = 1; i < args.size(); i++) {
         if (args.at(i) == "-c") {
             i++;
             cfg.load(args.at(i));
         } else if (args.at(i) == "-f") {
             i++;
+            std::ifstream gcd_file(args.at(i));
+            if (!gcd_file.is_open()) throw std::invalid_argument("file should be opened");
+            std::string gcode_text((std::istreambuf_iterator<char>(gcd_file)),
+                std::istreambuf_iterator<char>());
             std::cout << "i should run " << args.at(i) << " but it is unimplemented..." << std::endl;
             // args.at(i);
+            auto motor_layot_p = hardware::motor_layout::get_instance(cfg);
+            motor_layot_p->set_configuration(cfg);
+
+            auto program = gcode_to_maps_of_arguments(gcode_text);
+            std::cout << "program: " << program.size() << std::endl;
+            auto m_commands = converters::program_to_steps(program, cfg, *(motor_layot_p.get()));
+            std::cout << "motor commands: " << m_commands.size() << std::endl;
         }
     }
     /*raspigcd::gcd::gcode_interpreter_objects_t objs{};
@@ -62,19 +80,19 @@ int main(int argc, char **argv)
     */
 
     std::shared_ptr<raspigcd::gcd::path_intent_executor> executor_p = gcd::path_intent_executor_factory(cfg, gcd::machine_driver_selection::RASPBERRY_PI);
-    auto &executor =*(executor_p.get());
+    auto& executor = *(executor_p.get());
     auto result = executor.execute(
         {
-            movement::path_intentions::motor_t{.delay_s = 0.5, .motor = {true,true,true,true}},
+            movement::path_intentions::motor_t{.delay_s = 0.5, .motor = {true, true, true, true}},
             movement::path_intentions::spindle_t{.delay_s = 0.0001, .spindle = {{0, 1.0}}},
-            distance_t{0,0,0,0},
+            distance_t{0, 0, 0, 0},
             movement::path_intentions::move_t(20.0),
-            distance_t{20,0,20,0},
+            distance_t{20, 0, 20, 0},
             movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle = {{0, 0.0}}},
-            distance_t{20,0,20,0},
+            distance_t{20, 0, 20, 0},
             movement::path_intentions::move_t(20.0),
-            distance_t{0,0,0,0},
-            movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {false,false,false,false}},
+            distance_t{0, 0, 0, 0},
+            movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {false, false, false, false}},
         });
 
 
@@ -110,15 +128,15 @@ int main_old2()
     cfg.load_defaults();
     std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
     std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
-;
+    ;
     movement::steps_generator steps_generator_drv(motor_layout_);
     stepping_simple_timer stepping(cfg, raspi3, std::make_shared<hardware::driver::low_timers_busy_wait>());
 
     raspi3.get()->enable_steppers({true});
 
-    auto commands = steps_generator_drv.movement_from_to({0, 0, 0, 0}, {.v0 = 30,.accel = 0,.max_v = 30}, {0, 0, 2, 0}, cfg.tick_duration());
+    auto commands = steps_generator_drv.movement_from_to({0, 0, 0, 0}, {.v0 = 30, .accel = 0, .max_v = 30}, {0, 0, 2, 0}, cfg.tick_duration());
     stepping.exec(commands);
-    commands = steps_generator_drv.movement_from_to({0, 0, 2, 0}, {.v0 = 30,.accel = 0,.max_v = 30}, {0, 0, 0, 0}, cfg.tick_duration());
+    commands = steps_generator_drv.movement_from_to({0, 0, 2, 0}, {.v0 = 30, .accel = 0, .max_v = 30}, {0, 0, 0, 0}, cfg.tick_duration());
     stepping.exec(commands);
 
 
