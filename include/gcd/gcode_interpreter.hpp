@@ -88,6 +88,9 @@ std::string back_to_gcode(partitioned_program_t &btg);
 program_t apply_limits_for_turns (const program_t& program_states,
                 const configuration::limits &machine_limits);
 
+program_t g0_move_to_g1_sequence (const program_t& program_states,
+                const configuration::limits &machine_limits,
+                block_t current_state = {{'X',0},{'Y',0},{'Z',0},{'A',0}});
 
 /**
  * @brief enrich gcode that the moves can accelerate and break based on the limits

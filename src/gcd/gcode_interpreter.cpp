@@ -47,11 +47,23 @@ namespace gcd {
     }
     return {};
 } */
+
 /// UNTESTED
 distance_t block_to_distance_t(const block_t& block)
 {
     auto blk = block;
     return {blk['X'], blk['Y'], blk['Z'], blk['A']};
+}
+/// UNTESTED
+block_t distance_to_block(const distance_t& dist)
+{
+    
+    return {
+        {'X',dist[0]},
+        {'Y',dist[1]},
+        {'Z',dist[2]},
+        {'A',dist[3]},
+    };
 }
 
 /// UNTESTED
@@ -76,10 +88,11 @@ program_t apply_limits_for_turns(const program_t& program_states,
         auto& state = ret_states[0];
         if (state['F'] > 0) {
             state['F'] = std::min((machine_limits.max_no_accel_velocity_mm_s[0] +
-                             machine_limits.max_no_accel_velocity_mm_s[1] +
-                             machine_limits.max_no_accel_velocity_mm_s[2] +
-                             machine_limits.max_no_accel_velocity_mm_s[3]) /
-                         4,state['F']);
+                                      machine_limits.max_no_accel_velocity_mm_s[1] +
+                                      machine_limits.max_no_accel_velocity_mm_s[2] +
+                                      machine_limits.max_no_accel_velocity_mm_s[3]) /
+                                      4,
+                state['F']);
         }
         return ret_states;
     }
@@ -92,12 +105,12 @@ program_t apply_limits_for_turns(const program_t& program_states,
     }
     //block_t previous_block;
     if (ret_states.size() > 2) {
-        std::list < block_t > tristate;
+        std::list<block_t> tristate;
         tristate.push_back(ret_states[0]);
-        tristate.push_back(merge_blocks(tristate.back(),ret_states[1]));
+        tristate.push_back(merge_blocks(tristate.back(), ret_states[1]));
         for (::size_t i = 1; i < ret_states.size() - 1; i++) {
             ret_states[i] = tristate.back();
-            tristate.push_back(merge_blocks(tristate.back(),ret_states[i+1]));
+            tristate.push_back(merge_blocks(tristate.back(), ret_states[i + 1]));
             // 0-90 - 0.25 of the min speed no accel to the 1.0 of the min speed no accel
             // 90-180 - linear scale from min speed no accel to max speed
             // merge_blocks
@@ -135,6 +148,73 @@ program_t apply_limits_for_turns(const program_t& program_states,
             (*(--ret_states.end()))['F']);
     }
     return ret_states;
+}
+
+program_t g0_move_to_g1_sequence(const program_t& program_states,
+    const configuration::limits& machine_limits,
+    block_t current_state)
+{
+    using namespace raspigcd::movement::physics;
+    if (program_states.size() == 0) throw std::invalid_argument("there must be at least one G0 code in the program!");
+    program_t result;
+    for (const auto& ps_input : program_states) {
+        auto next_state = merge_blocks(current_state, ps_input);
+        if (ps_input.count('G')) {
+            if (ps_input.at('G') != 0) throw std::invalid_argument("g0 should be the only type of the commands in the program for g0_move_to_g1_sequence");
+            //current_state
+            auto A = block_to_distance_t(current_state);
+            auto B = block_to_distance_t(next_state);
+            auto ABvec = B-A;
+            double s = ABvec.length();
+            if (s == 0) {
+                result.push_back(next_state);
+            } else {
+                double a = machine_limits.proportional_max_accelerations_mm_s2(ABvec / s);
+                double max_v = machine_limits.proportional_max_velocity_mm_s(ABvec / s);
+                double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s);
+                path_node_t pnA = {.p=A,.v=min_v};
+                path_node_t pnMed = {.p=(A+B)*0.5,.v=max_v};
+                path_node_t pnB = {.p=B,.v=min_v};
+                double a_real = acceleration_between(pnA, pnMed);
+                //std::cout <<"a_real:" << a_real << " a_max" << a << std::endl;
+                if (a_real >= a) {
+                    auto block_A = current_state;
+                    pnMed = calculate_transition_point(pnA, pnMed, a);
+                    //std::cout << "pnMed.v " << pnMed.v << std::endl;
+                    auto block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
+                    auto block_B = next_state;
+                    block_Med['F'] = pnMed.v;
+                    block_Med['G'] = 1;
+                    result.push_back(block_Med);
+                    block_B['G'] = 1;
+                    block_B['F'] = min_v;
+                    result.push_back(block_B);
+                } else {
+                    auto block_A = current_state;
+                    pnMed = calculate_transition_point(pnA, pnMed, a);
+                    //std::cout << "pnMed.v " << pnMed.v << std::endl;
+                    auto block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
+                    block_Med['F'] = pnMed.v;
+                    block_Med['G'] = 1;
+                    result.push_back(block_Med);
+
+                    pnMed = calculate_transition_point(pnB, pnMed, a);
+                    block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
+                    block_Med['F'] = pnMed.v;
+                    block_Med['G'] = 1;
+                    result.push_back(block_Med);
+
+                    auto block_B = next_state;
+                    block_B['G'] = 1;
+                    block_B['F'] = min_v;
+                    result.push_back(block_B);
+                }
+            }
+        } else
+            throw std::invalid_argument("g0 should be the only type of the commands in the program for g0_move_to_g1_sequence");
+        current_state = next_state;
+    }
+    return result;
 }
 
 
