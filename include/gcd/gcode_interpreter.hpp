@@ -41,14 +41,25 @@ using block_t = std::map<char, double>;             // represents N001G0X10Y20
 using program_t = std::vector<block_t>;               // represents whole program without empty lines
 using partitioned_program_t = std::vector<program_t>; // represents program partitioned into different sections for optimization and interpretation
 
+
 /**
  * convert block to position
+ * @untested
  * */
 distance_t block_to_distance_t(const block_t& block);
+
 /**
  * calculates movement vector from block a to block b
+ * @untested
  * */
 distance_t blocks_to_vector_move(const block_t& block_a, const block_t& block_b);
+
+/**
+ * @brief converts distance to the block of X..Y..Z..A..
+ * @untested
+ */
+block_t distance_to_block(const distance_t& dist);
+
 
 
 //movement::path_intent_t generate_path_intent(const program_t& parsed_program_);
@@ -140,6 +151,10 @@ block_t diff_blocks(const block_t& destination, const block_t& source);
 program_t gcode_to_maps_of_arguments(const std::string& program_);
 
 block_t command_to_map_of_arguments(const std::string& command_);
+
+auto linear_interpolation = [](auto x, auto x0, auto y0, auto x1, auto y1) {
+    return y0 * (1 - (x - x0) / (x1 - x0)) + y1 * ((x - x0) / (x1 - x0)); // percentage of the max_no_accel_speed
+};
 
 } // namespace gcd
 } // namespace raspigcd

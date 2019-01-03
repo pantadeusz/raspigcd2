@@ -73,10 +73,6 @@ distance_t blocks_to_vector_move(const block_t& block_a, const block_t& block_b)
 }
 
 
-auto linear_interpolation = [](auto x, auto x0, auto y0, auto x1, auto y1) {
-    return y0 * (1 - (x - x0) / (x1 - x0)) + y1 * ((x - x0) / (x1 - x0)); // percentage of the max_no_accel_speed
-};
-
 program_t apply_limits_for_turns(const program_t& program_states,
     const configuration::limits& machine_limits)
 {
