@@ -35,6 +35,22 @@ int main(int argc, char** argv)
             i++;
             cfg.load(args.at(i));
         } else if (args.at(i) == "-f") {
+
+
+    using namespace raspigcd;
+    using namespace raspigcd::hardware;
+
+    configuration::global cfg;
+    cfg.load_defaults();
+    std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
+    std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
+    ;
+    movement::steps_generator steps_generator_drv(motor_layout_);
+    stepping_simple_timer stepping(cfg, raspi3, std::make_shared<hardware::driver::low_timers_busy_wait>());
+
+
+
+
             i++;
             std::ifstream gcd_file(args.at(i));
             if (!gcd_file.is_open()) throw std::invalid_argument("file should be opened");
@@ -49,6 +65,13 @@ int main(int argc, char** argv)
             std::cout << "program: " << program.size() << std::endl;
             auto m_commands = converters::program_to_steps(program, cfg, *(motor_layot_p.get()));
             std::cout << "motor commands: " << m_commands.size() << std::endl;
+
+    raspi3.get()->enable_steppers({true});
+
+    stepping.exec(m_commands);
+
+    raspi3.get()->enable_steppers({false});
+            
         }
     }
     /*raspigcd::gcd::gcode_interpreter_objects_t objs{};
@@ -78,7 +101,7 @@ int main(int argc, char** argv)
     raspigcd::gcd::path_intent_executor executor;
     executor.set_gcode_interpreter_objects(objs);
     */
-
+/*
     std::shared_ptr<raspigcd::gcd::path_intent_executor> executor_p = gcd::path_intent_executor_factory(cfg, gcd::machine_driver_selection::RASPBERRY_PI);
     auto& executor = *(executor_p.get());
     auto result = executor.execute(
@@ -94,7 +117,7 @@ int main(int argc, char** argv)
             distance_t{0, 0, 0, 0},
             movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {false, false, false, false}},
         });
-
+*/
 
     return 0;
 }
