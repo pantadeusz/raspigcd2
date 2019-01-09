@@ -35,43 +35,62 @@ int main(int argc, char** argv)
             i++;
             cfg.load(args.at(i));
         } else if (args.at(i) == "-f") {
+            using namespace raspigcd;
+            using namespace raspigcd::hardware;
 
-
-    using namespace raspigcd;
-    using namespace raspigcd::hardware;
-
-    configuration::global cfg;
-    cfg.load_defaults();
-    std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
-    std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
-    ;
-    movement::steps_generator steps_generator_drv(motor_layout_);
-    stepping_simple_timer stepping(cfg, raspi3, std::make_shared<hardware::driver::low_timers_busy_wait>());
-
-
-
+            std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
+            std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
+            motor_layout_->set_configuration(cfg);
+            movement::steps_generator steps_generator_drv(motor_layout_);
+            stepping_simple_timer stepping(cfg, raspi3, std::make_shared<hardware::driver::low_timers_busy_wait>());
 
             i++;
+
             std::ifstream gcd_file(args.at(i));
             if (!gcd_file.is_open()) throw std::invalid_argument("file should be opened");
             std::string gcode_text((std::istreambuf_iterator<char>(gcd_file)),
                 std::istreambuf_iterator<char>());
-            std::cout << "i should run " << args.at(i) << " but it is unimplemented..." << std::endl;
-            // args.at(i);
-            auto motor_layot_p = hardware::motor_layout::get_instance(cfg);
-            motor_layot_p->set_configuration(cfg);
 
             auto program = gcode_to_maps_of_arguments(gcode_text);
-            std::cout << "program: " << program.size() << std::endl;
-            auto m_commands = converters::program_to_steps(program, cfg, *(motor_layot_p.get()));
-            std::cout << "motor commands: " << m_commands.size() << std::endl;
+            auto program_parts = group_gcode_commands(program);
 
-    raspi3.get()->enable_steppers({true});
-
-    stepping.exec(m_commands);
-
-    raspi3.get()->enable_steppers({false});
-            
+            block_t machine_state;
+            for (auto& ppart : program_parts) {
+                if (ppart.size() != 0) {
+                    if (ppart[0].count('M') == 0) {
+                        switch ((int)(ppart[0].count('G'))) {
+                        case 4:
+                            std::cout << "Dwell not supported" << std::endl;
+                            break;
+                        case 0:
+                            ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
+                            [[fallthrough]];
+                        case 1:
+                            auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
+                                machine_state, [&machine_state](const block_t& result) {
+                                    machine_state = result;
+                                });
+                            stepping.exec(m_commands);
+                            break;
+                        }
+                    } else {
+                        for (auto& m : ppart) {
+                            switch ((int)(m['M'])) {
+                            case 17:
+                                raspi3.get()->enable_steppers({true});
+                                break;
+                            case 18:
+                                raspi3.get()->enable_steppers({false});
+                                break;
+                            }
+                        }
+                    }
+                }
+                for (auto& s : machine_state) {
+                    std::cout << s.first << ":" << s.second << " ";
+                }
+                std::cout << std::endl;
+            }
         }
     }
     /*raspigcd::gcd::gcode_interpreter_objects_t objs{};
@@ -101,7 +120,7 @@ int main(int argc, char** argv)
     raspigcd::gcd::path_intent_executor executor;
     executor.set_gcode_interpreter_objects(objs);
     */
-/*
+    /*
     std::shared_ptr<raspigcd::gcd::path_intent_executor> executor_p = gcd::path_intent_executor_factory(cfg, gcd::machine_driver_selection::RASPBERRY_PI);
     auto& executor = *(executor_p.get());
     auto result = executor.execute(

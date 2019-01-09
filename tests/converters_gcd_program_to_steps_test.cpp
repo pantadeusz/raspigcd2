@@ -198,7 +198,24 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         REQUIRE(commands_count > result.size() );
     }
     
-    //SECTION("program that stays in the same place should result in empty result")
-    //{
-    //}
+    SECTION("callback function should be called with appropriate end machine status")
+    {
+        auto program = gcode_to_maps_of_arguments(R"(
+           G1F0
+           G1X1F1
+           G1X10Y20Z10F4
+           G1X2Y2Z3A4
+           G1X1
+        )");
+        block_t machine_state = {{'F',1}};
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()),
+        machine_state, [&machine_state](const block_t &result){
+            machine_state = result;
+        } );
+        REQUIRE(machine_state['F'] == Approx(4));
+        REQUIRE(machine_state['X'] == Approx(1));
+        REQUIRE(machine_state['Y'] == Approx(2));
+        REQUIRE(machine_state['Z'] == Approx(3));
+        REQUIRE(machine_state['A'] == Approx(4));
+    }
 }

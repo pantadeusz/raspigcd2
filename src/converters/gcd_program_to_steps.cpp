@@ -20,6 +20,8 @@
 #include <movement/physics.hpp>
 #include <movement/simple_steps.hpp>
 
+#include <functional>
+
 namespace raspigcd {
 namespace converters {
 
@@ -27,7 +29,8 @@ hardware::multistep_commands_t program_to_steps(
     const gcd::program_t& prog_,
     const configuration::actuators_organization& conf_,
     hardware::motor_layout& ml_,
-    const gcd::block_t& initial_state_)
+    const gcd::block_t& initial_state_,
+    std::function<void(const gcd::block_t &)> finish_callback_f_)
 {
     using namespace raspigcd::hardware;
     using namespace raspigcd::gcd;
@@ -91,6 +94,7 @@ hardware::multistep_commands_t program_to_steps(
             result.insert(result.end(), collapsed.begin(), collapsed.end());
         }
         state = next_state;
+        finish_callback_f_(state);
     }
     return collapse_repeated_steps(result);
 }
