@@ -54,23 +54,37 @@ int main(int argc, char** argv)
             auto program = gcode_to_maps_of_arguments(gcode_text);
             auto program_parts = group_gcode_commands(program);
 
-            block_t machine_state;
+            block_t machine_state={{'F',0.5}};
             for (auto& ppart : program_parts) {
                 if (ppart.size() != 0) {
                     if (ppart[0].count('M') == 0) {
-                        switch ((int)(ppart[0].count('G'))) {
+                        switch ((int)(ppart[0]['G'])) {
                         case 4:
                             std::cout << "Dwell not supported" << std::endl;
                             break;
                         case 0:
-                            ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
-                            [[fallthrough]];
+                        ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
+                std::cout << "g0 -> g1: ";
+            for (auto &ms:ppart) {
+                for (auto& s : ms) {
+                    std::cout << s.first << ":" <<  s.second << " ";
+                }
+                std::cout << std::endl;
+            }
+[[fallthrough]];
                         case 1:
                             auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t& result) {
                                     machine_state = result;
+                for (auto& s : machine_state) {
+                    std::cout << s.first << ":" <<  s.second << " ";
+                }
+                std::cout << std::endl;
+
                                 });
                             stepping.exec(m_commands);
+                            std::list<steps_t> steps = hardware_commands_to_steps(m_commands);
+                            std::cout << "steps: " << motor_layout_->steps_to_cartesian(steps.back()) << std::endl;
                             break;
                         }
                     } else {
@@ -89,7 +103,7 @@ int main(int argc, char** argv)
                 for (auto& s : machine_state) {
                     std::cout << s.first << ":" << s.second << " ";
                 }
-                std::cout << std::endl;
+                std::cout << "  OK" << std::endl;
             }
         }
     }
