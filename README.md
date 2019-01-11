@@ -13,9 +13,21 @@ It will treat gcode as a complete object and execute it accordingly
 
 the thread will be initialized on gcode exec
 
+### Execution of gcode
+
+You can execute the gcode using the following command (example)
+
+```bash
+gcd -c config_file.json -f program.gcd
+```
+
+You can turn off optimization of gcode by adding ```--raw``` option. It will treat the gcode
+without any additional processing, so impossible turns can be performed. In this
+mode, only G1 and M codes are supported.
+
 # Style
 
-try to maintain stl style with custom types named wit _t as the postfix
+try to maintain stl style with custom types named with _t as the postfix
 
 tests are in separate files
 

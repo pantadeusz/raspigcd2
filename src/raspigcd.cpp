@@ -30,11 +30,16 @@ int main(int argc, char** argv)
     configuration::global cfg;
     cfg.load_defaults();
 
+    bool raw_gcode = false; // should I push G commands directly, without adaptation to machine
+
     for (unsigned i = 1; i < args.size(); i++) {
         if (args.at(i) == "-c") {
             i++;
             cfg.load(args.at(i));
-        } else if (args.at(i) == "-f") {
+        } else if (args.at(i) == "--raw") {
+            raw_gcode = true;
+        }
+        if (args.at(i) == "-f") {
             using namespace raspigcd;
             using namespace raspigcd::hardware;
 
@@ -63,7 +68,9 @@ int main(int argc, char** argv)
                             std::cout << "Dwell not supported" << std::endl;
                             break;
                         case 0:
-                            ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
+                            if (!raw_gcode) {
+                                ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
+                            }
                             std::cout << "g0 -> g1: ";
                             for (auto& ms : ppart) {
                                 for (auto& s : ms) {
@@ -73,6 +80,9 @@ int main(int argc, char** argv)
                             }
                             [[fallthrough]];
                         case 1:
+                            if (!raw_gcode) {
+                                // ppart = g1_moves_optimizer(ppart, cfg, machine_state);
+                            }
                             auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t& result) {
                                     machine_state = result;
