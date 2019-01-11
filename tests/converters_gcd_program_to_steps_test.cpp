@@ -198,7 +198,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         REQUIRE(commands_count > result.size() );
     }
     
-    SECTION("callback function should be called with appropriate end machine status")
+    SECTION("end state verification")
     {
         auto program = gcode_to_maps_of_arguments(R"(
            G1F0
@@ -217,5 +217,8 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         REQUIRE(machine_state['Y'] == Approx(2));
         REQUIRE(machine_state['Z'] == Approx(3));
         REQUIRE(machine_state['A'] == Approx(4));
+        auto ls = last_state_after_program_execution(program, {{'F',1}});
+        REQUIRE(ls == machine_state);
     }
+
 }

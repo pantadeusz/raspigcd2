@@ -42,6 +42,8 @@ using program_t = std::vector<block_t>;               // represents whole progra
 using partitioned_program_t = std::vector<program_t>; // represents program partitioned into different sections for optimization and interpretation
 
 
+block_t last_state_after_program_execution(const program_t &program_, const block_t &initial_state_);
+
 /**
  * convert block to position
  * @untested
@@ -94,11 +96,17 @@ std::string back_to_gcode(partitioned_program_t &btg);
 /**
  * @brief Adds limits to the machine turns based on the maximal speeds and angles
  * the states receives the minimum of feedrate based on intended feedrate and the
- * maximal feedrate based on turn angle and limits
+ * maximal feedrate based on turn angle and limits.
+ * 
+ * The first and last G1 command is interpreted that it is on the 90deg turn.
  */
 program_t apply_limits_for_turns (const program_t& program_states,
                 const configuration::limits &machine_limits);
 
+/**
+ * @brief converts G0 into sequences of G1 moves that accelerates to maximal
+ * speed, then move with constant speed, and then decelerates to minimal speed.
+ */
 program_t g0_move_to_g1_sequence (const program_t& program_states,
                 const configuration::limits &machine_limits,
                 block_t current_state = {{'X',0},{'Y',0},{'Z',0},{'A',0}});
@@ -117,7 +125,8 @@ program_t g0_move_to_g1_sequence (const program_t& program_states,
 /**
  * @brief Gropus gcode commands so the other parts can focus on the simple interpretation of parts
  * 
- * It groups into G0, G1 and M codes
+ * It groups into G0, G1 and M codes.
+ * 
  */
 partitioned_program_t group_gcode_commands(const program_t& program_states, const block_t & initial_state = {{'F',1}} );
 

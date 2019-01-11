@@ -181,7 +181,24 @@ TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - long movement", "[g
         REQUIRE(a_0 == Approx(0));
         double a_real2 = acceleration_between(pnMed2, pnB);
         REQUIRE(a_real2 == Approx(-machine_limits.max_accelerations_mm_s2[0]));
+
+        block_t init_stat_for_check = {{'F',machine_limits.max_no_accel_velocity_mm_s[0]}, {'X',0}, {'Y',0},{'Z',0}, {'A',0} };
+        auto ls_before = last_state_after_program_execution(g0_long_move, init_stat_for_check);
+        auto ls_after = last_state_after_program_execution(result, init_stat_for_check);
+        // std::cout << "ls_before: " << std::endl;
+        // for (auto e : ls_before) {
+        //     std::cout << "   " << e.first << ":" << e.second << std::endl;
+        // }
+        // std::cout << "ls_after: " << std::endl;
+        // for (auto e : ls_after) {
+        //     std::cout << "   " << e.first << ":" << e.second << std::endl;
+        // }
+        REQUIRE(ls_before != ls_after);
+        ls_before['G'] = 1; // this must change
+        REQUIRE(ls_before == ls_after);
     }
+
+
 }
 
 TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - multiple G0 codes", "[gcd][gcode_interpreter][g0_move_to_g1_sequence]")

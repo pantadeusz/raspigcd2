@@ -73,6 +73,16 @@ distance_t blocks_to_vector_move(const block_t& block_a, const block_t& block_b)
 }
 
 
+block_t last_state_after_program_execution(const program_t &program_, const block_t &initial_state_) {
+    block_t result = initial_state_;
+    for (const auto &e: program_) {
+        if (result.count('M')) result.erase('M');
+        result = merge_blocks(result, e);
+    }
+    return result;
+}
+
+
 program_t apply_limits_for_turns(const program_t& program_states,
     const configuration::limits& machine_limits)
 {
