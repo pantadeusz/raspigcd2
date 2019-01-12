@@ -25,6 +25,69 @@
 namespace raspigcd {
 namespace converters {
 
+raspigcd::hardware::multistep_commands_t __generate_g1_steps(
+    const raspigcd::gcd::block_t &state,
+    const raspigcd::gcd::block_t &next_state,
+    double dt,
+    hardware::motor_layout& ml_
+    ) {
+    using namespace raspigcd::hardware;
+    using namespace raspigcd::gcd;
+    using namespace raspigcd::movement::simple_steps;
+    using namespace movement::physics;
+    auto pos_from = gcd::block_to_distance_t(state);
+    auto pos_to = gcd::block_to_distance_t(next_state);
+
+    double l = (pos_to - pos_from).length(); // distance to travel
+    double v0 = state.at('F');                  // velocity
+    double v1 = next_state.at('F');             // velocity
+    std::list<multistep_command> fragment;   // fraagment of the commands list generated in this stage
+    steps_t final_steps;                     // steps after the move
+    if (l > 0) {
+        if ((v0 == v1)) {
+            if (v1 == 0) throw std::invalid_argument("the feedrate should not be 0 for non zero distance");
+            auto pos = pos_from;
+            double s = v1 * dt; // distance to go
+            auto direction = (pos_to - pos_from) / l;
+            auto pos_from_steps = ml_.cartesian_to_steps(pos); //configuration(state);
+            for (int i = 1; s <= l; ++i, s = v1 * (dt * i)) {
+                auto np = direction * s;
+                auto pos_to_steps = ml_.cartesian_to_steps(np); //gcd::block_to_distance_t(next_state);
+                multistep_commands_t steps_todo = chase_steps(pos_from_steps, pos_to_steps);
+                fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
+                pos = np;
+                pos_from_steps = pos_to_steps;
+            }
+            final_steps = pos_from_steps;
+        } else if ((v1 != v0)) {
+            auto direction = (pos_to - pos_from) / l;
+            const path_node_t pn_a{.p = pos_from, .v = v0};
+            const path_node_t pn_b{.p = pos_to, .v = v1};
+            double a = acceleration_between(pn_a, pn_b);
+            //std::cout << "a = " << a << std::endl;
+            double t = dt;                                       ///< current time
+            auto l = [&]() { return v0 * t + 0.5 * a * t * t; }; ///< current distance from p0
+            double s = (pos_to - pos_from).length();             // distance to travel
+            auto p_steps = ml_.cartesian_to_steps(pos_from);
+            for (int i = 1; l() < s; ++i, t = dt * i) {
+                auto pos = ml_.cartesian_to_steps(pos_from + direction * l());
+                multistep_commands_t steps_to_add = chase_steps(p_steps, pos);
+                fragment.insert(fragment.end(), steps_to_add.begin(), steps_to_add.end());
+                p_steps = pos;
+            }
+            final_steps = p_steps;
+        }
+        auto pos_to_steps = ml_.cartesian_to_steps(pos_to);
+        if (!(final_steps == pos_to_steps)) { // fix missing steps
+            multistep_commands_t steps_todo = chase_steps(final_steps, pos_to_steps);
+            fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
+        }
+        auto collapsed = collapse_repeated_steps(fragment);
+        return collapsed;
+    }
+    return {};
+}
+
 hardware::multistep_commands_t program_to_steps(
     const gcd::program_t& prog_,
     const configuration::actuators_organization& conf_,
@@ -47,56 +110,8 @@ hardware::multistep_commands_t program_to_steps(
         if (next_state.at('G') == 92) {
             // change position, but not generate steps
         } else if (next_state.at('G') == 1) {
-            auto pos_from = gcd::block_to_distance_t(state);
-            auto pos_to = gcd::block_to_distance_t(next_state);
-
-            double l = (pos_to - pos_from).length(); // distance to travel
-            double v0 = state['F'];                  // velocity
-            double v1 = next_state['F'];             // velocity
-            std::list<multistep_command> fragment;   // fraagment of the commands list generated in this stage
-            steps_t final_steps;                     // steps after the move
-            if (l > 0) {
-                if ((v0 == v1)) {
-                    if (v1 == 0) throw std::invalid_argument("the feedrate should not be 0 for non zero distance");
-                    auto pos = pos_from;
-                    double s = v1 * dt; // distance to go
-                    auto direction = (pos_to - pos_from) / l;
-                    auto pos_from_steps = ml_.cartesian_to_steps(pos); //configuration(state);
-                    for (int i = 1; s <= l; ++i, s = v1 * (dt * i)) {
-                        auto np = direction * s;
-                        auto pos_to_steps = ml_.cartesian_to_steps(np); //gcd::block_to_distance_t(next_state);
-                        multistep_commands_t steps_todo = chase_steps(pos_from_steps, pos_to_steps);
-                        fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
-                        pos = np;
-                        pos_from_steps = pos_to_steps;
-                    }
-                    final_steps = pos_from_steps;
-                } else if ((v1 != v0)) {
-                    auto direction = (pos_to - pos_from) / l;
-                    const path_node_t pn_a{.p = pos_from, .v = v0};
-                    const path_node_t pn_b{.p = pos_to, .v = v1};
-                    double a = acceleration_between(pn_a, pn_b);
-                    //std::cout << "a = " << a << std::endl;
-                    double t = dt;                                       ///< current time
-                    auto l = [&]() { return v0 * t + 0.5 * a * t * t; }; ///< current distance from p0
-                    double s = (pos_to - pos_from).length();             // distance to travel
-                    auto p_steps = ml_.cartesian_to_steps(pos_from);
-                    for (int i = 1; l() < s; ++i, t = dt * i) {
-                        auto pos = ml_.cartesian_to_steps(pos_from + direction * l());
-                        multistep_commands_t steps_to_add = chase_steps(p_steps, pos);
-                        fragment.insert(fragment.end(), steps_to_add.begin(), steps_to_add.end());
-                        p_steps = pos;
-                    }
-                    final_steps = p_steps;
-                }
-                auto pos_to_steps = ml_.cartesian_to_steps(pos_to);
-                if (!(final_steps == pos_to_steps)) { // fix missing steps
-                    multistep_commands_t steps_todo = chase_steps(final_steps, pos_to_steps);
-                    fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
-                }
-                auto collapsed = collapse_repeated_steps(fragment);
-                result.insert(result.end(), collapsed.begin(), collapsed.end());
-            }
+            auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
+            result.insert(result.end(), collapsed.begin(), collapsed.end());
         }
         state = next_state;
         finish_callback_f_(state);

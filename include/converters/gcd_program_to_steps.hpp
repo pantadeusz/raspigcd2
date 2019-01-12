@@ -31,7 +31,7 @@ hardware::multistep_commands_t program_to_steps(
     const gcd::program_t& prog_,
     const configuration::actuators_organization& conf_,
     hardware::motor_layout &ml_,
-    const gcd::block_t& initial_state_ = {},
+    const gcd::block_t& initial_state_ = {{'F',0}},
     std::function<void(const gcd::block_t &)> finish_callback_f_ = [](const gcd::block_t &){});
 
 } // namespace converters

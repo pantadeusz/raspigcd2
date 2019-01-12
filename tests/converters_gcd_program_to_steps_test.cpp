@@ -188,7 +188,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
            std::string("G1X") + std::to_string(0) + "F" + std::to_string(v0) + "\n" +
            std::string("G1X") + std::to_string(s) + "F" + std::to_string(v1)
         );
-        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()),{{'F',0}} );
         steps_t steps = {0,0,0,0};
         int commands_count = 0; 
         for (auto &e : result) {
