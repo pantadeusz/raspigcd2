@@ -33,6 +33,35 @@ std::list<steps_t> hardware_commands_to_steps(const std::vector<multistep_comman
     return ret;
 }
 
+steps_t hardware_commands_to_last_position(const std::vector<multistep_command>& commands_to_do, int last_step_)
+{
+    steps_t _steps = {0, 0, 0, 0};
+    int itt = 0;
+    for (const auto& s : commands_to_do) {
+        for (int i = 0; i < s.count; i++) {
+            if ((last_step_ >= 0) && (itt >= last_step_)) return _steps;
+            for (int j = 0; j < 4; j++) {
+                _steps[j] = _steps[j] + (int)((signed char)s.b[j].step * ((signed char)s.b[j].dir * 2 - 1));
+            }
+            itt++;
+        }
+    }
+    return _steps;
+}
+
+int hardware_commands_to_steps_count(const std::vector<multistep_command>& commands_to_do, int last_step_)
+{
+    int itt = 0;
+    for (const auto& s : commands_to_do) {
+        for (int i = 0; i < s.count; i++) {
+            if ((last_step_ >= 0) && (itt >= last_step_)) return i;
+            itt++;
+        }
+    }
+    return itt;
+}
+
+
 
 void stepping_sim::exec(const std::vector<multistep_command>& commands_to_do)
 {

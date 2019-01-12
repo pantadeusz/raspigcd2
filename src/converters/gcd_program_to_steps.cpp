@@ -109,6 +109,17 @@ hardware::multistep_commands_t program_to_steps(
 
         if (next_state.at('G') == 92) {
             // change position, but not generate steps
+        } else if (next_state.at('G') == 4) {
+            double t = 0;
+            if (next_state.count('X')) { // seconds
+                t = next_state.at('X');
+            } else if (next_state.count('P')) {
+                t = next_state.at('P')/ 1000.0;
+            }
+            hardware::multistep_command executor_command = {};
+            executor_command.count = t/dt;
+            result.push_back(executor_command);
+            next_state = state;
         } else if (next_state.at('G') == 1) {
             auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
             result.insert(result.end(), collapsed.begin(), collapsed.end());

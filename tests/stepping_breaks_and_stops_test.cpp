@@ -36,13 +36,13 @@ TEST_CASE("path_intent_executor terminate procedure for stepping_simple_timer.",
 
 
     hardware::driver::inmem* inmem_ptr = (hardware::driver::inmem*)steppers_drv.get();
-    hardware::driver::low_timers_fake* low_timers_fake_ptr = (hardware::driver::low_timers_fake*)timers_drv.get();
+    //hardware::driver::low_timers_fake* low_timers_fake_ptr = (hardware::driver::low_timers_fake*)timers_drv.get();
 
     SECTION("break execution and check that the steps performed are less than requested")
     {
         multistep_commands_t commands_to_do;
         for (int i = 0; i < 4; i++) {
-            int n = 0;
+            //int n = 0;
             multistep_command cmnd;
             cmnd.count = 1;
             cmnd.b[0].step = 0;

@@ -161,6 +161,10 @@ public:
 
 
 std::list<steps_t> hardware_commands_to_steps(const multistep_commands_t& commands_to_do);
+// untested:
+steps_t hardware_commands_to_last_position(const std::vector<multistep_command>& commands_to_do, int last_step_ = -1);
+// untested:
+int hardware_commands_to_steps_count(const std::vector<multistep_command>& commands_to_do, int last_step_ = -1);
 
 } // namespace hardware
 } // namespace raspigcd
