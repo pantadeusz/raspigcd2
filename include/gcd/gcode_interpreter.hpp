@@ -41,7 +41,9 @@ using block_t = std::map<char, double>;             // represents N001G0X10Y20
 using program_t = std::vector<block_t>;               // represents whole program without empty lines
 using partitioned_program_t = std::vector<program_t>; // represents program partitioned into different sections for optimization and interpretation
 
-
+/**
+ * @brief calculates last state after execution of the program.
+ */
 block_t last_state_after_program_execution(const program_t &program_, const block_t &initial_state_);
 
 /**

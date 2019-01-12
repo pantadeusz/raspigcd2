@@ -4,6 +4,7 @@
 #include <catch2/catch.hpp>
 #include <converters/gcd_program_to_steps.hpp>
 #include <hardware/stepping_commands.hpp>
+#include <hardware/stepping.hpp>
 #include <gcd/gcode_interpreter.hpp>
 
 #include <thread>
@@ -30,6 +31,10 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         stepper.steps_per_mm = 100;
         test_config.steppers.push_back(stepper);
     }
+    steps_t steps_per_mm_arr;
+    for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+        steps_per_mm_arr[i] = test_config.steppers[i].steps_per_mm;
+    };
 
     auto motor_layot_p = hardware::motor_layout::get_instance(test_config);
     motor_layot_p->set_configuration(test_config);
@@ -212,6 +217,28 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         machine_state, [&machine_state](const block_t &result){
             machine_state = result;
         } );
+
+        steps_t steps = {0,0,0,0};
+        int commands_count = 0; 
+        for (auto &e : result) {
+            for (int i = 0; i < e.count; i++) {
+                commands_count++;
+                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                    auto m = e.b[i];
+                    if (m.step) steps[i] += ((int)(m.dir)*2)-1;
+                }
+            }
+        }
+
+        steps_t expected_steps = steps_per_mm_arr*steps_t{1,2,3,4};
+        REQUIRE(steps == expected_steps);
+        std::list<steps_t> hstps = hardware_commands_to_steps(result);
+        REQUIRE(hstps.back() == expected_steps);
+
+        //double dt = ((double) test_config.tick_duration_us)/1000000.0;
+        //REQUIRE(commands_count == (int)(t/dt));
+
+
         REQUIRE(machine_state['F'] == Approx(4));
         REQUIRE(machine_state['X'] == Approx(1));
         REQUIRE(machine_state['Y'] == Approx(2));
@@ -221,4 +248,32 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         REQUIRE(ls == machine_state);
     }
 
+    SECTION("accept coordinates change via G92") {
+        auto program = gcode_to_maps_of_arguments(R"(
+           G1F0
+           G1X1F1
+           G1X10Y20Z10F4
+           G1X0Y0Z0F4
+           G92X101Y102Z103A104
+           G1X2Y2Z3A4
+           G1X1
+        )");
+        block_t machine_state = {{'F',1}};
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()),
+        machine_state, [&machine_state](const block_t &result){
+            machine_state = result;
+        } );
+        REQUIRE(machine_state['F'] == Approx(4));
+        REQUIRE(machine_state['X'] == Approx(1));
+        REQUIRE(machine_state['Y'] == Approx(2));
+        REQUIRE(machine_state['Z'] == Approx(3));
+        REQUIRE(machine_state['A'] == Approx(4));
+        auto ls = last_state_after_program_execution(program, {{'F',1}});
+        REQUIRE(ls == machine_state);
+
+        steps_t expected_steps = steps_per_mm_arr*steps_t{-100,-100,-100,-100};
+        std::list<steps_t> hstps = hardware_commands_to_steps(result);
+        REQUIRE(hstps.back() == expected_steps);
+
+    } 
 }
