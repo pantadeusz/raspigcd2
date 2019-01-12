@@ -276,4 +276,22 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         REQUIRE(hstps.back() == expected_steps);
 
     } 
+
+    SECTION("simple dwell G04 for 1 second") {
+        auto program = gcode_to_maps_of_arguments(R"(
+           G4X1
+        )");
+        block_t machine_state = {{'F',1}};
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()),
+        machine_state, [&machine_state](const block_t &result){
+            machine_state = result;
+        } );
+        auto ls = last_state_after_program_execution(program, {{'F',1}});
+        REQUIRE(ls == machine_state);
+
+        steps_t expected_steps = steps_per_mm_arr*steps_t{0,0,0,0};
+        std::list<steps_t> hstps = hardware_commands_to_steps(result);
+        REQUIRE(hstps.back() == expected_steps);
+
+    } 
 }

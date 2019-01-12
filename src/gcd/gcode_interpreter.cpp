@@ -75,8 +75,13 @@ distance_t blocks_to_vector_move(const block_t& block_a, const block_t& block_b)
 
 block_t last_state_after_program_execution(const program_t &program_, const block_t &initial_state_) {
     block_t result = initial_state_;
-    for (const auto &e: program_) {
+    for (auto e: program_) {
         if (result.count('M')) result.erase('M');
+        if (e.count('G')) {
+            if ((int)(e.at('G')) == 4 ) {
+                e.clear(); // G4 means dwell, we don't need that
+            }
+        }
         result = merge_blocks(result, e);
     }
     return result;
