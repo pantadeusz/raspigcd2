@@ -102,7 +102,10 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
     _terminate_execution = 0;
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
-            if (_terminate_execution) throw execution_terminated();
+            if (_terminate_execution) {
+                std::cout << hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index);
+                throw execution_terminated();
+            }
             _steppers_driver->do_step(s.b);
             _tick_index++;
             prev_timer = _low_timer->wait_for_tick_s(prev_timer, _delay_microseconds);
