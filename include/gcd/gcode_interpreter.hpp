@@ -113,15 +113,13 @@ program_t g0_move_to_g1_sequence (const program_t& program_states,
                 const configuration::limits &machine_limits,
                 block_t current_state = {{'X',0},{'Y',0},{'Z',0},{'A',0}});
 
+
 /**
- * @brief enrich gcode that the moves can accelerate and break based on the limits
- * 
- * adds blocks that allow to have A->accelerate->A'->const_speed->B'->break->B
- * 
- * this itself allow for the more precise movements
+ * @brief optimize G1 G4 G92 and other moves for best fitting to the machine
  */
-//program_t enrich_program_with_limits (const program_t& program_states,
-//                const configuration::limits &machine_limits);
+program_t work_moves_optimize (const program_t& program_states,
+                const configuration::limits &machine_limits,
+                block_t current_state = {{'X',0},{'Y',0},{'Z',0},{'A',0}});
 
 
 /**

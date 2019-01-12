@@ -161,8 +161,13 @@ public:
 
 
 std::list<steps_t> hardware_commands_to_steps(const multistep_commands_t& commands_to_do);
-// untested:
-steps_t hardware_commands_to_last_position(const std::vector<multistep_command>& commands_to_do, int last_step_ = -1);
+/**
+ * @brief Calculates position after execution of given number of steps
+ * 
+ * @param commands_to_do list of commands to execute
+ * @param last_step_ the break after given number of steps. If 0, then no steps are performed.
+ */
+steps_t hardware_commands_to_last_position_after_given_steps(const std::vector<multistep_command>& commands_to_do, int last_step_ = -1);
 // untested:
 int hardware_commands_to_steps_count(const std::vector<multistep_command>& commands_to_do, int last_step_ = -1);
 

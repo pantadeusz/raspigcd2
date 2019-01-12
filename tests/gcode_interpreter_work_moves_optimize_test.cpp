@@ -91,7 +91,7 @@ TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - short movement", "[
         auto result = g0_move_to_g1_sequence(g0_short_move, machine_limits);
         movement::physics::path_node_t pnA = {.p = {0, 0, 0, 0}, .v = 2};
         movement::physics::path_node_t pnMed = {.p = {1, 0, 0, 0}, .v = result[0]['F']};
-        //movement::physics::path_node_t pnB = {.p = {2, 0, 0, 0}, .v = 2};
+        movement::physics::path_node_t pnB = {.p = {2, 0, 0, 0}, .v = 2};
         double a_real = acceleration_between(pnA, pnMed);
         REQUIRE(a_real <= (machine_limits.max_accelerations_mm_s2[0] + 0.0001));
         REQUIRE(a_real >= 0.0);
@@ -102,11 +102,11 @@ TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - short movement", "[
         auto result = g0_move_to_g1_sequence(g0_short_move, machine_limits);
         movement::physics::path_node_t pnA = {.p = {0, 0, 0, 0}, .v = 2};
         movement::physics::path_node_t pnMed = {.p = {1, 0, 0, 0}, .v = result[0]['F']};
-        //movement::physics::path_node_t pnB = {.p = {2, 0, 0, 0}, .v = 2};
+        movement::physics::path_node_t pnB = {.p = {2, 0, 0, 0}, .v = 2};
         double a_real = acceleration_between(pnA, pnMed);
         INFO(pnA.v);
         INFO(pnMed.v);
-        //INFO(pnB.v);
+        INFO(pnB.v);
         REQUIRE(a_real == Approx(machine_limits.max_accelerations_mm_s2[0]));
     }
     SECTION("zero length movement should be left unchanged")
@@ -150,16 +150,15 @@ TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - long movement", "[g
         auto blk = block;
         return {blk['X'], blk['Y'], blk['Z'], blk['A']};
     };
-    
-    // auto d2b = [](const distance_t& dist)->block_t
-    // {
-    //     return {
-    //         {'X', dist[0]},
-    //         {'Y', dist[1]},
-    //         {'Z', dist[2]},
-    //         {'A', dist[3]},
-    //     };
-    // };
+    auto d2b = [](const distance_t& dist)->block_t
+    {
+        return {
+            {'X', dist[0]},
+            {'Y', dist[1]},
+            {'Z', dist[2]},
+            {'A', dist[3]},
+        };
+    };
 
 
     SECTION("the middle point should be with maximal reachable feedrate given machine limits")

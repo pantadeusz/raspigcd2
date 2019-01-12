@@ -293,17 +293,10 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         REQUIRE(ls['A'] == machine_state['A']);
 
         steps_t expected_steps = steps_per_mm_arr*steps_t{0,0,0,0};
-        //std::list<steps_t> hstps = hardware_commands_to_steps(result);
-        steps_t hstps = hardware_commands_to_last_position(result);
-        int steps_done_count = hardware_commands_to_steps_count(result);
-
+        steps_t hstps = hardware_commands_to_last_position_after_given_steps(result);
         REQUIRE(hstps == expected_steps);
-
-        //double dt = ((double) test_config.tick_duration_us)/1000000.0;
-        //std::list<steps_t> hstps = hardware_commands_to_steps(result);
-        //REQUIRE(hstps.size() == (int)(1.0/dt));
-
     } 
+    
     SECTION("simple dwell G04 for 1 second - time is correct") {
         auto program = gcode_to_maps_of_arguments(R"(
            G4X1
@@ -318,5 +311,41 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
 
         double dt = ((double) test_config.tick_duration_us)/1000000.0;
         REQUIRE(steps_done_count == (int)(1.0/dt));
-    } 
+    }
+
+    SECTION("simple dwell G04 for 2 second in miliseconds - time is correct") {
+        auto program = gcode_to_maps_of_arguments(R"(
+           G4P2000
+        )");
+        block_t machine_state = {{'F',1}};
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()),
+        machine_state, [&machine_state](const block_t &result){
+            machine_state = result;
+        } );
+        auto ls = last_state_after_program_execution(program, {{'F',1}});
+        int steps_done_count = hardware_commands_to_steps_count(result);
+
+        double dt = ((double) test_config.tick_duration_us)/1000000.0;
+        REQUIRE(steps_done_count == (int)(2.0/dt));
+    }
+
+    SECTION("simple dwell G04 for 2 second in miliseconds with additional G1 commands that do nothing- time is correct") {
+        auto program = gcode_to_maps_of_arguments(R"(
+           G1F1
+           G4P1500
+           G1F1
+           G4P500
+        )");
+        block_t machine_state = {{'F',1}};
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()),
+        machine_state, [&machine_state](const block_t &result){
+            machine_state = result;
+        } );
+        auto ls = last_state_after_program_execution(program, {{'F',1}});
+        int steps_done_count = hardware_commands_to_steps_count(result);
+
+        double dt = ((double) test_config.tick_duration_us)/1000000.0;
+        REQUIRE(steps_done_count == (int)(2.0/dt));
+    }
+
 }

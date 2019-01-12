@@ -33,7 +33,7 @@ std::list<steps_t> hardware_commands_to_steps(const std::vector<multistep_comman
     return ret;
 }
 
-steps_t hardware_commands_to_last_position(const std::vector<multistep_command>& commands_to_do, int last_step_)
+steps_t hardware_commands_to_last_position_after_given_steps(const std::vector<multistep_command>& commands_to_do, int last_step_)
 {
     steps_t _steps = {0, 0, 0, 0};
     int itt = 0;
