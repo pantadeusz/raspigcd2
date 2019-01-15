@@ -346,4 +346,45 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
         REQUIRE(((driver::inmem*)lsfake.get())->counters[i] == -1);
     }
 
+    SECTION("Stop program in multiple steps")
+    {
+        int n = 0;
+        multistep_commands_t commands;
+        for (int i = 0; i < 40; i++) {
+            multistep_command cmnd;
+            cmnd.count = 1;
+            cmnd.b[0].step = 0;
+            cmnd.b[0].dir = 0;
+            cmnd.b[1].step = 0;
+            cmnd.b[1].dir = 0;
+            cmnd.b[2].step = 0;
+            cmnd.b[2].dir = 0;
+            cmnd.b[3].step = 0;
+            cmnd.b[3].dir = 0;
+            cmnd.b[i%4].step = 1;
+            cmnd.b[i%4].dir = 0;
+            commands.push_back(cmnd);
+        }
+
+        ((driver::inmem*)lsfake.get())->current_steps = {0, 0, 0, 0};
+        ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { 
+            if (n == 1) {
+                worker.terminate(16);
+            }
+            n++;
+        });
+        try {
+            worker.exec(commands);
+        }catch(const hardware::execution_terminated &e) {
+            REQUIRE(e.delta_steps == ((driver::inmem*)lsfake.get())->current_steps);
+        }
+        REQUIRE(n == 18);
+        steps_t cmpto = {-5, -5, -4, -4};
+        REQUIRE(((driver::inmem*)lsfake.get())->current_steps == cmpto);
+        for (int i:{0,1})
+        REQUIRE(((driver::inmem*)lsfake.get())->counters[i] == -5);
+        for (int i:{2,3})
+        REQUIRE(((driver::inmem*)lsfake.get())->counters[i] == -4);
+    }
+
 }

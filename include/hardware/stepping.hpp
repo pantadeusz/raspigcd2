@@ -69,9 +69,10 @@ public:
     virtual int get_tick_index() const = 0;
 
     /**
-     * breaks execution of the exec method. This will stop everyting at once;
+     * breaks execution of the exec method.
+     * if n > 0 that means it shlud stop in n steps
      * */
-    virtual void terminate() = 0;
+    virtual void terminate(const int n = 0) = 0;
 
     virtual void reset_after_terminate() = 0;
 };
@@ -95,8 +96,8 @@ public:
 // const steps_t& start_steps, std::function<void(const steps_t&)> on_step_
     void exec(const multistep_commands_t& commands_to_do);
 
-    void terminate() {
-        _terminate_execution = 1;
+    void terminate(const int n= 0) {
+        _terminate_execution = 1+n;
     }
     void reset_after_terminate() {_terminate_execution = 0;};    
 
@@ -141,8 +142,8 @@ public:
 
     void exec(const multistep_commands_t& commands_to_do);
 
-    void terminate() {
-        _terminate_execution = 1;
+    void terminate(const int n = 0) {
+        _terminate_execution = 1+n;
     }
     void reset_after_terminate() {_terminate_execution = 0;};
 

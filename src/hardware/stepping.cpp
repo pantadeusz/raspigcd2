@@ -69,8 +69,12 @@ void stepping_sim::exec(const std::vector<multistep_command>& commands_to_do)
     _tick_index = 0;
     auto start_steps = current_steps;
     for (auto& steps : hardware_commands_to_steps(commands_to_do)) {
-        if (_terminate_execution) {
-            throw execution_terminated();
+        if (_terminate_execution > 0) {
+            if (_terminate_execution == 1) {
+                throw execution_terminated();
+            } else {
+                _terminate_execution--;
+            }
         }
         current_steps = steps + start_steps;
         _on_step(steps); // callback virtually set
@@ -102,14 +106,20 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
     _tick_index = 0;
     std::chrono::high_resolution_clock::time_point prev_timer = _low_timer->start_timing();
     _terminate_execution = 0;
+//    int counter_delay = 1000;
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
-            if (_terminate_execution) {
-                throw execution_terminated(hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index));
+            if (_terminate_execution > 0) {
+                if (_terminate_execution == 1) {
+                    throw execution_terminated(hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index));
+                } else {
+                    _terminate_execution--;
+//                    counter_delay = counter_delay * 12 / 10;
+                }
             }
             _steppers_driver->do_step(s.b);
             _tick_index++;
-            prev_timer = _low_timer->wait_for_tick_s(prev_timer, _delay_microseconds);
+            prev_timer = _low_timer->wait_for_tick_s(prev_timer, _delay_microseconds);//*counter_delay/1000);
         }
     }
     //return _steps;
