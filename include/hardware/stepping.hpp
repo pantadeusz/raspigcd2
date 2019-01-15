@@ -36,6 +36,9 @@ namespace hardware {
 
 class execution_terminated : public std::exception {
 public:
+    const steps_t delta_steps;
+    execution_terminated (const steps_t ds ={0,0,0,0}):delta_steps(ds){}
+
     const char* what() const noexcept
     {
         static const char what_[]="stepping has been terminated";
@@ -51,11 +54,12 @@ class stepping
 {
 public:
     /**
-	* @brief Executes multistep commands list. On each step it calls on_step_ function with current position as an argument. The return value is the final steps value
+	* @brief Executes multistep commands list. On each step it calls on_step_
+     function with current position as an argument. The return value is the final steps value
 	*
 	* @param start_steps the initial position of motors in steps
 	* @param commands_to_do array of commands to execute
-	* @param on_step_ function to execute on each step. This function can throw exceptions to break execution of steps
+	* // @param on_step_ function to execute on each step. This function can throw exceptions to break execution of steps
 	* @return steps_t final position of the machine in steps
 	*/
     virtual void exec(const multistep_commands_t& commands_to_do) = 0;
@@ -68,6 +72,7 @@ public:
      * breaks execution of the exec method. This will stop everyting at once;
      * */
     virtual void terminate() = 0;
+
     virtual void reset_after_terminate() = 0;
 };
 

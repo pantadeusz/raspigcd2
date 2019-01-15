@@ -1,8 +1,8 @@
 #include <configuration.hpp>
 #include <configuration_json.hpp>
-#include <hardware/stepping.hpp>
 #include <hardware/driver/inmem.hpp>
 #include <hardware/driver/low_timers_fake.hpp>
+#include <hardware/stepping.hpp>
 
 #define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_DISABLE_MATCHERS
@@ -20,7 +20,7 @@ using namespace raspigcd::hardware;
 
 TEST_CASE("Hardware stepping_sim", "[hardware_stepping][stepping_sim]")
 {
-    stepping_sim worker({0,0,0,0});
+    stepping_sim worker({0, 0, 0, 0});
 
     SECTION("Run empty program")
     {
@@ -34,7 +34,7 @@ TEST_CASE("Hardware stepping_sim", "[hardware_stepping][stepping_sim]")
     {
         int n = 0;
         worker.set_callback([&](const auto&) { n++; });
-        worker.exec({{{{.step=0, .dir=0}, {.step=0, .dir=0}, {.step=0, .dir=0}, {.step=0, .dir=0}},1}});
+        worker.exec({{{{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, 1}});
         REQUIRE(n == 1);
     }
     SECTION("Run one step in each positive  direction")
@@ -166,12 +166,13 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
         }
     }
 
-    SECTION("stepping break counter should be correct 1") {
+    SECTION("stepping break counter should be correct 1")
+    {
         multistep_commands_t commands_to_do;
 
         for (int i = 0; i < 4; i++) {
             multistep_command cmnd;
-            cmnd.count = 1+i;
+            cmnd.count = 1 + i;
             cmnd.b[0].step = 0;
             cmnd.b[0].dir = 0;
             cmnd.b[1].step = 0;
@@ -186,16 +187,17 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
         }
 
         std::list<steps_t> steps_list = hardware_commands_to_steps(commands_to_do);
-        steps_t last_step = hardware_commands_to_last_position_after_given_steps(commands_to_do, 1 );
-        REQUIRE(last_step == std::vector<steps_t>(steps_list.begin(),steps_list.end()).at(0));
+        steps_t last_step = hardware_commands_to_last_position_after_given_steps(commands_to_do, 1);
+        REQUIRE(last_step == std::vector<steps_t>(steps_list.begin(), steps_list.end()).at(0));
     }
 
-    SECTION("stepping break counter should be correct - 2") {
+    SECTION("stepping break counter should be correct - 2")
+    {
         multistep_commands_t commands_to_do;
 
         for (int i = 0; i < 4; i++) {
             multistep_command cmnd;
-            cmnd.count = 1+i;
+            cmnd.count = 1 + i;
             cmnd.b[0].step = 0;
             cmnd.b[0].dir = 0;
             cmnd.b[1].step = 0;
@@ -210,16 +212,17 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
         }
 
         std::list<steps_t> steps_list = hardware_commands_to_steps(commands_to_do);
-        steps_t last_step = hardware_commands_to_last_position_after_given_steps(commands_to_do, 5 );
-        REQUIRE(last_step == std::vector<steps_t>(steps_list.begin(),steps_list.end()).at(4));
+        steps_t last_step = hardware_commands_to_last_position_after_given_steps(commands_to_do, 5);
+        REQUIRE(last_step == std::vector<steps_t>(steps_list.begin(), steps_list.end()).at(4));
     }
 
-    SECTION("stepping break counter should be correct - last") {
+    SECTION("stepping break counter should be correct - last")
+    {
         multistep_commands_t commands_to_do;
 
         for (int i = 0; i < 4; i++) {
             multistep_command cmnd;
-            cmnd.count = 1+i;
+            cmnd.count = 1 + i;
             cmnd.b[0].step = 0;
             cmnd.b[0].dir = 0;
             cmnd.b[1].step = 0;
@@ -234,7 +237,113 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
         }
 
         std::list<steps_t> steps_list = hardware_commands_to_steps(commands_to_do);
-        steps_t last_step = hardware_commands_to_last_position_after_given_steps(commands_to_do, -1 );
+        steps_t last_step = hardware_commands_to_last_position_after_given_steps(commands_to_do, -1);
         REQUIRE(last_step == steps_list.back());
     }
+
+    SECTION("execute multiple commands in one program")
+    {
+        int n = 0;
+        multistep_commands_t commands;
+        for (int i = 0; i < 4; i++) {
+            multistep_command cmnd;
+            cmnd.count = 1;
+            cmnd.b[0].step = 0;
+            cmnd.b[0].dir = 0;
+            cmnd.b[1].step = 0;
+            cmnd.b[1].dir = 0;
+            cmnd.b[2].step = 0;
+            cmnd.b[2].dir = 0;
+            cmnd.b[3].step = 0;
+            cmnd.b[3].dir = 0;
+            cmnd.b[i].step = 1;
+            cmnd.b[i].dir = 0;
+            commands.push_back(cmnd);
+        }
+
+        ((driver::inmem*)lsfake.get())->current_steps = {0, 0, 0, 0};
+        ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { 
+            n++; 
+        });
+        worker.exec(commands);
+        REQUIRE(n == 4);
+        steps_t cmpto = {-1, -1, -1, -1};
+        REQUIRE(((driver::inmem*)lsfake.get())->current_steps == cmpto);
+        for (int i:{0,1,2,3})
+        REQUIRE(((driver::inmem*)lsfake.get())->counters[i] == -1);
+    }
+
+    SECTION("stop program after 2 steps then check position")
+    {
+        int n = 0;
+        multistep_commands_t commands;
+        for (int i = 0; i < 4; i++) {
+            multistep_command cmnd;
+            cmnd.count = 1;
+            cmnd.b[0].step = 0;
+            cmnd.b[0].dir = 0;
+            cmnd.b[1].step = 0;
+            cmnd.b[1].dir = 0;
+            cmnd.b[2].step = 0;
+            cmnd.b[2].dir = 0;
+            cmnd.b[3].step = 0;
+            cmnd.b[3].dir = 0;
+            cmnd.b[i].step = 1;
+            cmnd.b[i].dir = 0;
+            commands.push_back(cmnd);
+        }
+
+        ((driver::inmem*)lsfake.get())->current_steps = {0, 0, 0, 0};
+        ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { 
+            if (n == 1) {
+                worker.terminate();
+            }
+            n++;
+        });
+        REQUIRE_THROWS_AS( worker.exec(commands), hardware::execution_terminated);
+        REQUIRE(n == 2);
+        steps_t cmpto = {-1, -1, 0, 0};
+        REQUIRE(((driver::inmem*)lsfake.get())->current_steps == cmpto);
+        for (int i:{0,1})
+        REQUIRE(((driver::inmem*)lsfake.get())->counters[i] == -1);
+    }
+    SECTION("stop program after 2 steps then check position - exception should have correct coordinates")
+    {
+        int n = 0;
+        multistep_commands_t commands;
+        for (int i = 0; i < 4; i++) {
+            multistep_command cmnd;
+            cmnd.count = 1;
+            cmnd.b[0].step = 0;
+            cmnd.b[0].dir = 0;
+            cmnd.b[1].step = 0;
+            cmnd.b[1].dir = 0;
+            cmnd.b[2].step = 0;
+            cmnd.b[2].dir = 0;
+            cmnd.b[3].step = 0;
+            cmnd.b[3].dir = 0;
+            cmnd.b[i].step = 1;
+            cmnd.b[i].dir = 0;
+            commands.push_back(cmnd);
+        }
+
+        ((driver::inmem*)lsfake.get())->current_steps = {0, 0, 0, 0};
+        ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { 
+            if (n == 1) {
+                worker.terminate();
+            }
+            n++;
+        });
+        try {
+            worker.exec(commands);
+        }catch(const hardware::execution_terminated &e) {
+            REQUIRE(e.delta_steps == ((driver::inmem*)lsfake.get())->current_steps);
+        }
+        REQUIRE(n == 2);
+        steps_t cmpto = {-1, -1, 0, 0};
+        REQUIRE(((driver::inmem*)lsfake.get())->current_steps == cmpto);
+        for (int i:{0,1})
+        REQUIRE(((driver::inmem*)lsfake.get())->counters[i] == -1);
+    }
+
 }

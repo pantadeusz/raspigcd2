@@ -69,7 +69,9 @@ void stepping_sim::exec(const std::vector<multistep_command>& commands_to_do)
     _tick_index = 0;
     auto start_steps = current_steps;
     for (auto& steps : hardware_commands_to_steps(commands_to_do)) {
-        if (_terminate_execution) throw execution_terminated();
+        if (_terminate_execution) {
+            throw execution_terminated();
+        }
         current_steps = steps + start_steps;
         _on_step(steps); // callback virtually set
         _tick_index++;
@@ -103,8 +105,7 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
             if (_terminate_execution) {
-                std::cout << hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index);
-                throw execution_terminated();
+                throw execution_terminated(hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index));
             }
             _steppers_driver->do_step(s.b);
             _tick_index++;
