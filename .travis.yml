@@ -33,6 +33,7 @@ install:
     - cd Catch2-2.5.0
     - cmake -Bcmakebuild -H. -DBUILD_TESTING=OFF
     - sudo $(which cmake) --build cmakebuild --target install
+    - cd ..
 
 script: rm -rf build; mkdir -p build; cd build; cmake -DCMAKE_BUILD_TYPE=Debug .. ; make -j 4; make test
 
