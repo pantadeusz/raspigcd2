@@ -1,4 +1,3 @@
-#define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_DISABLE_MATCHERS
 #define CATCH_CONFIG_FAST_COMPILE
 #include <catch2/catch.hpp>
@@ -61,7 +60,7 @@ TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - simple cases and er
 }
 
 
-TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - short movement", "[gcd][gcode_interpreter][g0_move_to_g1_sequence]")
+TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - short movement - work moves optimize", "[gcd][gcode_interpreter][g0_move_to_g1_sequence]")
 {
     configuration::limits machine_limits(
         {100, 101, 102, 103}, // acceleration

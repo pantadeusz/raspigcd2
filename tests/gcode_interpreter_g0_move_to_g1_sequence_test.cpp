@@ -1,4 +1,3 @@
-#define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_DISABLE_MATCHERS
 #define CATCH_CONFIG_FAST_COMPILE
 #include <catch2/catch.hpp>
@@ -16,7 +15,7 @@ using namespace raspigcd;
 using namespace raspigcd::configuration;
 using namespace raspigcd::gcd;
 //apply_limits_for_turns
-TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - simple cases and errors", "[gcd][gcode_interpreter][g0_move_to_g1_sequence][exceptions]")
+TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - simple cases", "[gcd][gcode_interpreter][g0_move_to_g1_sequence][exceptions]")
 {
     configuration::limits machine_limits(
         {100, 101, 102, 103}, // acceleration

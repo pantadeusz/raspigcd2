@@ -106,7 +106,7 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
     _tick_index = 0;
     std::chrono::high_resolution_clock::time_point prev_timer = _low_timer->start_timing();
     _terminate_execution = 0;
-//    int counter_delay = 1000;
+    int counter_delay = 1000;
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
             if (_terminate_execution > 0) {
@@ -114,7 +114,7 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
                     throw execution_terminated(hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index));
                 } else {
                     _terminate_execution--;
-//                    counter_delay = counter_delay * 12 / 10;
+                    counter_delay = counter_delay * 12 / 10;
                 }
             }
             _steppers_driver->do_step(s.b);

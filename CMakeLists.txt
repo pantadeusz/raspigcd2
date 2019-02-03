@@ -5,7 +5,7 @@ project (raspigcd2 CXX)
 set (raspigcd2_VERSION_MAJOR 0)
 set (raspigcd2_VERSION_MINOR 1)
 
-# set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -53,17 +53,28 @@ install (TARGETS raspigcd2 DESTINATION lib)
 install (TARGETS gcd DESTINATION bin)
 
 
-file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/tests/*_test.cpp")
-foreach(file ${files})
-  get_filename_component(fn_target ${file}
-                       NAME)
-  add_executable(${fn_target} ${file})
-  target_link_libraries(${fn_target} raspigcd2 ${CMAKE_THREAD_LIBS_INIT})
-  add_test(NAME ${fn_target} COMMAND "${CMAKE_BINARY_DIR}/${fn_target}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
-endforeach()
+## file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/tests/*_test.cpp")
+## foreach(file ${files})
+##   get_filename_component(fn_target ${file}
+##                        NAME)
+##   add_executable(${fn_target} ${file})
+##   target_link_libraries(${fn_target} raspigcd2 ${CMAKE_THREAD_LIBS_INIT})
+##   add_test(NAME ${fn_target} COMMAND "${CMAKE_BINARY_DIR}/${fn_target}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
+## endforeach()
+
+file(GLOB_RECURSE tests_SOURCES "tests/*_test.cpp")
+add_executable(tests ${tests_SOURCES} "tests/tests.cpp" )
+target_link_libraries(tests raspigcd2 ${CMAKE_THREAD_LIBS_INIT}  Catch2::Catch2)
+# add_test(NAME ${fn_target} COMMAND "${CMAKE_BINARY_DIR}/${fn_target}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 
 
-enable_testing()
+# enable_testing()
+
+find_package(Catch2 REQUIRED)
+
+include(CTest)
+include(Catch)
+catch_discover_tests(tests)
 
 SET(CPACK_PACKAGE_VERSION_MAJOR ${raspigcd2_VERSION_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${raspigcd2_VERSION_MINOR})

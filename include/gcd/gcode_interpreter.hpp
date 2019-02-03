@@ -114,13 +114,6 @@ program_t g0_move_to_g1_sequence (const program_t& program_states,
                 block_t current_state = {{'X',0},{'Y',0},{'Z',0},{'A',0}});
 
 
-/**
- * @brief optimize G1 G4 G92 and other moves for best fitting to the machine
- */
-program_t work_moves_optimize (const program_t& program_states,
-                const configuration::limits &machine_limits,
-                block_t current_state = {{'X',0},{'Y',0},{'Z',0},{'A',0}});
-
 
 /**
  * @brief Gropus gcode commands so the other parts can focus on the simple interpretation of parts

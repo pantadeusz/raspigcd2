@@ -3,7 +3,6 @@
 #include <hardware/stepping.hpp>
 #include <movement/simple_steps.hpp>
 
-#define CATCH_CONFIG_MAIN
 #define CATCH_CONFIG_DISABLE_MATCHERS
 #define CATCH_CONFIG_FAST_COMPILE
 #include <catch2/catch.hpp>
@@ -18,7 +17,7 @@ using namespace raspigcd::movement::simple_steps;
 using namespace raspigcd::movement;
 
 
-TEST_CASE("Movement constant speed", "[movement][steps_generator]")
+TEST_CASE("Movement constant speed in steps generator", "[movement][steps_generator]")
 {
     SECTION("collapse_repeated_steps")
     {
