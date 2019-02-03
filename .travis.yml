@@ -32,7 +32,7 @@ install:
     - tar -xvf v2.5.0.tar.gz
     - cd Catch2-2.5.0
     - cmake -Bcmakebuild -H. -DBUILD_TESTING=OFF
-    - sudo /usr/bin/cmake --build cmakebuild --target install
+    - sudo $(which cmake) --build cmakebuild --target install
 
 script: rm -rf build; mkdir -p build; cd build; cmake -DCMAKE_BUILD_TYPE=Debug .. ; make -j 4; make test
 
