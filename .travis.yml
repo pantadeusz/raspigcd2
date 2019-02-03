@@ -26,6 +26,8 @@ matrix:
 
 before_install:
     - eval "${MATRIX_EVAL}"
+
+install:
     - wget https://codeload.github.com/catchorg/Catch2/tar.gz/v2.5.0 -O v2.5.0.tar.gz
     - tar -xvf v2.5.0.tar.gz
     - cd Catch2-2.5.0
