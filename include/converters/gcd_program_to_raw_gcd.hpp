@@ -34,6 +34,12 @@ gcd::program_t program_to_raw_program (
     hardware::motor_layout &ml_,
     const gcd::block_t& initial_state_ = {{'F',0}});
 
+gcd::program_t program_to_raw_program_str (
+    const std::string& prog_text_,
+    const configuration::actuators_organization& conf_,
+    hardware::motor_layout &ml_,
+    const gcd::block_t& initial_state_ = {{'F',0}});
+
 } // namespace converters
 } // namespace raspigcd
 

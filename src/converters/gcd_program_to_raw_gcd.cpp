@@ -31,9 +31,26 @@ gcd::program_t program_to_raw_program (
     hardware::motor_layout& ml_,
     const gcd::block_t& initial_state_)
 {
-    return {};
+    using namespace gcd;
+    partitioned_program_t prog_grouped = group_gcode_commands(prog_, initial_state_);
+    
+    program_t ret = {};
+    for (auto &e : prog_grouped) {
+        ret.insert(ret.end(),e.begin(),e.end());
+    }
+    return ret;
 }
 
+gcd::program_t program_to_raw_program_str (
+    const std::string& prog_text_,
+    const configuration::actuators_organization& conf_,
+    hardware::motor_layout &ml_,
+    const gcd::block_t& initial_state_) {
+        return program_to_raw_program(gcd::gcode_to_maps_of_arguments(prog_text_),
+        conf_,
+        ml_,
+        initial_state_);
+}
 
 } // namespace converters
 } // namespace raspigcd

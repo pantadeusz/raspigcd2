@@ -41,7 +41,19 @@ TEST_CASE("converters - program_to_raw_program", "[gcd][converters][program_to_r
     SECTION("empty program should result in empty steps list")
     {
         REQUIRE(program_to_raw_program({},test_config, *(motor_layot_p.get()) ).size() == 0);
-
     }
-
+    SECTION("program with only commands from M category goes unchanged")
+    {
+        program_t program = gcode_to_maps_of_arguments("M17\nM3\nM18\nM5");
+        program_t result_program = program_to_raw_program(program,test_config, *(motor_layot_p.get()) );
+        REQUIRE(program == result_program);
+    }
+    SECTION("text or nit grouped program should result in the same output")
+    {
+        std::string program_txt = "M17\nM3\nM18\nM5";
+        program_t program = gcode_to_maps_of_arguments(program_txt);
+        program_t result_program1 = program_to_raw_program_str(program_txt,test_config, *(motor_layot_p.get()) );
+        program_t result_program2 = program_to_raw_program(program,test_config, *(motor_layot_p.get()) );
+        REQUIRE(result_program1 == result_program2);
+    }
 }
