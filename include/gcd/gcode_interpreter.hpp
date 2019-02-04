@@ -83,8 +83,7 @@ distance_t blocks_to_vector_move(const block_t & block_a, const block_t & block_
 /**
  * @brief Generates string based on gcode grouped by fragments G1, G0 and M
  */
-std::string back_to_gcode(partitioned_program_t &btg);
-
+std::string back_to_gcode(const partitioned_program_t &btg);
 
 //partitioned_program_t apply_machine_limits(
 //    const partitioned_program_t& program_states,

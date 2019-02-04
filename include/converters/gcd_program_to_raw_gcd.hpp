@@ -30,14 +30,12 @@ namespace converters {
  * */
 gcd::program_t program_to_raw_program (
     const gcd::program_t& prog_,
-    const configuration::actuators_organization& conf_,
-    hardware::motor_layout &ml_,
+    const configuration::limits& conf_,
     const gcd::block_t& initial_state_ = {{'F',0}});
 
 gcd::program_t program_to_raw_program_str (
     const std::string& prog_text_,
-    const configuration::actuators_organization& conf_,
-    hardware::motor_layout &ml_,
+    const configuration::limits& conf_,
     const gcd::block_t& initial_state_ = {{'F',0}});
 
 } // namespace converters

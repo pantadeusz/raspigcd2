@@ -229,7 +229,7 @@ program_t g0_move_to_g1_sequence(const program_t& program_states,
 }
 
 
-std::string back_to_gcode(partitioned_program_t& btg)
+std::string back_to_gcode(const partitioned_program_t& btg)
 {
     std::stringstream strs;
     for (auto& group : btg) {
@@ -267,7 +267,7 @@ block_t diff_blocks(const block_t& destination, const block_t& source)
 partitioned_program_t group_gcode_commands(const program_t& program_states, const block_t& initial_state)
 {
     partitioned_program_t generated_program;
-    block_t current_state = merge_blocks({{'X', 0}, {'Y', 0}, {'Z', 0}}, initial_state);
+    block_t current_state = merge_blocks({{'X', 0}, {'Y', 0}, {'Z', 0}, {'A', 0}}, initial_state);
     for (const auto& e : program_states) {
         if (generated_program.size() == 0) {
             if ((e.count('G') > 0) || (e.count('M')))
