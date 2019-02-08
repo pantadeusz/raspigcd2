@@ -35,29 +35,29 @@ gcd::program_t program_to_raw_program(
     partitioned_program_t prog_grouped = group_gcode_commands(prog_, machine_state);
 
     program_t ret = {};
-    std::cout << "ok, robim" << std::endl;
+    //std::cout << "ok, robim" << std::endl;
     for (auto& ppart : prog_grouped) {
         auto part_fixed = ppart;
         if (ppart.size() != 0) {
-            std::cout << "ppart" << std::endl;
+            //std::cout << "ppart" << std::endl;
             if (ppart[0].count('M') == 0) {
-                std::cout << "::G: " << (int)(ppart[0]['G']) << std::endl;
+                //std::cout << "::G: " << (int)(ppart[0]['G']) << std::endl;
                 switch ((int)(ppart[0]['G'])) {
                 case 4: // no change
                     break;
                 case 0:
-                    std::cout << "g0_move_to_g1_sequence" << std::endl;
+                    //std::cout << "g0_move_to_g1_sequence" << std::endl;
                     part_fixed = g0_move_to_g1_sequence(ppart, conf_, machine_state);
-                    std::cout << "g0 -> g1: ";
-                    for (auto& ms : ppart) {
-                        for (auto& s : ms) {
-                            std::cout << s.first << ":" << s.second << " ";
-                        }
-                        std::cout << std::endl;
-                    }
-                    [[fallthrough]];
+                    //std::cout << "g0 -> g1: ";
+                    // for (auto& ms : ppart) {
+                    //     for (auto& s : ms) {
+                    //         std::cout << s.first << ":" << s.second << " ";
+                    //     }
+                    //     std::cout << std::endl;
+                    // }
+                    break;
                 case 1:
-                    // part_fixed = g1_moves_optimizer(ppart, cfg, machine_state);
+                    // part_fixed = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
                     break;
                 }
             } else {
@@ -65,15 +65,15 @@ gcd::program_t program_to_raw_program(
         }
         //        for (auto& s : machine_state) {
         for (auto pp : part_fixed) {
-            for (auto& s : pp) {
-                std::cout << s.first << ":" << s.second << " ";
-            }
-            std::cout << std::endl;
+            //for (auto& s : pp) {
+            //    std::cout << s.first << ":" << s.second << " ";
+            //}
+            //std::cout << std::endl;
             machine_state = merge_blocks(machine_state, pp);
             machine_state.erase('G');
             machine_state.erase('M');
         }
-        std::cout << "  OK" << std::endl;
+        //std::cout << "  OK" << std::endl;
         ret.insert(ret.end(), part_fixed.begin(), part_fixed.end());
     }
     auto rret = ret;

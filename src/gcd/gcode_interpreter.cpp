@@ -161,6 +161,76 @@ program_t apply_limits_for_turns(const program_t& program_states,
     return ret_states;
 }
 
+program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
+    const configuration::limits& machine_limits,
+    block_t current_state)
+{
+    using namespace raspigcd::movement::physics;
+    if (program_states.size() == 0) throw std::invalid_argument("there must be at least one G0 or G1 code in the program!");
+    program_t result;
+    for (const auto& ps_input : program_states) {
+        auto next_state = merge_blocks(current_state, ps_input);
+        if (ps_input.count('G')) {
+            if ((ps_input.at('G') != 0) && (ps_input.at('G') != 1)) {
+                throw std::invalid_argument("G0 or G1 should be the only type of the commands in the program for g1_move_to_g1_with_machine_limits");
+            }
+            //current_state
+            auto A = block_to_distance_t(current_state);
+            auto B = block_to_distance_t(next_state);
+            auto ABvec = B-A;
+            double s = ABvec.length();
+            if (s == 0) {
+                result.push_back(next_state);
+            } else {
+                result.push_back(next_state);
+                /*double a = machine_limits.proportional_max_accelerations_mm_s2(ABvec / s);
+                double max_v = machine_limits.proportional_max_velocity_mm_s(ABvec / s);
+                double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s);
+                path_node_t pnA = {.p=A,.v=min_v};
+                path_node_t pnMed = {.p=(A+B)*0.5,.v=max_v};
+                path_node_t pnB = {.p=B,.v=min_v};
+                double a_real = acceleration_between(pnA, pnMed);
+                //std::cout <<"a_real:" << a_real << " a_max" << a << std::endl;
+                if (a_real >= a) {
+                    auto block_A = current_state;
+                    pnMed = calculate_transition_point(pnA, pnMed, a);
+                    //std::cout << "pnMed.v " << pnMed.v << std::endl;
+                    auto block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
+                    auto block_B = next_state;
+                    block_Med['F'] = pnMed.v;
+                    block_Med['G'] = 1;
+                    result.push_back(block_Med);
+                    block_B['G'] = 1;
+                    block_B['F'] = min_v;
+                    result.push_back(block_B);
+                } else {
+                    auto block_A = current_state;
+                    pnMed = calculate_transition_point(pnA, pnMed, a);
+                    //std::cout << "pnMed.v " << pnMed.v << std::endl;
+                    auto block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
+                    block_Med['F'] = pnMed.v;
+                    block_Med['G'] = 1;
+                    result.push_back(block_Med);
+
+                    pnMed = calculate_transition_point(pnB, pnMed, a);
+                    block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
+                    block_Med['F'] = pnMed.v;
+                    block_Med['G'] = 1;
+                    result.push_back(block_Med);
+
+                    auto block_B = next_state;
+                    block_B['G'] = 1;
+                    block_B['F'] = min_v;
+                    result.push_back(block_B);
+                } */
+            }
+        } else
+            throw std::invalid_argument("G0 or G1 should be the only type of the commands in the program for g1_move_to_g1_with_machine_limits");
+        current_state = next_state;
+    }
+    return result;
+}
+
 program_t g0_move_to_g1_sequence(const program_t& program_states,
     const configuration::limits& machine_limits,
     block_t current_state)

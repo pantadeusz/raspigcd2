@@ -46,6 +46,7 @@ TEST_CASE("converters - program_to_raw_program", "[gcd][converters][program_to_r
     {
         std::string program_txt = "M17\nM3\nG0X100\nM18\nG0X0\nM5";
         program_t program = gcode_to_maps_of_arguments(program_txt);
+        INFO(back_to_gcode({program}));
         program_t result_program = program_to_raw_program(program,test_config );
         INFO(back_to_gcode({result_program}));
         REQUIRE(!(program == result_program));

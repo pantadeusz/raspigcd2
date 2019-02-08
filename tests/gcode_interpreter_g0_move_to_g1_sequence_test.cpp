@@ -11,10 +11,18 @@
 #include <thread>
 #include <vector>
 
+#include "tests_helper.hpp"
+
 using namespace raspigcd;
 using namespace raspigcd::configuration;
 using namespace raspigcd::gcd;
+
+
+
 //apply_limits_for_turns
+
+
+
 TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - simple cases", "[gcd][gcode_interpreter][g0_move_to_g1_sequence][exceptions]")
 {
     configuration::limits machine_limits(
@@ -79,6 +87,11 @@ TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - short movement", "[
     SECTION("the movement too short to reach maximum speed will result in just 2 G1 commands")
     {
         auto result = g0_move_to_g1_sequence(g0_short_move, machine_limits);
+        
+        auto img_before = simulate_moves_on_image(g0_short_move);
+        auto img_after = simulate_moves_on_image(result);
+        REQUIRE(image_difference(img_before, img_after) == 0);
+
         REQUIRE(result.size() == 2);
         for (auto& blk : result) {
             REQUIRE(blk['G'] == 1);
@@ -94,6 +107,9 @@ TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - short movement", "[
         double a_real = acceleration_between(pnA, pnMed);
         REQUIRE(a_real <= (machine_limits.max_accelerations_mm_s2[0] + 0.0001));
         REQUIRE(a_real >= 0.0);
+        auto img_before = simulate_moves_on_image(g0_short_move);
+        auto img_after = simulate_moves_on_image(result);
+        REQUIRE(image_difference(img_before, img_after) == 0);
     }
 
     SECTION("the middle point should be with maximal reachable feedrate given machine limits")
@@ -107,6 +123,9 @@ TEST_CASE("gcode_interpreter_test - g0_move_to_g1_sequence - short movement", "[
         INFO(pnMed.v);
         //INFO(pnB.v);
         REQUIRE(a_real == Approx(machine_limits.max_accelerations_mm_s2[0]));
+        auto img_before = simulate_moves_on_image(g0_short_move);
+        auto img_after = simulate_moves_on_image(result);
+        REQUIRE(image_difference(img_before, img_after) == 0);
     }
     SECTION("zero length movement should be left unchanged")
     {
