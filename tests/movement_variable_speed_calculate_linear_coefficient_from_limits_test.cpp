@@ -1,7 +1,6 @@
 #include <configuration.hpp>
 #include <configuration_json.hpp>
 #include <hardware/stepping.hpp>
-#include <movement/variable_speed.hpp>
 #include <hardware/driver/inmem.hpp>
 
 #define CATCH_CONFIG_DISABLE_MATCHERS
@@ -13,7 +12,7 @@
 #include <vector>
 
 using namespace raspigcd;
-using namespace raspigcd::movement;
+// using namespace raspigcd::movement;
 using namespace raspigcd::configuration;
 
 TEST_CASE( "movement variable speed calculate_linear_coefficient_from_limits", "[movement][calculate_linear_coefficient_from_limits][todo]" ) {

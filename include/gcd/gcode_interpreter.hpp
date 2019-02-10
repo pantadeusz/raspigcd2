@@ -21,12 +21,11 @@
 #include <configuration.hpp>
 //#include <memory>
 //#include <hardware/low_steppers.hpp>
-//#include <hardware/motor_layout.hpp>
+#include <hardware/motor_layout.hpp>
 //#include <hardware/stepping.hpp>
 //#include <gcd/factory.hpp>
 //#include <movement/path_intent_t.hpp>
 
-#include <movement/path_intent_t.hpp> // TODO: Remove this
 #include <movement/physics.hpp>
 
 #include <list>

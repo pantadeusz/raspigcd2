@@ -1,7 +1,5 @@
 #include <configuration.hpp>
 #include <converters/gcd_program_to_steps.hpp>
-#include <gcd/factory.hpp>
-#include <gcd/path_intent_executor.hpp>
 #include <hardware/driver/inmem.hpp>
 #include <hardware/driver/low_buttons_fake.hpp>
 #include <hardware/driver/low_spindles_pwm_fake.hpp>
@@ -10,8 +8,6 @@
 #include <hardware/driver/raspberry_pi.hpp>
 #include <hardware/motor_layout.hpp>
 #include <hardware/stepping.hpp>
-#include <movement/steps_generator.hpp>
-#include <movement/variable_speed.hpp>
 
 
 #include <fstream>
@@ -46,7 +42,6 @@ int main(int argc, char** argv)
             std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
             std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
             motor_layout_->set_configuration(cfg);
-            movement::steps_generator steps_generator_drv(motor_layout_);
             stepping_simple_timer stepping(cfg, raspi3, std::make_shared<hardware::driver::low_timers_busy_wait>());
 
             i++;
@@ -164,7 +159,7 @@ int main(int argc, char** argv)
     return 0;
 }
 
-
+/*
 int main_spindle_test()
 {
     using namespace std::chrono_literals;
@@ -238,3 +233,4 @@ int main_old()
     raspi3.enable_steppers({false});
     return 0;
 }
+*/

@@ -24,7 +24,14 @@ install(DIRECTORY include/ DESTINATION include/raspigcd2
         FILES_MATCHING PATTERN "*.hpp")
 
 
-find_package (Threads)
+find_package(Git)
+find_package(Threads)
+
+# Require dot, treat the other components as optional
+find_package(Doxygen
+             REQUIRED dot
+             OPTIONAL_COMPONENTS mscgen dia)
+
 
 # FIND_PACKAGE( OpenMP )
 #   if(OPENMP_FOUND)
@@ -47,7 +54,7 @@ list(REMOVE_ITEM lib_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/raspigcd.cpp)
 
 add_library(raspigcd2 SHARED ${lib_SOURCES})
 add_executable(gcd ${raspigcd2_SOURCES} ${lib_SOURCES})
-target_link_libraries(gcd raspigcd2 ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(gcd ${CMAKE_THREAD_LIBS_INIT})
 
 install (TARGETS raspigcd2 DESTINATION lib)
 install (TARGETS gcd DESTINATION bin)
@@ -68,7 +75,30 @@ target_link_libraries(tests raspigcd2 ${CMAKE_THREAD_LIBS_INIT}  Catch2::Catch2)
 # add_test(NAME ${fn_target} COMMAND "${CMAKE_BINARY_DIR}/${fn_target}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 
 
-# enable_testing()
+set(DOXYGEN_GENERATE_HTML YES)
+set(DOXYGEN_GENERATE_MAN YES)
+set(DOXYGEN_RECURSIVE YES)
+set(CALL_GRAPH YES)
+set(CALLER_GRAPH YES)
+set(DOXYGEN_EXCLUDE_PATTERNS
+*/thirdparty/*
+*/__old_experiments_01/*
+*/.git/*
+*/.svn/*
+*/.hg/*
+*/CMakeFiles/*
+*/_CPack_Packages/*
+DartConfiguration.tcl
+CMakeLists.txt
+CMakeCache.txt
+)
+
+doxygen_add_docs(
+    doxygen
+    "${PROJECT_SOURCE_DIR}"
+    COMMENT "Generate man pages"
+)
+
 
 find_package(Catch2 REQUIRED)
 

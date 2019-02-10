@@ -27,6 +27,9 @@
 
 namespace raspigcd {
 
+/**
+ * namespace for all of the configuration classes and structures
+ */
 namespace configuration {
 
 
@@ -96,10 +99,22 @@ public:
     std::array<double, RASPIGCD_HARDWARE_DOF> max_velocity_mm_s;          ///<maximal velocity on axis in mm/s
     std::array<double, RASPIGCD_HARDWARE_DOF> max_no_accel_velocity_mm_s; ///<maximal velocity on axis in mm/s
 
+    /**
+    * calculates maximal linear acceleration with respect to the cureant direction and limits
+     */
     virtual double proportional_max_accelerations_mm_s2(const std::array<double, RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    /**
+    * calculates maximal linear velocity with respect to the cureant direction and limits
+     */
     virtual double proportional_max_velocity_mm_s(const std::array<double, RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    /**
+    * calculates maximal linear velocity that can be reached instantenousli with respect to the cureant direction and limits
+     */
     virtual double proportional_max_no_accel_velocity_mm_s(const std::array<double, RASPIGCD_HARDWARE_DOF>& norm_vect) const;
 
+    /**
+    * constructs limits configuration element
+     */
     limits(
         std::array<double, RASPIGCD_HARDWARE_DOF> _max_accelerations_mm_s2,
         std::array<double, RASPIGCD_HARDWARE_DOF> _max_velocity_mm_s,
@@ -113,21 +128,30 @@ public:
     }
 };
 
+/**
+ * possible motors layouts
+ */
 enum motion_layouts {
     COREXY,
     CARTESIAN
 };
 
+/**
+ * how are acutators organized. CoreXY or somehow different. It also takes the scale that must be appllied to coordinates
+ */
 class actuators_organization
 {
 public:
     std::array<double, RASPIGCD_HARDWARE_DOF> scale; ///< scale along each axis (can be negative)
     motion_layouts motion_layout;                    ///< name of layout selected: 'corexy' 'cartesian'
-    std::vector<stepper> steppers;
-    int tick_duration_us;         // microseconds tick time
+    std::vector<stepper> steppers; ///< steppers configuration
+    int tick_duration_us;         ///< microseconds tick time
 };
 
 
+/**
+ * Global configuration class.
+ */
 class global : public limits, public actuators_organization
 {
 public:
