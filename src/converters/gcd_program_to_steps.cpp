@@ -51,7 +51,8 @@ raspigcd::hardware::multistep_commands_t __generate_g1_steps(
             auto direction = (pos_to - pos_from) / l;
             auto pos_from_steps = ml_.cartesian_to_steps(pos); //configuration(state);
             for (int i = 1; s <= l; ++i, s = v1 * (dt * i)) {
-                auto np = direction * s;
+                // TODO: Create test case for this situation!!!!
+                auto np = pos_from + direction * s;
                 auto pos_to_steps = ml_.cartesian_to_steps(np); //gcd::block_to_distance_t(next_state);
                 multistep_commands_t steps_todo = chase_steps(pos_from_steps, pos_to_steps);
                 fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
@@ -121,6 +122,15 @@ hardware::multistep_commands_t program_to_steps(
             result.push_back(executor_command);
             next_state = state;
         } else if ((next_state.at('G') == 1) || (next_state.at('G') == 0)) {
+            std::cout << "STATE: ";
+            for (char idx : {'X','Y','Z'}) {
+                std::cout << idx << state[idx] << " ";
+            }
+            std::cout << "  -->  ";
+            for (char idx : {'X','Y','Z'}) {
+                std::cout << idx << next_state[idx] << " ";
+            }
+            std::cout << std::endl;
             auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
             result.insert(result.end(), collapsed.begin(), collapsed.end());
         }

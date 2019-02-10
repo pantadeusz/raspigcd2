@@ -39,7 +39,25 @@ int main(int argc, char** argv)
             using namespace raspigcd;
             using namespace raspigcd::hardware;
 
-            std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
+            std::shared_ptr<low_steppers> raspi3;
+            steps_t position_for_fake;
+            try {
+                raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
+            } catch (...) {
+                auto fk = std::make_shared<driver::inmem>();
+                fk->set_step_callback([&position_for_fake](const steps_t&st){
+                    // if (!(position_for_fake == st)) {
+                    //     std::cout << ";; " 
+                    //     << st[0] << " " 
+                    //     << st[1] << " " 
+                    //     << st[2] << std::endl;
+                    // }
+                    position_for_fake = st;
+                    //
+                });
+                raspi3 = fk;
+            }
+            //std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
             std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
             motor_layout_->set_configuration(cfg);
             stepping_simple_timer stepping(cfg, raspi3, std::make_shared<hardware::driver::low_timers_busy_wait>());
