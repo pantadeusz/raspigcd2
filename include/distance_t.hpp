@@ -28,6 +28,11 @@
 
 namespace raspigcd {
 
+/**
+ * The class that represents distances between points in euclidean space.
+ * 
+ * You can also call it coordinates if you want.
+ * */
 class distance_t : public std::array<double, RASPIGCD_HARDWARE_DOF>
 {
 public:

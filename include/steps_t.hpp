@@ -22,9 +22,17 @@
 #include <array>
 #include <iostream>
 
+#include <hardware_dof_conf.hpp>
+
+/**
+ * main namespace for the project raspigcd
+ * */
 namespace raspigcd {
 
-class steps_t : public std::array<int, 4>
+/**
+ * the class that represents steps for each stepper motor
+ * */
+class steps_t : public std::array<int, RASPIGCD_HARDWARE_DOF>
 {
 public:
     inline int& a() { return this->operator[](0); };

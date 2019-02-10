@@ -27,11 +27,20 @@
 namespace raspigcd {
 namespace movement {
 
+/**
+ * simple steps calculations, like removal of unnecesary steps (duplicate steps) and other similar tasks
+ * */
 namespace simple_steps {
 
+/**
+ * calculate the number of steps that must be performed to reach destination steps. Effectively checks the max steps count
+ * */
 int steps_remaining( const steps_t& steps_, const steps_t& destination_steps_ );
 
 
+/**
+ * remove unnecessary points from list of steps
+ * */
 hardware::multistep_commands_t collapse_repeated_steps(const std::list<hardware::multistep_command>& ret);
 
 /**
