@@ -75,6 +75,10 @@ distance_t blocks_to_vector_move(const block_t& block_a, const block_t& block_b)
 
 block_t last_state_after_program_execution(const program_t &program_, const block_t &initial_state_) {
     block_t result = initial_state_;
+    result['X'];
+    result['Y'];
+    result['Z'];
+    result['A'];
     for (auto e: program_) {
         if (result.count('M')) result.erase('M');
         if (e.count('G')) {

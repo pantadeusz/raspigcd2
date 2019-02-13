@@ -104,13 +104,15 @@ hardware::multistep_commands_t program_to_steps(
     std::list<multistep_command> result;
     //double dt = 0.000001 * (double)conf_.tick_duration_us;//
     double dt = ((double)conf_.tick_duration_us) / 1000000.0;
-    // std::cout << "dt = " << dt << std::endl;
+    //std::cout << "dt = " << dt << std::endl;
     for (const auto& block : prog_) {
+        finish_callback_f_(state);
         auto next_state = gcd::merge_blocks(state, block);
 
         if (next_state.at('G') == 92) {
             // change position, but not generate steps
         } else if (next_state.at('G') == 4) {
+            //std::cout << "G4: " << std::endl;
             double t = 0;
             if (next_state.count('X')) { // seconds
                 t = next_state.at('X');
@@ -122,21 +124,13 @@ hardware::multistep_commands_t program_to_steps(
             result.push_back(executor_command);
             next_state = state;
         } else if ((next_state.at('G') == 1) || (next_state.at('G') == 0)) {
-            std::cout << "STATE: ";
-            for (char idx : {'X','Y','Z'}) {
-                std::cout << idx << state[idx] << " ";
-            }
-            std::cout << "  -->  ";
-            for (char idx : {'X','Y','Z'}) {
-                std::cout << idx << next_state[idx] << " ";
-            }
-            std::cout << std::endl;
+        
             auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
             result.insert(result.end(), collapsed.begin(), collapsed.end());
         }
         state = next_state;
-        finish_callback_f_(state);
     }
+    finish_callback_f_(state);
     return collapse_repeated_steps(result);
 }
 

@@ -70,7 +70,7 @@ install (TARGETS gcd DESTINATION bin)
 ## endforeach()
 
 file(GLOB_RECURSE tests_SOURCES "tests/*_test.cpp")
-add_executable(tests ${tests_SOURCES} "tests/tests.cpp" )
+add_executable(tests ${tests_SOURCES} "tests/tests.cpp" "thirdparty/lodepng/lodepng.cpp" )
 target_link_libraries(tests raspigcd2 ${CMAKE_THREAD_LIBS_INIT}  Catch2::Catch2)
 # add_test(NAME ${fn_target} COMMAND "${CMAKE_BINARY_DIR}/${fn_target}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 

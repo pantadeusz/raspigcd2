@@ -5,6 +5,7 @@
 #include <hardware/stepping_commands.hpp>
 #include <hardware/stepping.hpp>
 #include <gcd/gcode_interpreter.hpp>
+#include "tests_helper.hpp"
 
 #include <thread>
 #include <vector>
@@ -273,7 +274,17 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         steps_t expected_steps = steps_per_mm_arr*steps_t{-100,-100,-100,-100};
         std::list<steps_t> hstps = hardware_commands_to_steps(result);
         REQUIRE(hstps.back() == expected_steps);
+/*
+        std::vector<std::vector<int>> img_dta = simulate_moves_on_image(program);
+        std::vector<std::vector<int>> img_dta_2 = simulate_moves_on_image(result,*(motor_layot_p.get()));
+        
+    //int image_difference(const std::vector<std::vector<int>>& a, const std::vector<std::vector<int>>& b);
 
+
+
+    //std::vector<std::vector<int>> load_image(std::string filename);
+        save_image(std::string(__FILE__)+"_accept_ccordinates_change", img_dta);
+        */
     } 
 
     SECTION("simple dwell G04 for 1 second - position is correct") {
@@ -285,7 +296,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         machine_state, [&machine_state](const block_t &result){
             machine_state = result;
         } );
-        auto ls = last_state_after_program_execution(program, {{'F',1}});
+        auto ls = last_state_after_program_execution(program, {{'X',0},{'F',1}});
         REQUIRE(ls['X'] == machine_state['X']);
         REQUIRE(ls['Y'] == machine_state['Y']);
         REQUIRE(ls['Z'] == machine_state['Z']);
@@ -341,8 +352,9 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
             machine_state = result;
         } );
         auto ls = last_state_after_program_execution(program, {{'F',1}});
+        //INFO(result);
         int steps_done_count = hardware_commands_to_steps_count(result);
-
+        INFO(steps_done_count);
         double dt = ((double) test_config.tick_duration_us)/1000000.0;
         REQUIRE(steps_done_count == (int)(2.0/dt));
     }
