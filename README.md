@@ -66,3 +66,7 @@ will  execute as following parts interpreted as separate executions of motor thr
 ## Compilation options
 
 You can define ```STEPPING_DELAY_SLEEP_UNTIL``` to disable busy loop in timers. This definition will reduce cpu utilization, but increase jitter.
+
+# Licensing
+
+If you are interested in different (non-exclusive) license, please contact me (author).

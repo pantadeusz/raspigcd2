@@ -1,7 +1,7 @@
 /*
-
     Raspberry Pi G-CODE interpreter
-    Copyright (C) 2018  Tadeusz Puźniakowski puzniakowski.pl
+
+    Copyright (C) 2019  Tadeusz Puźniakowski puzniakowski.pl
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU Affero General Public License as published by
@@ -15,8 +15,10 @@
 
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 */
+
+
+
 
 #include <hardware/driver/raspberry_pi.hpp>
 
