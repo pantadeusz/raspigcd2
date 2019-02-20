@@ -60,8 +60,7 @@ int main(int argc, char** argv)
             cfg.load(args.at(i));
         } else if (args.at(i) == "--raw") {
             raw_gcode = true;
-        } el
-        if (args.at(i) == "-f") {
+        } else if (args.at(i) == "-f") {
             using namespace raspigcd;
             using namespace raspigcd::hardware;
 
