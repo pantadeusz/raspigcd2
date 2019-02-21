@@ -51,6 +51,7 @@ global& global::load_defaults()
     simulate_execution = false;
 
     motion_layout = COREXY; //"corexy";
+    lowleveltimer = BUSY_WAIT;
     scale = {1.0, 1.0, 1.0, 1.0};
     max_accelerations_mm_s2 = {200.0, 200.0, 200.0, 200.0};
     max_velocity_mm_s = {220.0, 220.0, 110.0, 220.0};  ///<maximal velocity on axis in mm/s
@@ -165,11 +166,19 @@ void from_json(const nlohmann::json& j, button& p)
 }
 
 
+auto lowleveltimertostring = [](auto llt){
+    return (llt == BUSY_WAIT) ? 
+            "low_timers_busy_wait" : (
+               (llt == WAIT_FOR) ? "low_timers_wait_for" : "low_timers_fake"
+            );
+};
+
 void to_json(nlohmann::json& j, const global& p)
 {
     j = nlohmann::json{
         {"tick_duration_us", p.tick_duration_us},
         {"simulate_execution", p.simulate_execution},
+        {"lowleveltimer", lowleveltimertostring(p.lowleveltimer)},
         {"motion_layout", (p.motion_layout == COREXY) ? "corexy" : "cartesian"},
         {"scale", p.scale},
         {"max_accelerations_mm_s2", p.max_accelerations_mm_s2},
@@ -186,10 +195,24 @@ void from_json(const nlohmann::json& j, global& p)
     p.simulate_execution = j.value("simulate_execution", p.simulate_execution);
     p.tick_duration_us = j.value("tick_duration_us", p.tick_duration_us);
 
-    std::string s = j.value("motion_layout", (p.motion_layout == COREXY) ? "corexy" : "cartesian");
+    {
+        //p.lowleveltimer = j.value("lowleveltimer", p.lowleveltimer);
+        std::string s = j.value("lowleveltimer", lowleveltimertostring(p.lowleveltimer));
+        if (!((s == "low_timers_busy_wait") || 
+        (s == "low_timers_wait_for") || 
+        (s == "low_timers_fake")
+        )) throw std::invalid_argument("lowleveltimer can be only low_timers_busy_wait or low_timers_wait_for or low_timers_fake");
+        p.lowleveltimer = (s == "low_timers_busy_wait") ? BUSY_WAIT : p.lowleveltimer;
+        p.lowleveltimer = (s == "low_timers_wait_for") ? WAIT_FOR : p.lowleveltimer;
+        p.lowleveltimer = (s == "low_timers_fake") ? FAKE : p.lowleveltimer;
+    }
+
+    {
+        std::string s = j.value("motion_layout", (p.motion_layout == COREXY) ? "corexy" : "cartesian");
     if (!((s == "corexy") || (s == "cartesian"))) throw std::invalid_argument("motion_layout can be only corexy or cartesian");
     p.motion_layout = (s == "corexy") ? COREXY : p.motion_layout;
     p.motion_layout = (s == "cartesian") ? CARTESIAN : p.motion_layout;
+    }
 
     p.scale = j.value("scale", p.scale);
     p.max_accelerations_mm_s2 = j.value("max_accelerations_mm_s2", p.max_accelerations_mm_s2);
@@ -220,7 +243,8 @@ bool operator==(const global& l, const global& r)
            (l.spindles == r.spindles) &&
            (l.steppers == r.steppers) &&
            (l.buttons == r.buttons) &&
-           (l.simulate_execution == r.simulate_execution);
+           (l.simulate_execution == r.simulate_execution) &&
+           (l.lowleveltimer == r.lowleveltimer);
 }
 
 bool operator==(const button& l, const button& r)

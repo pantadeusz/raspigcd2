@@ -30,6 +30,7 @@ This is simple program that uses the library. It will execute given GCode.
 #include <hardware/driver/low_buttons_fake.hpp>
 #include <hardware/driver/low_spindles_pwm_fake.hpp>
 #include <hardware/driver/low_timers_busy_wait.hpp>
+#include <hardware/driver/low_timers_wait_for.hpp>
 #include <hardware/driver/low_timers_fake.hpp>
 #include <hardware/driver/raspberry_pi.hpp>
 #include <hardware/motor_layout.hpp>
@@ -85,8 +86,14 @@ int main(int argc, char** argv)
             //std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
             std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
             motor_layout_->set_configuration(cfg);
-            stepping_simple_timer stepping(cfg, raspi3, std::make_shared<hardware::driver::low_timers_busy_wait>());
 
+            std::shared_ptr<raspigcd::hardware::low_timers>timer_drv;
+            switch (cfg.lowleveltimer) {
+                case raspigcd::configuration::low_timers_e::FAKE: timer_drv = std::make_shared<hardware::driver::low_timers_busy_wait>(); break;
+                case raspigcd::configuration::low_timers_e::BUSY_WAIT: timer_drv = std::make_shared<hardware::driver::low_timers_wait_for>(); break;
+                case raspigcd::configuration::low_timers_e::WAIT_FOR: timer_drv = std::make_shared<hardware::driver::low_timers_fake>(); break;
+            }
+            stepping_simple_timer stepping(cfg, raspi3, timer_drv);
             i++;
 
             std::ifstream gcd_file(args.at(i));

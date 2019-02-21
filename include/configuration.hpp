@@ -139,6 +139,16 @@ enum motion_layouts {
     CARTESIAN
 };
 
+
+/**
+ * possible timer source
+ */
+enum low_timers_e {
+    BUSY_WAIT,
+    WAIT_FOR,
+    FAKE
+};
+
 /**
  * how are acutators organized. CoreXY or somehow different. It also takes the scale that must be appllied to coordinates
  */
@@ -165,6 +175,7 @@ public:
  */
     double tick_duration() const; // czas ticku w sekundach. 0.00005 = 50mikrosekund
     bool simulate_execution;      // should I use simulator by default
+    low_timers_e lowleveltimer;
 
     std::vector<spindle_pwm> spindles;
     std::vector<sync_laser> lasers;
