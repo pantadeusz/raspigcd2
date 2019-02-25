@@ -66,9 +66,13 @@ int main(int argc, char** argv)
             using namespace raspigcd::hardware;
 
             std::shared_ptr<low_steppers> raspi3;
+            std::shared_ptr<low_spindles_pwm> spindles;
+
             steps_t position_for_fake;
             try {
-                raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
+                auto rp = std::make_shared<driver::raspberry_pi_3>(cfg);
+                raspi3 = rp;
+                spindles = rp;
             } catch (...) {
                 auto fk = std::make_shared<driver::inmem>();
                 fk->set_step_callback([&position_for_fake](const steps_t&st){
@@ -145,10 +149,16 @@ int main(int argc, char** argv)
                         for (auto& m : ppart) {
                             switch ((int)(m['M'])) {
                             case 17:
-                                raspi3.get()->enable_steppers({true});
+                                raspi3->enable_steppers({true});
                                 break;
                             case 18:
-                                raspi3.get()->enable_steppers({false});
+                                raspi3->enable_steppers({false});
+                                break;
+                            case 3:
+                                spindles->spindle_pwm_power(0, 1.0);
+                                break;
+                            case 5:
+                                spindles->spindle_pwm_power(0, 0.0);
                                 break;
                             }
                         }
