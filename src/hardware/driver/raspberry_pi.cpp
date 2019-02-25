@@ -115,16 +115,17 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
         INP_GPIO(sppwm.pin);
         OUT_GPIO(sppwm.pin);
         _spindle_duties.push_back(0.0);
+        spindle_pwm_power(i, 0.0);
         _spindle_threads.push_back(std::thread([this, sppwm, i]() {
             double& _duty = _spindle_duties[i];
-            {
+            /* {
                 sched_param sch_params;
                 sch_params.sched_priority = sched_get_priority_max(SCHED_RR);
 
                 if (pthread_setschedparam(pthread_self(), SCHED_RR, &sch_params)) {
                     std::cerr << "Warning: spindle_pi::configure - set realtime thread failed" << std::endl;
                 }
-            }
+            } */
             auto prevTime = std::chrono::steady_clock::now();
             while (_threads_alive) {
                 // 1
@@ -140,7 +141,6 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
                 }
             }
         }));
-        spindle_pwm_power(i, 0.0);
     }
 
     //    std::this_thread::sleep_until(std::chrono::steady_clock::now() + std::chrono::seconds(3));
