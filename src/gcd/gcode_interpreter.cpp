@@ -179,7 +179,7 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
         auto next_state = merge_blocks(current_state, ps_input);
         if (ps_input.count('G')) {
             if ((ps_input.at('G') != 0) && (ps_input.at('G') != 1)) {
-                throw std::invalid_argument("G0 or G1 should be the only type of the commands in the program for g1_move_to_g1_with_machine_limits");
+                throw std::invalid_argument("Gx should be the only type of the commands in the program for g1_move_to_g1_with_machine_limits");
             }
             //current_state
             auto A = block_to_distance_t(current_state);
@@ -232,10 +232,10 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
                 } */
             }
         } else
-            throw std::invalid_argument("G0 or G1 should be the only type of the commands in the program for g1_move_to_g1_with_machine_limits");
+            throw std::invalid_argument("Gx should be the only type of the commands in the program for g1_move_to_g1_with_machine_limits");
         current_state = next_state;
     }
-    return result;
+    return apply_limits_for_turns(result, machine_limits);
 }
 
 program_t g0_move_to_g1_sequence(const program_t& program_states,
