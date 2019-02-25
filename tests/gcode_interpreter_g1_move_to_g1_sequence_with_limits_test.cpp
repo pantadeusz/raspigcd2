@@ -28,8 +28,10 @@
 #include <hardware/driver/low_spindles_pwm_fake.hpp>
 #include <hardware/driver/low_timers_fake.hpp>
 #include <hardware/stepping.hpp>
+#include <movement/physics.hpp>
 #include <thread>
 #include <vector>
+
 
 #include "tests_helper.hpp"
 
@@ -97,14 +99,15 @@ TEST_CASE("gcode_interpreter_test - g1_move_to_g1_with_machine_limits - check if
 
 TEST_CASE("gcode_interpreter_test - g1_move_to_g1_with_machine_limits - check if machine limits are not breached", "[gcd][gcode_interpreter][g1_move_to_g1_with_machine_limits][in_limits]")
 {
+    using namespace raspigcd::movement::physics;
     configuration::limits machine_limits(
         {100, 101, 102, 103}, // acceleration
         {20, 21, 22, 23},     // max velocity
         {2, 3, 4, 5});        // no accel velocity
-    program_t program_0 = gcode_to_maps_of_arguments("G1X10F1\nG1Y20F50\nG1X0Z10F30\nG1X0Y0Z0F1");
-
-    SECTION("program without any acceleration that must be reduced")
+ 
+    SECTION("sharp turns should be performed with lower speed")
     {
+        program_t program_0 = gcode_to_maps_of_arguments("G1X10F1\nG1Y20F50\nG1X0Z10F30\nG1X0Y0Z0F1");
         auto program_0_prim = g1_move_to_g1_with_machine_limits(program_0, machine_limits);
         INFO(back_to_gcode({program_0}));
         INFO(back_to_gcode({program_0_prim}));
@@ -114,6 +117,27 @@ TEST_CASE("gcode_interpreter_test - g1_move_to_g1_with_machine_limits - check if
         REQUIRE(program_0_prim.at(1).at('F') == Approx(3.0));
         REQUIRE(program_0_prim.at(2).at('F') < 22.0);
     }
+/*
+    // double acceleration_between(const path_node_t &a, const path_node_t &b) {
+    SECTION("accelerations should fit in machine limits") {
+        program_t program_0 = gcode_to_maps_of_arguments("G1X1F1\nG1X1.5F20\nG1X2F1");
+        auto program_0_prim = g1_move_to_g1_with_machine_limits(program_0, machine_limits);
+        INFO(back_to_gcode({program_0}));
+        INFO(back_to_gcode({program_0_prim}));
+        for (unsigned i = 1; i < program_0_prim.size(); i++) {
+//            REQUIRE(program_0_prim.at(0).at('F') == Approx(1.0));
+            path_node_t p0n = {
+                .p = block_to_distance_t(program_0_prim.at(i-1)),
+                .v = program_0_prim.at(i-1)['F']};
+            path_node_t p1n = {
+                .p = block_to_distance_t(program_0_prim.at(i)),
+                .v = program_0_prim.at(i)['F']};
+            
+            double accel = acceleration_between(p0n, p1n);
+            REQUIRE(accel < 103);
+        }
+    }
+*/
 }
 
 //TEST_CASE("gcode_interpreter_test - g1_move_to_g1_with_machine_limits - check if resulting gcode is within machine limits", "[gcd][gcode_interpreter][g1_move_to_g1_with_machine_limits][in_limits]")

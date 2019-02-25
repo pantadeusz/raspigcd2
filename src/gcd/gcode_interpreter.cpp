@@ -60,12 +60,11 @@ distance_t block_to_distance_t(const block_t& block)
 /// UNTESTED
 block_t distance_to_block(const distance_t& dist)
 {
-    
     return {
-        {'X',dist[0]},
-        {'Y',dist[1]},
-        {'Z',dist[2]},
-        {'A',dist[3]},
+        {'X', dist[0]},
+        {'Y', dist[1]},
+        {'Z', dist[2]},
+        {'A', dist[3]},
     };
 }
 
@@ -76,16 +75,17 @@ distance_t blocks_to_vector_move(const block_t& block_a, const block_t& block_b)
 }
 
 
-block_t last_state_after_program_execution(const program_t &program_, const block_t &initial_state_) {
+block_t last_state_after_program_execution(const program_t& program_, const block_t& initial_state_)
+{
     block_t result = initial_state_;
     result['X'];
     result['Y'];
     result['Z'];
     result['A'];
-    for (auto e: program_) {
+    for (auto e : program_) {
         if (result.count('M')) result.erase('M');
         if (e.count('G')) {
-            if ((int)(e.at('G')) == 4 ) {
+            if ((int)(e.at('G')) == 4) {
                 e.clear(); // G4 means dwell, we don't need that
             }
         }
@@ -184,20 +184,36 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
             //current_state
             auto A = block_to_distance_t(current_state);
             auto B = block_to_distance_t(next_state);
-            auto ABvec = B-A;
+            auto ABvec = B - A;
             double s = ABvec.length();
             if (s == 0) {
                 result.push_back(next_state);
             } else {
-                result.push_back(next_state);
-                /*double a = machine_limits.proportional_max_accelerations_mm_s2(ABvec / s);
-                double max_v = machine_limits.proportional_max_velocity_mm_s(ABvec / s);
-                double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s);
-                path_node_t pnA = {.p=A,.v=min_v};
-                path_node_t pnMed = {.p=(A+B)*0.5,.v=max_v};
-                path_node_t pnB = {.p=B,.v=min_v};
-                double a_real = acceleration_between(pnA, pnMed);
-                //std::cout <<"a_real:" << a_real << " a_max" << a << std::endl;
+                if (current_state['F'] == next_state['F']) {
+                    result.push_back(next_state);
+                } else {
+                    double a = machine_limits.proportional_max_accelerations_mm_s2(ABvec / s);
+                    double max_v = machine_limits.proportional_max_velocity_mm_s(ABvec / s);
+                    double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s);
+
+                    path_node_t pnA = {.p = A, .v = current_state['F']};
+                    //path_node_t pnMed = {.p = (A + B) * 0.5, .v = std::max(current_state['F'], next_state['F'])};
+                    path_node_t pnB = {.p = B, .v = next_state['F']};
+                    double a_AB = acceleration_between(pnA, pnB);
+//                    if ((a_AB <= a) && (a_AB >= -a)) {
+                    if (a_AB <= a) { // && (a_AB >= -a)) {
+                        result.push_back(next_state);
+                    } else {
+//                         auto midblock = merge_blocks(current_state, distance_to_block(pnMed.p));
+//                         midblock['F'] = std::min(midblock['F'], );
+//                         result.push_back(midblock);
+                        //next_state['F'] = a;
+                        //next_state['F'] = 
+//                        while ((acceleration_between(pnA, pnMed) > a) || (acceleration_between(pnA, pnMed) < a)
+                        result.push_back(next_state);
+                    }
+                    //double a_AM = acceleration_between(pnA, pnMed);
+                    /*//std::cout <<"a_real:" << a_real << " a_max" << a << std::endl;
                 if (a_real >= a) {
                     auto block_A = current_state;
                     pnMed = calculate_transition_point(pnA, pnMed, a);
@@ -230,6 +246,7 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
                     block_B['F'] = min_v;
                     result.push_back(block_B);
                 } */
+                }
             }
         } else
             throw std::invalid_argument("Gx should be the only type of the commands in the program for g1_move_to_g1_with_machine_limits");
@@ -252,7 +269,7 @@ program_t g0_move_to_g1_sequence(const program_t& program_states,
             //current_state
             auto A = block_to_distance_t(current_state);
             auto B = block_to_distance_t(next_state);
-            auto ABvec = B-A;
+            auto ABvec = B - A;
             double s = ABvec.length();
             if (s == 0) {
                 result.push_back(next_state);
@@ -260,16 +277,16 @@ program_t g0_move_to_g1_sequence(const program_t& program_states,
                 double a = machine_limits.proportional_max_accelerations_mm_s2(ABvec / s);
                 double max_v = machine_limits.proportional_max_velocity_mm_s(ABvec / s);
                 double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s);
-                path_node_t pnA = {.p=A,.v=min_v};
-                path_node_t pnMed = {.p=(A+B)*0.5,.v=max_v};
-                path_node_t pnB = {.p=B,.v=min_v};
+                path_node_t pnA = {.p = A, .v = min_v};
+                path_node_t pnMed = {.p = (A + B) * 0.5, .v = max_v};
+                path_node_t pnB = {.p = B, .v = min_v};
                 double a_real = acceleration_between(pnA, pnMed);
                 //std::cout <<"a_real:" << a_real << " a_max" << a << std::endl;
                 if (a_real >= a) {
                     auto block_A = current_state;
                     pnMed = calculate_transition_point(pnA, pnMed, a);
                     //std::cout << "pnMed.v " << pnMed.v << std::endl;
-                    auto block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
+                    auto block_Med = merge_blocks(current_state, distance_to_block(pnMed.p));
                     auto block_B = next_state;
                     block_Med['F'] = pnMed.v;
                     block_Med['G'] = 1;
@@ -281,13 +298,13 @@ program_t g0_move_to_g1_sequence(const program_t& program_states,
                     auto block_A = current_state;
                     pnMed = calculate_transition_point(pnA, pnMed, a);
                     //std::cout << "pnMed.v " << pnMed.v << std::endl;
-                    auto block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
+                    auto block_Med = merge_blocks(current_state, distance_to_block(pnMed.p));
                     block_Med['F'] = pnMed.v;
                     block_Med['G'] = 1;
                     result.push_back(block_Med);
 
                     pnMed = calculate_transition_point(pnB, pnMed, a);
-                    block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
+                    block_Med = merge_blocks(current_state, distance_to_block(pnMed.p));
                     block_Med['F'] = pnMed.v;
                     block_Med['G'] = 1;
                     result.push_back(block_Med);
@@ -355,10 +372,10 @@ partitioned_program_t group_gcode_commands(const program_t& program_states, cons
             if (e.count('G')) {
                 if (generated_program.back().back().count('G')) {
                     if ((generated_program.back().back().at('G') == 0) && (e.at('G') == 0)) {
-                    //if (generated_program.back().back().at('G') == e.at('G')) {
+                        //if (generated_program.back().back().at('G') == e.at('G')) {
                         generated_program.back().push_back(e);
                     } else if ((generated_program.back().back().at('G') > 0) && (e.at('G') > 0)) {
-                    //if (generated_program.back().back().at('G') == e.at('G')) {
+                        //if (generated_program.back().back().at('G') == e.at('G')) {
                         generated_program.back().push_back(e);
                     } else {
                         generated_program.push_back({e});
