@@ -117,7 +117,7 @@ TEST_CASE("gcode_interpreter_test - g1_move_to_g1_with_machine_limits - check if
         REQUIRE(program_0_prim.at(1).at('F') == Approx(3.0));
         REQUIRE(program_0_prim.at(2).at('F') < 22.0);
     }
-/*
+
     // double acceleration_between(const path_node_t &a, const path_node_t &b) {
     SECTION("accelerations should fit in machine limits") {
         program_t program_0 = gcode_to_maps_of_arguments("G1X1F1\nG1X1.5F20\nG1X2F1");
@@ -135,9 +135,43 @@ TEST_CASE("gcode_interpreter_test - g1_move_to_g1_with_machine_limits - check if
             
             double accel = acceleration_between(p0n, p1n);
             REQUIRE(accel < 103);
+            REQUIRE(accel > -103);
         }
     }
-*/
+    // double acceleration_between(const path_node_t &a, const path_node_t &b) {
+    SECTION("sharp brake should also be well resolved") {
+        program_t program_0 = gcode_to_maps_of_arguments("G1X1F1\nG1X11.5F20\nG1X12F1");
+        auto program_0_prim = g1_move_to_g1_with_machine_limits(program_0, machine_limits);
+        INFO(back_to_gcode({program_0}));
+        INFO(back_to_gcode({program_0_prim}));
+        for (unsigned i = 1; i < program_0_prim.size(); i++) {
+//            REQUIRE(program_0_prim.at(0).at('F') == Approx(1.0));
+            path_node_t p0n = {
+                .p = block_to_distance_t(program_0_prim.at(i-1)),
+                .v = program_0_prim.at(i-1)['F']};
+            path_node_t p1n = {
+                .p = block_to_distance_t(program_0_prim.at(i)),
+                .v = program_0_prim.at(i)['F']};
+            
+            double accel = acceleration_between(p0n, p1n);
+            REQUIRE(accel < 103);
+            REQUIRE(accel > -103);
+        
+        }
+    } 
+    // double acceleration_between(const path_node_t &a, const path_node_t &b) {
+    SECTION("breaking cannot exceed speed limits") {
+        program_t program_0 = gcode_to_maps_of_arguments("G1X1F1\nG1X11.5F20\nG1X12F1");
+        auto program_0_prim = g1_move_to_g1_with_machine_limits(program_0, machine_limits);
+        INFO(back_to_gcode({program_0}));
+        INFO(back_to_gcode({program_0_prim}));
+        REQUIRE(program_0_prim.at(0)['F'] <= 1.0);
+        REQUIRE(program_0_prim.at(0)['F'] >= -1.0);
+        REQUIRE(program_0_prim.at(1)['F'] <=  20.0);
+        REQUIRE(program_0_prim.at(1)['F'] >= -20.0);
+        REQUIRE(program_0_prim.at(2)['F'] <=  1.0);
+        REQUIRE(program_0_prim.at(2)['F'] >= -1.0);
+    }
 }
 
 //TEST_CASE("gcode_interpreter_test - g1_move_to_g1_with_machine_limits - check if resulting gcode is within machine limits", "[gcd][gcode_interpreter][g1_move_to_g1_with_machine_limits][in_limits]")

@@ -170,17 +170,43 @@ program_t apply_limits_for_turns(const program_t& program_states,
 
 program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
     const configuration::limits& machine_limits,
-    block_t current_state)
+    block_t current_state0)
 {
     using namespace raspigcd::movement::physics;
     if (program_states.size() == 0) throw std::invalid_argument("there must be at least one G0 or G1 code in the program!");
     program_t result;
+    result.reserve(program_states.size()+1024);
+    block_t current_state = current_state0;
     for (const auto& ps_input : program_states) {
         auto next_state = merge_blocks(current_state, ps_input);
         if (ps_input.count('G')) {
             if ((ps_input.at('G') != 0) && (ps_input.at('G') != 1)) {
                 throw std::invalid_argument("Gx should be the only type of the commands in the program for g1_move_to_g1_with_machine_limits");
             }
+            //current_state
+            auto A = block_to_distance_t(current_state);
+            auto B = block_to_distance_t(next_state);
+            auto ABvec = B - A;
+            double s = ABvec.length();
+            if (s == 0) {
+                result.push_back(next_state);
+            } else {
+                result.push_back(next_state);
+            }
+        } else {
+            throw std::invalid_argument("Gx should be the only type of the commands in the program for g1_move_to_g1_with_machine_limits");
+        }
+        current_state = next_state;
+    }
+    result.shrink_to_fit();
+    auto result_with_limits = apply_limits_for_turns(result, machine_limits);
+
+    auto do_the_acceleration_limiting = [&machine_limits](auto program) {
+        auto current_state = program.front();
+        program_t result; 
+        for (int i = 0; i < program.size(); i ++) {
+            auto ps_input = program[i];
+            auto next_state = merge_blocks(current_state, ps_input);
             //current_state
             auto A = block_to_distance_t(current_state);
             auto B = block_to_distance_t(next_state);
@@ -197,62 +223,40 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
                     double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s);
 
                     path_node_t pnA = {.p = A, .v = current_state['F']};
-                    //path_node_t pnMed = {.p = (A + B) * 0.5, .v = std::max(current_state['F'], next_state['F'])};
                     path_node_t pnB = {.p = B, .v = next_state['F']};
                     double a_AB = acceleration_between(pnA, pnB);
-//                    if ((a_AB <= a) && (a_AB >= -a)) {
-                    if (a_AB <= a) { // && (a_AB >= -a)) {
+                    if (a_AB <= a) {
                         result.push_back(next_state);
                     } else {
-//                         auto midblock = merge_blocks(current_state, distance_to_block(pnMed.p));
-//                         midblock['F'] = std::min(midblock['F'], );
-//                         result.push_back(midblock);
-                        //next_state['F'] = a;
-                        //next_state['F'] = 
-//                        while ((acceleration_between(pnA, pnMed) > a) || (acceleration_between(pnA, pnMed) < a)
+                        double range = std::abs(acceleration_between(pnA, pnB))/2.0;
+                        for (int i = 0; i < 16; i++){
+                            auto l = std::abs(acceleration_between(pnA, pnB));
+                            auto r = std::abs(a);
+                            if (l>r) {
+                                pnB.v = (pnB.v-range)*((a > 0)?1.0:-1.0);
+                            } else if (l < r) {
+                                pnB.v = (pnB.v+range)*((a > 0)?1.0:-1.0);
+                            } else break;
+                            if (pnB.v > next_state['F']) pnB.v = next_state['F'];
+                            if (pnB.v < 0) pnB.v = 0;
+                            
+                            range = range / 2;
+                        }
+                        next_state['F'] = pnB.v;
                         result.push_back(next_state);
                     }
-                    //double a_AM = acceleration_between(pnA, pnMed);
-                    /*//std::cout <<"a_real:" << a_real << " a_max" << a << std::endl;
-                if (a_real >= a) {
-                    auto block_A = current_state;
-                    pnMed = calculate_transition_point(pnA, pnMed, a);
-                    //std::cout << "pnMed.v " << pnMed.v << std::endl;
-                    auto block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
-                    auto block_B = next_state;
-                    block_Med['F'] = pnMed.v;
-                    block_Med['G'] = 1;
-                    result.push_back(block_Med);
-                    block_B['G'] = 1;
-                    block_B['F'] = min_v;
-                    result.push_back(block_B);
-                } else {
-                    auto block_A = current_state;
-                    pnMed = calculate_transition_point(pnA, pnMed, a);
-                    //std::cout << "pnMed.v " << pnMed.v << std::endl;
-                    auto block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
-                    block_Med['F'] = pnMed.v;
-                    block_Med['G'] = 1;
-                    result.push_back(block_Med);
-
-                    pnMed = calculate_transition_point(pnB, pnMed, a);
-                    block_Med = merge_blocks(current_state,distance_to_block(pnMed.p));
-                    block_Med['F'] = pnMed.v;
-                    block_Med['G'] = 1;
-                    result.push_back(block_Med);
-
-                    auto block_B = next_state;
-                    block_B['G'] = 1;
-                    block_B['F'] = min_v;
-                    result.push_back(block_B);
-                } */
                 }
             }
-        } else
-            throw std::invalid_argument("Gx should be the only type of the commands in the program for g1_move_to_g1_with_machine_limits");
-        current_state = next_state;
-    }
-    return apply_limits_for_turns(result, machine_limits);
+            current_state = next_state;
+        }
+        return result;
+    };
+
+    std::reverse(result_with_limits.begin(), result_with_limits.end());
+    result_with_limits = do_the_acceleration_limiting(result_with_limits);
+    std::reverse(result_with_limits.begin(), result_with_limits.end());
+    result_with_limits = do_the_acceleration_limiting(result_with_limits);
+    return result_with_limits;
 }
 
 program_t g0_move_to_g1_sequence(const program_t& program_states,
