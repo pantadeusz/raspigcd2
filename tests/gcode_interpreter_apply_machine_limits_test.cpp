@@ -247,6 +247,7 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program", 
                 ))*0.5;
         REQUIRE(ret[1].at('F') == 
             Approx (target_feedrate));
+        REQUIRE (ret.size() == 3);
     }
 
     SECTION("turn of 135 deg along XY axis. The speed should be the lower of the two x and y of the no accel velocity")
