@@ -112,6 +112,7 @@ int main(int argc, char** argv)
             for (auto& ppart : program_parts) {
                 if (ppart.size() != 0) {
                     if (ppart[0].count('M') == 0) {
+                        std::cout << "G PART: " << ppart.size() << std::endl;
                         switch ((int)(ppart[0]['G'])) {
                         case 4:
                             std::cout << "Dwell not supported" << std::endl;
@@ -131,6 +132,8 @@ int main(int argc, char** argv)
                         case 1:
                             if (!raw_gcode) {
                                 // ppart = g1_moves_optimizer(ppart, cfg, machine_state);
+                                ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
+
                             }
                             auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t& result) {
@@ -146,6 +149,7 @@ int main(int argc, char** argv)
                             break;
                         }
                     } else {
+                        std::cout << "M PART: " << ppart.size() << std::endl;
                         for (auto& m : ppart) {
                             switch ((int)(m['M'])) {
                             case 17:

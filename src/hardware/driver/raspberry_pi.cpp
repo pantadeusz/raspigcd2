@@ -112,6 +112,7 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
     _threads_alive = true;
     for (unsigned i = 0; i < spindles.size(); i++) {
         auto sppwm = spindles[i];
+        std::cout << "setting pin " << sppwm.pin << " as spindle pwm output" << std::endl;
         INP_GPIO(sppwm.pin);
         OUT_GPIO(sppwm.pin);
         _spindle_duties.push_back(0.0);
@@ -134,11 +135,11 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
                     std::this_thread::sleep_until(prevTime + std::chrono::microseconds((int)(_duty * 1000000.0)));
                 }
                 if (_duty < sppwm.cycle_time_seconds) {
-                    GPIO_CLR = 1 << sppwm.pin;
                     // 0
-                    prevTime = prevTime + std::chrono::microseconds((int)(sppwm.cycle_time_seconds * 1000000.0));
-                    std::this_thread::sleep_until(prevTime);
+                    GPIO_CLR = 1 << sppwm.pin;
                 }
+                prevTime = prevTime + std::chrono::microseconds((int)(sppwm.cycle_time_seconds * 1000000.0));
+                std::this_thread::sleep_until(prevTime);
             }
         }));
     }
@@ -263,11 +264,13 @@ void raspberry_pi_3::enable_steppers(const std::vector<bool> en)
     }
 }
 
-void raspberry_pi_3::spindle_pwm_power(const int i, const double pwr)
+void raspberry_pi_3::spindle_pwm_power(const int i, const double pwr0)
 {
+    auto pwr = pwr0;
     if (pwr < 0) throw std::invalid_argument("spindle power should be 0 or more");
-    if (pwr > 1.0) throw std::invalid_argument("spindle power should be less or equal 1");
-    _spindle_duties[i] = (spindles[i].duty_max - spindles[i].duty_min) * pwr + spindles[i].duty_min;
+    if (pwr > 1.1) throw std::invalid_argument("spindle power should be less or equal 1");
+    if (pwr > 1.0) pwr = 1.0;
+    _spindle_duties[i] = (spindles.at(i).duty_max - spindles.at(i).duty_min) * pwr + spindles.at(i).duty_min;
 }
 
 } // namespace driver
