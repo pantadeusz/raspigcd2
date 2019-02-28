@@ -32,6 +32,7 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
+#include <cmath>
 
 namespace raspigcd {
 namespace gcd {
@@ -120,6 +121,7 @@ program_t apply_limits_for_turns(const program_t& program_states,
         ret_states[0]['F'] = std::min(
             machine_limits.proportional_max_no_accel_velocity_mm_s(first_diff / first_diff.length()),
             ret_states[0]['F']);
+        if (std::isnan(ret_states[0]['F'])) throw std::invalid_argument("A: ret_states[0]['F'] cannot be nan!!");
     }
     //block_t previous_block;
     if (ret_states.size() > 2) {
@@ -140,20 +142,40 @@ program_t apply_limits_for_turns(const program_t& program_states,
             double angle = B.angle(A, C);
             if (angle <= (M_PI / 2.0)) {
                 auto y = linear_interpolation(angle, 0, 0.25, M_PI / 2.0, 1);
-                if (ret_states[i]['F'] == 0.0) throw std::invalid_argument("feedrate cannot be 0");
+                if (ret_states[i]['F'] == 0.0) 
+                     throw std::invalid_argument("feedrate cannot be 0");
                 double result_f = std::min(y * std::min(
-                                                   machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / (B - A).length()),
-                                                   machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / (C - B).length())),
+                    machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / (B - A).length()),
+                    machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / (C - B).length())),
                     ret_states[i]['F']);
-
+                if (std::isnan(result_f)) throw std::invalid_argument("A: result_f cannot be nan!!");
                 ret_states[i]['F'] = result_f;
             } else {
-                auto y = linear_interpolation(angle, M_PI / 2.0, std::min(machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / (B - A).length()), machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / (C - B).length())), M_PI, std::min(machine_limits.proportional_max_velocity_mm_s((B - A) / (B - A).length()), machine_limits.proportional_max_velocity_mm_s((C - B) / (C - B).length())));
+                auto B_A = (B - A).length();
+                auto C_B = (C - B).length();
+                B_A = (B_A <= 0)?0.0000001:B_A;
+                C_B = (C_B <= 0)?0.0000001:C_B;
+                auto y = linear_interpolation(angle, 
+                    M_PI / 2.0, 
+                    std::min(
+                        machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / B_A),
+                        machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / C_B)),
+                        M_PI, 
+                        std::min(machine_limits.proportional_max_velocity_mm_s((B - A) / B_A),
+                        machine_limits.proportional_max_velocity_mm_s((C - B) / C_B)));
+                if (std::isnan(y)) y = ret_states[i]['F'];
                 if (ret_states[i]['F'] == 0.0) throw std::invalid_argument("feedrate cannot be 0");
                 double result_f =
                     std::min(y,
                         ret_states[i]['F']);
-
+                if (std::isnan(result_f)) {
+                        std::cout << y << std::endl;
+                        std::cout << machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / B_A) << std::endl;
+                        std::cout << machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / C_B) << std::endl;
+                        std::cout << machine_limits.proportional_max_velocity_mm_s((B - A) / B_A) << std::endl;
+                        std::cout << machine_limits.proportional_max_velocity_mm_s((C - B) / C_B) << std::endl;
+                    throw std::invalid_argument("B: result_f cannot be nan!");
+                    }
                 ret_states[i]['F'] = result_f;
             }
             tristate.pop_front();
@@ -161,9 +183,13 @@ program_t apply_limits_for_turns(const program_t& program_states,
     }
     {
         auto second_diff = blocks_to_vector_move(*(--(--ret_states.end())), *(--ret_states.end()));
-        (*(--ret_states.end()))['F'] = std::min(
-            machine_limits.proportional_max_no_accel_velocity_mm_s(second_diff / second_diff.length()),
-            (*(--ret_states.end()))['F']);
+        auto A = machine_limits.proportional_max_no_accel_velocity_mm_s(second_diff / second_diff.length());
+        auto B =  (*(--ret_states.end()))['F'];
+        auto ff = std::min( A, B);
+        if (std::isnan(A)) ff = B;
+        if (std::isnan(B)) ff = A;
+        if (std::isnan(ff)) throw std::invalid_argument("ff feedrate cannot be nan");
+        (*(--ret_states.end()))['F'] = ff;
     }
     return ret_states;
 }
