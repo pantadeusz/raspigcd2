@@ -225,10 +225,13 @@ int main(int argc, char** argv)
                 std::istreambuf_iterator<char>());
 
             auto program = gcode_to_maps_of_arguments(gcode_text);
+            for (auto &p: program) if (p.count('G')) if (p['G'] == 0) p['F'] = *std::max_element(std::begin(cfg.max_velocity_mm_s), std::end(cfg.max_velocity_mm_s));
             auto program_parts = group_gcode_commands(program);
             std::cout << "Initial GCODE: " << std::endl << back_to_gcode(program_parts) << std::endl;
             block_t machine_state = {{'F', 0.5}};
-
+            program_parts = insert_additional_nodes_inbetween(program_parts, machine_state, cfg);
+            std::cout << "Initial GCODE w additional parts: " << std::endl << back_to_gcode(program_parts) << std::endl;
+            
             program_t prepared_program;
             if (!raw_gcode) {
             for (auto& ppart : program_parts) {

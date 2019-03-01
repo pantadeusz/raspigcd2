@@ -52,5 +52,63 @@ TEST_CASE("gcode_interpreter_test - insert_additional_nodes_inbetween", "[gcd][g
         partitioned_program_t input = {};
         block_t initial_state = {};
         REQUIRE_NOTHROW(result = insert_additional_nodes_inbetween(input, initial_state, machine_limits));
-    }    
+    }
+    
+    SECTION("empty parameters should result in empty result")
+    {
+        partitioned_program_t result;
+        partitioned_program_t input = {};
+        block_t initial_state = {};
+        result = insert_additional_nodes_inbetween(input, initial_state, machine_limits);
+        REQUIRE(result.size() == 0);
+    }
+
+    SECTION("program without any G moves should result in the unmodified one")
+    {
+        partitioned_program_t result;
+        block_t initial_state = {};
+        auto program = gcode_to_maps_of_arguments("M17\nM18\nM5\nM3");
+        auto input = group_gcode_commands(program);
+
+        result = insert_additional_nodes_inbetween(input, initial_state, machine_limits);
+        REQUIRE(result.size() == input.size());
+        for (unsigned i = 0; i < result.size(); i++) {
+            REQUIRE(result[i] == input[i]);
+        }
+    }
+    SECTION("program without G code move that goes nowhere should result in the unmodified one")
+    {
+        partitioned_program_t result;
+        block_t initial_state = {};
+        auto program = gcode_to_maps_of_arguments("M17\nM18\nG0X0\nM5\nM3");
+        auto input = group_gcode_commands(program);
+
+        result = insert_additional_nodes_inbetween(input, initial_state, machine_limits);
+        REQUIRE(result.size() == input.size());
+        for (unsigned i = 0; i < result.size(); i++) {
+            REQUIRE(result[i] == input[i]);
+        }
+    }
+   
+    SECTION("program with G codes that moves in short distance should give additional 1 step")
+    {
+        partitioned_program_t result;
+        block_t initial_state = {};
+        auto program = gcode_to_maps_of_arguments("M17\nM18\nG0X1F100\nM5\nM3");
+        auto input = group_gcode_commands(program);
+
+        result = insert_additional_nodes_inbetween(input, initial_state, machine_limits);
+        REQUIRE(result.size() == input.size());
+        for (unsigned i = 0; i < result.size(); i++) {
+            if (i == 2) {
+                INFO(i);
+                INFO(result[i].size());
+                REQUIRE(result[i].size() == (input[i].size()+1));
+                REQUIRE(result[i][0]['G'] == input[i][0]['G']);
+                REQUIRE(result[i][1]['G'] == input[i][0]['G']);
+            } else {
+                REQUIRE(result[i].size() == input[i].size());
+            }
+        }
+    }
 }

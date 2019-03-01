@@ -82,7 +82,46 @@ block_t last_state_after_program_execution(const program_t& program_, const bloc
 
 
 partitioned_program_t insert_additional_nodes_inbetween(partitioned_program_t &partitioned_program_, const block_t &initial_state, const configuration::limits &machine_limits) {
-    return {};
+    partitioned_program_t ret;
+    auto current_state = merge_blocks({{'X',0.0},{'Y',0.0},{'Z',0.0},{'A',0.0},{'F',0.1}}, initial_state);
+    for (const auto &subprogram : partitioned_program_) {
+        if (subprogram.size() > 0) {
+            if (subprogram[0].count('G')) {
+                program_t nsubprog;
+                nsubprog.reserve(subprogram.size()*2);
+                for (const auto &block : subprogram) {
+                    std::cout << "###############  G: " << block.at('G') << " ; state: "  << current_state['G'] << std::endl;
+                    if ((block.at('G') == 0) || (block.at('G') == 1)) {
+                        auto next_state = merge_blocks(current_state, block);
+                        distance_t move_vec = blocks_to_vector_move(current_state, next_state);
+                        if (move_vec.length() == 0) {
+                            nsubprog.push_back(block);
+                        } else {
+                            move_vec = move_vec * 0.5;
+                            auto mid_state = merge_blocks(current_state, distance_to_block(block_to_distance_t(current_state) + move_vec));
+                            mid_state['G'] = next_state['G'];
+                            mid_state['F'] = std::max(next_state['F'], current_state['F']);
+                            nsubprog.push_back(mid_state);
+                            nsubprog.push_back(next_state);
+                        }
+                        current_state = next_state;
+                    } else {
+                        if (block.at('G') == 92) {
+                            current_state = merge_blocks(current_state, block);
+                            nsubprog.push_back(current_state);
+                        } else {
+                            nsubprog.push_back(block);
+                        }
+                    }
+                }
+                nsubprog.shrink_to_fit();
+                ret.push_back(nsubprog);
+            } else {
+                ret.push_back(subprogram);
+            }
+        }
+    }
+    return ret;
 }
 
 
