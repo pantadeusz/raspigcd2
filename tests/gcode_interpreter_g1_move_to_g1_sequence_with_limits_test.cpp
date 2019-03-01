@@ -119,6 +119,7 @@ TEST_CASE("gcode_interpreter_test - g1_move_to_g1_with_machine_limits - check if
     }
 
     // double acceleration_between(const path_node_t &a, const path_node_t &b) {
+        
     SECTION("accelerations should fit in machine limits") {
         program_t program_0 = gcode_to_maps_of_arguments("G1X1F1\nG1X1.5F20\nG1X2F1");
         auto program_0_prim = g1_move_to_g1_with_machine_limits(program_0, machine_limits);
@@ -138,6 +139,7 @@ TEST_CASE("gcode_interpreter_test - g1_move_to_g1_with_machine_limits - check if
             REQUIRE(accel > -103);
         }
     }
+    
     // double acceleration_between(const path_node_t &a, const path_node_t &b) {
     SECTION("sharp brake should also be well resolved") {
         program_t program_0 = gcode_to_maps_of_arguments("G1X1F1\nG1X11.5F20\nG1X12F1");

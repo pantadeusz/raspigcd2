@@ -101,7 +101,10 @@ public:
             for ( ; active; ) {
                     SDL_Event event;
                     while ( SDL_PollEvent( &event ) ) {
-                        if ( event.type == SDL_QUIT ) active = false;
+                        if ( event.type == SDL_QUIT ) {
+                            active = false;
+                            std::cout << "window closed" << std::endl;
+                        }
                     }
                     
                     SDL_SetRenderDrawColor(renderer.get(),0,0,0,255);
@@ -272,7 +275,10 @@ int main(int argc, char** argv)
                 std::istreambuf_iterator<char>());
 
             auto program = gcode_to_maps_of_arguments(gcode_text);
-            for (auto &p: program) if (p.count('G')) if (p['G'] == 0) p['F'] = *std::max_element(std::begin(cfg.max_velocity_mm_s), std::end(cfg.max_velocity_mm_s));
+            for (auto &p: program) {
+                if ((p.count('G')) && (p['G'] == 0)) 
+                    p['F'] = *std::max_element(std::begin(cfg.max_velocity_mm_s), std::end(cfg.max_velocity_mm_s));
+            }
             auto program_parts = group_gcode_commands(program);
             std::cout << "Initial GCODE: " << std::endl << back_to_gcode(program_parts) << std::endl;
             block_t machine_state = {{'F', 0.5}};
@@ -290,11 +296,11 @@ int main(int argc, char** argv)
                             std::cout << "Dwell not supported" << std::endl;
                             break;
                         case 0:
-                            ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
-                            for (auto &e : ppart) e['G'] = 0;
-                            prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
-                            machine_state = last_state_after_program_execution(ppart,machine_state);
-                            break;
+                            //ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
+                            //for (auto &e : ppart) e['G'] = 0;
+                            //prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                            //machine_state = last_state_after_program_execution(ppart,machine_state);
+                            //break;
                         case 1:
                             ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
                             prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
@@ -325,7 +331,7 @@ int main(int argc, char** argv)
             std::cout << "Prepared GCODE: " << std::endl << back_to_gcode(program_parts) << std::endl;
             machine_state = {{'F', 0.5}};
             }
-
+            std::cout << "STARTING" << std::endl;
             for (auto& ppart : program_parts) {
                 if (ppart.size() != 0) {
                     if (ppart[0].count('M') == 0) {
