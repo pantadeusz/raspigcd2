@@ -41,6 +41,7 @@ This is simple program that uses the library. It will execute given GCode.
 #include <streambuf>
 #include <string>
 #include <mutex>
+#include <future>
 
 using namespace raspigcd;
 using namespace raspigcd::hardware;
@@ -303,61 +304,62 @@ int main(int argc, char** argv)
             
             program_t prepared_program;
             if (!raw_gcode) {
-            for (auto& ppart : program_parts) {
-                if (ppart.size() != 0) {
-                    if (ppart[0].count('M') == 0) {
-                        std::cout << "G PART: " << ppart.size() << std::endl;
-                        switch ((int)(ppart[0]['G'])) {
-                        case 4:
-                            std::cout << "Dwell not supported" << std::endl;
-                            break;
-                        case 0:
-                            //ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
-                            //for (auto &e : ppart) e['G'] = 0;
-                            //prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
-                            //machine_state = last_state_after_program_execution(ppart,machine_state);
-                            //break;
-                        case 1:
-                            ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
-                            prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
-                            machine_state = last_state_after_program_execution(ppart,machine_state);
-                            break;
-                        }
-                    } else {
-                        std::cout << "M PART: " << ppart.size() << std::endl;
-                        for (auto& m : ppart) {
-                            switch ((int)(m['M'])) {
-                                case 18:
-                                case 3:
-                                case 5:
-                                case 17:
-                                prepared_program.push_back(m);
+                for (auto& ppart : program_parts) {
+                    if (ppart.size() != 0) {
+                        if (ppart[0].count('M') == 0) {
+                            std::cout << "G PART: " << ppart.size() << std::endl;
+                            switch ((int)(ppart[0]['G'])) {
+                            case 4:
+                                std::cout << "Dwell not supported" << std::endl;
                                 break;
+                            case 0:
+                                //ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
+                                //for (auto &e : ppart) e['G'] = 0;
+                                //prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                                //machine_state = last_state_after_program_execution(ppart,machine_state);
+                                //break;
+                            case 1:
+                                ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
+                                prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                                machine_state = last_state_after_program_execution(ppart,machine_state);
+                                break;
+                            }
+                        } else {
+                            std::cout << "M PART: " << ppart.size() << std::endl;
+                            for (auto& m : ppart) {
+                                switch ((int)(m['M'])) {
+                                    case 18:
+                                    case 3:
+                                    case 5:
+                                    case 17:
+                                    prepared_program.push_back(m);
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            std::cout << "Prepared GCODE NO GROUPING INIT: " << std::endl << back_to_gcode({prepared_program}) << std::endl;
-            std::cout << "Prepared GCODE INIT: " << std::endl << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
-            std::cout << "Prepared GCODE NO DUPLICATES: " << std::endl << back_to_gcode({remove_duplicate_blocks(prepared_program,{})}) << std::endl;
-            program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program,{}));
-            //program_parts = group_gcode_commands(prepared_program);
-            std::cout << "Prepared GCODE: " << std::endl << back_to_gcode(program_parts) << std::endl;
-            machine_state = {{'F', 0.5}};
-            }
+                std::cout << "Prepared GCODE NO GROUPING INIT: " << std::endl << back_to_gcode({prepared_program}) << std::endl;
+                std::cout << "Prepared GCODE INIT: " << std::endl << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
+                std::cout << "Prepared GCODE NO DUPLICATES: " << std::endl << back_to_gcode({remove_duplicate_blocks(prepared_program,{})}) << std::endl;
+                program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program,{}));
+                //program_parts = group_gcode_commands(prepared_program);
+                std::cout << "Prepared GCODE: " << std::endl << back_to_gcode(program_parts) << std::endl;
+                machine_state = {{'F', 0.5}};
+            } // if prepare paths
+            
             std::cout << "STARTING" << std::endl;
+
+            machine_state = {{'F', 0.5}};
             for (auto& ppart : program_parts) {
                 if (ppart.size() != 0) {
                     if (ppart[0].count('M') == 0) {
                         //std::cout << "G PART: " << ppart.size() << std::endl;
                         switch ((int)(ppart[0]['G'])) {
-                        case 4:
-                            std::cout << "Dwell not supported" << std::endl;
-                            break;
                         case 0:
                         case 1:
+                        case 4:
                             auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t& result) {
                                     machine_state = result;
@@ -368,7 +370,7 @@ int main(int argc, char** argv)
                                     // std::cout << std::endl;
                                 });
                             stepping.exec(m_commands);
-                            std::list<steps_t> steps = hardware_commands_to_steps(m_commands);
+                            //std::list<steps_t> steps = hardware_commands_to_steps(m_commands);
                             //std::cout << "steps: " << motor_layout_->steps_to_cartesian(steps.back()) << std::endl;
                             break;
                         }
