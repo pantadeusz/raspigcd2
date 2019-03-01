@@ -64,7 +64,7 @@ distance_t get_next_position(const distance_t &s0, const distance_t &v0, const d
 /**
  * @brief returns next velocity
  */
-distance_t get_next_velocity(const distance_t &s0, const distance_t &v0, const double &a, const double &t);
+distance_t get_next_velocity(const distance_t &v0, const double &a, const double &t);
 
 /**
  * @brief returns next velocity

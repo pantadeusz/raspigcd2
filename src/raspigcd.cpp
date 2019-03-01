@@ -80,7 +80,12 @@ public:
     video_sdl(configuration::global *cfg_, int width = 640, int height = 480) {
         cfg = cfg_;
         
-        steps_scale = {cfg->steppers[0].steps_per_mm,cfg->steppers[1].steps_per_mm,cfg->steppers[2].steps_per_mm,cfg->steppers[3].steps_per_mm};
+        steps_scale = {
+            (int)(cfg->steppers[0].steps_per_mm),
+            (int)(cfg->steppers[1].steps_per_mm),
+            (int)(cfg->steppers[2].steps_per_mm),
+            (int)(cfg->steppers[3].steps_per_mm)
+            };
         movements_track.push_back({0,0,0,0});
         loop_thread = std::thread([this,width,height](){
             std::cout << "loop thread..." << std::endl;
@@ -122,7 +127,10 @@ public:
                     for (auto e : t) {
                         SDL_RenderDrawPoint(renderer.get(), e[0]+width/2, e[1]+height/2);    
                     }
-                    SDL_RenderDrawPoint(renderer.get(), s[0]+width/2-s[2], s[1]+s[2]+height/2);
+                    SDL_SetRenderDrawColor(renderer.get(),255,128,128,255);
+                    for (int i = 0; i < std::abs(s[2]); i++ ) {
+                        SDL_RenderDrawPoint(renderer.get(), s[0]+width/2-i*(s[2]/std::abs(s[2])), s[1]+i*(s[2]/std::abs(s[2]))+height/2);
+                    }
                     //std::cout << "step.. " << s[0] << ", " << s[1] << ", " << s[2] << std::endl;
 
                     SDL_RenderPresent( renderer.get() );
@@ -153,23 +161,7 @@ public:
 /// end of visualization
 
 
-
-int main(int argc, char** argv)
-{
-    #ifdef HAVE_SDL2
-    //std::cout << "WITH SDL!!! " << std::endl;
-    if ( SDL_Init( SDL_INIT_VIDEO ) != 0 ) throw std::invalid_argument ( "SDL_Init" );
-    #endif
-
-    using namespace std::chrono_literals;
-    std::vector<std::string> args(argv, argv + argc);
-    configuration::global cfg;
-    cfg.load_defaults();
-
-    bool raw_gcode = false; // should I push G commands directly, without adaptation to machine
-
-    for (unsigned i = 1; i < args.size(); i++) {
-        if ((args.at(i) == "-h") || (args.at(i) == "--help")) {
+void help_text(const std::vector<std::string> &args) {
             std::cout << "NAME" << std::endl;
             std::cout << "\t" << args[0] << " - raspigcd runner program." << std::endl;
             std::cout << std::endl;
@@ -215,7 +207,25 @@ int main(int argc, char** argv)
             std::cout << "\t" << std::endl;
             std::cout << "\tYou should have received a copy of the GNU Affero General Public License" << std::endl;
             std::cout << "\talong with this program.  If not, see <https://www.gnu.org/licenses/>." << std::endl;
+}
 
+int main(int argc, char** argv)
+{
+    #ifdef HAVE_SDL2
+    //std::cout << "WITH SDL!!! " << std::endl;
+    if ( SDL_Init( SDL_INIT_VIDEO ) != 0 ) throw std::invalid_argument ( "SDL_Init" );
+    #endif
+
+    using namespace std::chrono_literals;
+    std::vector<std::string> args(argv, argv + argc);
+    configuration::global cfg;
+    cfg.load_defaults();
+
+    bool raw_gcode = false; // should I push G commands directly, without adaptation to machine
+
+    for (unsigned i = 1; i < args.size(); i++) {
+        if ((args.at(i) == "-h") || (args.at(i) == "--help")) {
+            help_text(args);
         } else if (args.at(i) == "-c") {
             i++;
             cfg.load(args.at(i));
@@ -391,126 +401,6 @@ int main(int argc, char** argv)
     #ifdef HAVE_SDL2
     SDL_Quit();
     #endif
-    /*raspigcd::gcd::gcode_interpreter_objects_t objs{};
-    objs.motor_layout = hardware::motor_layout::get_instance(cfg);
-    objs.configuration.motion_layout = cfg.motion_layout;
-    objs.configuration.scale = cfg.scale;
-    objs.configuration.steppers = cfg.steppers;
-    objs.configuration = cfg;
-    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers);
-
-
-    try {
-        auto hardware_driver = std::make_shared< driver::raspberry_pi_3>(cfg);
-        objs.steppers = hardware_driver;
-        objs.buttons = hardware_driver;
-        objs.spindles_pwm = hardware_driver;
-        objs.timers = hardware_driver;
-    } catch ( ... ) {
-        std::cout << "falling back to emulation of hardware motors..." << std::endl;
-        objs.steppers = std::make_shared< driver::inmem>();
-        objs.buttons = std::make_shared<hardware::driver::low_buttons_fake>();
-        objs.spindles_pwm = std::make_shared<hardware::driver::low_spindles_pwm_fake>();
-        objs.timers = std::make_shared<hardware::driver::low_timers_fake>();
-    }
-    objs.stepping = std::make_shared<hardware::stepping_simple_timer>(objs.configuration, objs.steppers);
-    
-    raspigcd::gcd::path_intent_executor executor;
-    executor.set_gcode_interpreter_objects(objs);
-    */
-    /*
-    std::shared_ptr<raspigcd::gcd::path_intent_executor> executor_p = gcd::path_intent_executor_factory(cfg, gcd::machine_driver_selection::RASPBERRY_PI);
-    auto& executor = *(executor_p.get());
-    auto result = executor.execute(
-        {
-            movement::path_intentions::motor_t{.delay_s = 0.5, .motor = {true, true, true, true}},
-            movement::path_intentions::spindle_t{.delay_s = 0.0001, .spindle = {{0, 1.0}}},
-            distance_t{0, 0, 0, 0},
-            movement::path_intentions::move_t(20.0),
-            distance_t{20, 0, 20, 0},
-            movement::path_intentions::spindle_t{.delay_s = 0.01, .spindle = {{0, 0.0}}},
-            distance_t{20, 0, 20, 0},
-            movement::path_intentions::move_t(20.0),
-            distance_t{0, 0, 0, 0},
-            movement::path_intentions::motor_t{.delay_s = 0.001, .motor = {false, false, false, false}},
-        });
-*/
 
     return 0;
 }
-
-/*
-int main_spindle_test()
-{
-    using namespace std::chrono_literals;
-
-    configuration::global cfg;
-    cfg.load_defaults();
-    std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
-
-    raspi3.get()->enable_steppers({true});
-
-    std::this_thread::sleep_for(3s);
-    raspi3.get()->spindle_pwm_power(0, 1);
-    std::this_thread::sleep_for(3s);
-    raspi3.get()->spindle_pwm_power(0, 0);
-
-    raspi3.get()->enable_steppers({false});
-    return 0;
-}
-
-
-int main_old2()
-{
-    using namespace std::chrono_literals;
-
-    configuration::global cfg;
-    cfg.load_defaults();
-    std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
-    std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
-    ;
-    movement::steps_generator steps_generator_drv(motor_layout_);
-    stepping_simple_timer stepping(cfg, raspi3, std::make_shared<hardware::driver::low_timers_busy_wait>());
-
-    raspi3.get()->enable_steppers({true});
-
-    auto commands = steps_generator_drv.movement_from_to({0, 0, 0, 0}, {.v0 = 30, .accel = 0, .max_v = 30}, {0, 0, 2, 0}, cfg.tick_duration());
-    stepping.exec(commands);
-    commands = steps_generator_drv.movement_from_to({0, 0, 2, 0}, {.v0 = 30, .accel = 0, .max_v = 30}, {0, 0, 0, 0}, cfg.tick_duration());
-    stepping.exec(commands);
-
-
-    raspi3.get()->enable_steppers({false});
-    return 0;
-}
-
-int main_old()
-{
-    using namespace std::chrono_literals;
-
-    configuration::global cfg;
-    cfg.load_defaults();
-    driver::raspberry_pi_3 raspi3(cfg);
-    raspi3.enable_steppers({true});
-    for (int i = 0; i < cfg.steppers[2].steps_per_mm * 2; i++) {
-        single_step_command cmnd[4];
-        cmnd[3].step = 0;
-        cmnd[0] = cmnd[1] = cmnd[2] = cmnd[3];
-        cmnd[2].step = 1;
-        cmnd[2].dir = 1;
-        raspi3.do_step(cmnd);
-        std::this_thread::sleep_for(1ms);
-    }
-    for (int i = 0; i < cfg.steppers[2].steps_per_mm * 2; i++) {
-        single_step_command cmnd[4];
-        cmnd[3].step = 0;
-        cmnd[0] = cmnd[1] = cmnd[2] = cmnd[3];
-        cmnd[2].step = 1;
-        cmnd[2].dir = 0;
-        raspi3.do_step(cmnd);
-        std::this_thread::sleep_for(6ms);
-    }
-    raspi3.enable_steppers({false});
-    return 0;
-}
-*/

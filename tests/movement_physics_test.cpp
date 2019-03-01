@@ -115,7 +115,7 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
         const distance_t v0(0, 0, 0, 0);
         const double a = 0;
         const double t = 2;
-        distance_t result = get_next_velocity(s0, v0, a, t);
+        distance_t result = get_next_velocity(v0, a, t);
         REQUIRE(cmp_approx(result, v0));
     }
 
@@ -127,7 +127,7 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
             v0[i] = 1.0;
             const double a = 0;
             const double t = 2;
-            distance_t result = get_next_velocity(s0, v0, a, t);
+            distance_t result = get_next_velocity(v0, a, t);
             distance_t expected = v0;
             REQUIRE(cmp_approx(result, expected));
         }
@@ -143,7 +143,7 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
             const double t = 2;
             INFO(v0);
             INFO(a);
-            distance_t result = get_next_velocity(s0, v0, a, t);
+            distance_t result = get_next_velocity(v0, a, t);
             distance_t expected = v0;
             expected[i] += a * t;
             REQUIRE(cmp_approx(result, expected));
@@ -158,7 +158,7 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
         const double t = 5;
         INFO(v0);
         INFO(a);
-        auto end_v = get_next_velocity(s0, v0, a, t);
+        auto end_v = get_next_velocity(v0, a, t);
         INFO(end_v);
         double result = std::sqrt(end_v.length2());
         double expected = 0.0;

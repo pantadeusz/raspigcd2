@@ -66,13 +66,11 @@ std::vector<std::vector<int>> simulate_moves_on_image(const program_t& prg, cons
         distance_t p1 = block_to_distance_t(new_state);
 
 
-        double v0 = 1;
         distance_t vp = p1 - p0;
         double s = std::sqrt(vp.length2()); ///< summary distance to go
         distance_t vp_v = vp / s;
 
         //double T = s / v0;
-        double a = 0;
         for (int i = 0; i < s * 10; ++i) {
             auto pos = p0 + vp_v * i;
             ret.at(pos[1]).at(pos[0]) = pos[2];
@@ -111,13 +109,10 @@ std::vector<std::vector<int>> simulate_moves_on_image(const raspigcd::hardware::
         distance_t p1 = new_state;
 
 
-        double v0 = 1;
         distance_t vp = p1 - p0;
         double s = std::sqrt(vp.length2()); ///< summary distance to go
         distance_t vp_v = vp / s;
 
-        //double T = s / v0;
-        double a = 0;
         for (int i = 0; i < s * 10; ++i) {
             auto pos = p0 + vp_v * i;
             ret.at(pos[1]).at(pos[0]) = pos[2];
@@ -151,6 +146,7 @@ std::vector<std::vector<int>> load_image(std::string filename)
     lodepng::load_file(buffer, filename);
     unsigned w, h;
     unsigned error = lodepng::decode(image, w, h, buffer);
+    if (error) std::cerr << "error loading image " << filename << std::endl;
     std::vector<std::vector<int>> ret;
     ret.reserve(h);
     for (unsigned int y = 0; y < h; y++) {

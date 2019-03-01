@@ -43,7 +43,7 @@ distance_t get_next_position(const distance_t &s0, const distance_t &v0, const d
     return s1;
 }
 
-distance_t get_next_velocity(const distance_t &s0, const distance_t &v0, const double &a, const double &t) {
+distance_t get_next_velocity( const distance_t &v0, const double &a, const double &t) {
     auto l = std::sqrt(v0.length2());
     if (l == 0.0) return v0;
     distance_t a_= (v0/l)*a;
@@ -85,13 +85,11 @@ double acceleration_between(const path_node_t &a, const path_node_t &b) {
     if (s == 0) throw std::invalid_argument("cannot do infinite accelerations");
     
     double a_min = -10000000.0, a_max= 10000000.0;
-    double tt = 0;
     for (int n = 0; n < 82; n++) {
         double acc = (a_max + a_min)/2.0;
         double t = 0.0;
         if (acc != 0.0) {
             t = std::abs((b.v-a.v)/acc);
-            tt = t;
             double s1 = a.v * t + acc*t*t/2.0;
             //std::cout << "********s1 = " << s1 << " ?? " << s  << "  acc: " << acc << std::endl;
             double mx = (dv >= 0)?1:-1;
