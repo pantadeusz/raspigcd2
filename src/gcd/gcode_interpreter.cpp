@@ -108,7 +108,7 @@ partitioned_program_t insert_additional_nodes_inbetween(partitioned_program_t &p
                                 max_accel);
                              move_vec = move_vec * 0.5;
                             if ((transition_point.p-a.p).length() < move_vec.length()) {
-                                std::cout << "a.p " << a.p << "  transition_point.p " << transition_point.p << "   b.p " << b.p << std::endl;
+                                //std::cout << "a.p " << a.p << "  transition_point.p " << transition_point.p << "   b.p " << b.p << std::endl;
                                 auto nmvect = (move_vec/move_vec.length())*(transition_point.p-a.p).length();
                                 auto mid_state_a = merge_blocks(current_state, distance_to_block(a.p + nmvect));
                                 auto mid_state_b = merge_blocks(current_state, distance_to_block(b.p - nmvect));
