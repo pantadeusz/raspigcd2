@@ -106,6 +106,34 @@ TEST_CASE("gcode_interpreter_test - insert_additional_nodes_inbetween", "[gcd][g
                 REQUIRE(result[i].size() == (input[i].size()+1));
                 REQUIRE(result[i][0]['G'] == input[i][0]['G']);
                 REQUIRE(result[i][1]['G'] == input[i][0]['G']);
+                REQUIRE(result[i][0]['F'] == input[i][0]['F']);
+                REQUIRE(result[i][1]['F'] == input[i][0]['F']);
+            } else {
+                REQUIRE(result[i].size() == input[i].size());
+            }
+        }
+    }
+
+    SECTION("program with G codes that moves in long distance should give additional 2 steps")
+    {
+        partitioned_program_t result;
+        block_t initial_state = {};
+        auto program = gcode_to_maps_of_arguments("M17\nM18\nG0X100F100\nM5\nM3");
+        auto input = group_gcode_commands(program);
+
+        result = insert_additional_nodes_inbetween(input, initial_state, machine_limits);
+        REQUIRE(result.size() == input.size());
+        for (unsigned i = 0; i < result.size(); i++) {
+            if (i == 2) {
+                INFO(i);
+                INFO(result[i].size());
+                REQUIRE(result[i].size() == (input[i].size()+2));
+                REQUIRE(result[i][0]['G'] == input[i][0]['G']);
+                REQUIRE(result[i][1]['G'] == input[i][0]['G']);
+                REQUIRE(result[i][2]['G'] == input[i][0]['G']);
+                REQUIRE(result[i][0]['F'] == input[i][0]['F']);
+                REQUIRE(result[i][1]['F'] == input[i][0]['F']);
+                REQUIRE(result[i][2]['F'] == input[i][0]['F']);
             } else {
                 REQUIRE(result[i].size() == input[i].size());
             }

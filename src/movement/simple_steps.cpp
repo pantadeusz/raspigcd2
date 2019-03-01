@@ -41,6 +41,8 @@ int steps_remaining(const steps_t& steps_, const steps_t& destination_steps_)
     return ret;
 }
 
+//bool 
+
 hardware::multistep_commands_t collapse_repeated_steps(
     const std::list<hardware::multistep_command>& ret
     ) 
@@ -51,14 +53,7 @@ hardware::multistep_commands_t collapse_repeated_steps(
     // repeated commands should be one with apropriate count
     for (auto& e : ret) {
         if (e.count > 0) {
-            if ((ret_vect.size() == 0) || 
-                !(
-                    (e.b[0] == ret_vect.back().b[0]) &&
-                    (e.b[1] == ret_vect.back().b[1]) &&
-                    (e.b[2] == ret_vect.back().b[2]) &&
-                    (e.b[3] == ret_vect.back().b[3])
-                )
-                ) {
+            if ((ret_vect.size() == 0) || !(multistep_command_same_command( e, ret_vect.back()))) {
                 ret_vect.push_back(e);
             } else {
                 if (ret_vect.back().count > 0x0fffffff) {

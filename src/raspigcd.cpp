@@ -323,7 +323,7 @@ int main(int argc, char** argv)
                 }
             }
 
-
+            std::cout << "Prepared GCODE NO GROUPING INIT: " << std::endl << back_to_gcode({prepared_program}) << std::endl;
             std::cout << "Prepared GCODE INIT: " << std::endl << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
             std::cout << "Prepared GCODE NO DUPLICATES: " << std::endl << back_to_gcode({remove_duplicate_blocks(prepared_program,{})}) << std::endl;
             program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program,{}));
@@ -345,6 +345,7 @@ int main(int argc, char** argv)
                             auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t& result) {
                                     machine_state = result;
+                                    // std::cout << "____ program_to_steps:";
                                     // for (auto& s : machine_state) {
                                     //     std::cout << s.first << ":" << s.second << " ";
                                     // }
@@ -375,11 +376,11 @@ int main(int argc, char** argv)
                         }
                     }
                 }
-                std::cout << "[MS] Machine state" << std::endl;
-                for (auto& s : machine_state) {
-                    std::cout << s.first << ":" << s.second << " ";
-                }
-                std::cout << "  OK" << std::endl;
+                //std::cout << "[MS] Machine state:  ";
+                //for (auto& s : machine_state) {
+                //    std::cout << s.first << ":" << s.second << " ";
+                //}
+                //std::cout << "  OK" << std::endl;
                 if (video.get() != nullptr) {
                     if (!(video->active)) break;
                 }

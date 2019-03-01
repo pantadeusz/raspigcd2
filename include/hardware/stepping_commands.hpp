@@ -44,6 +44,14 @@ inline bool operator==(const single_step_command &a, const single_step_command &
     //return *(char*)&a == *(char*)&b;
 }
 
+/**
+ * @brief Compares the steps command. Ignore count
+ */
+inline bool multistep_command_same_command(const multistep_command &a, const multistep_command &b) {
+    for (unsigned i = 0; i < RASPIGCD_HARDWARE_DOF; i++) if (!(a.b[i] == b.b[i])) return false;
+    return true;
+}
+
 } // namespace hardware
 } // namespace raspigcd
 

@@ -82,6 +82,7 @@ block_t last_state_after_program_execution(const program_t& program_, const bloc
 
 
 partitioned_program_t insert_additional_nodes_inbetween(partitioned_program_t &partitioned_program_, const block_t &initial_state, const configuration::limits &machine_limits) {
+    using namespace raspigcd::movement::physics;
     partitioned_program_t ret;
     auto current_state = merge_blocks({{'X',0.0},{'Y',0.0},{'Z',0.0},{'A',0.0},{'F',0.1}}, initial_state);
     for (const auto &subprogram : partitioned_program_) {
@@ -97,13 +98,32 @@ partitioned_program_t insert_additional_nodes_inbetween(partitioned_program_t &p
                         if (move_vec.length() == 0) {
                             nsubprog.push_back(block);
                         } else {
-                            move_vec = move_vec * 0.5;
-                            auto mid_state = merge_blocks(current_state, distance_to_block(block_to_distance_t(current_state) + move_vec));
-                            mid_state['G'] = next_state['G'];
-                            mid_state['F'] = std::max(next_state['F'], current_state['F']);
-                            nsubprog.push_back(mid_state);
-                            nsubprog.push_back(next_state);
-                        }
+                            double max_accel = machine_limits.proportional_max_accelerations_mm_s2(move_vec);
+                            double max_no_acc_v = machine_limits.proportional_max_no_accel_velocity_mm_s(move_vec);
+                            path_node_t a = {block_to_distance_t(current_state),max_no_acc_v};//current_state['F']};
+                            path_node_t b = {block_to_distance_t(next_state),next_state['F']};
+                            path_node_t transition_point = calculate_transition_point(
+                                a, 
+                                b, 
+                                max_accel);
+                             move_vec = move_vec * 0.5;
+                            if ((transition_point.p-a.p).length() < move_vec.length()) {
+                                std::cout << "a.p " << a.p << "  transition_point.p " << transition_point.p << "   b.p " << b.p << std::endl;
+                                auto nmvect = (move_vec/move_vec.length())*(transition_point.p-a.p).length();
+                                auto mid_state_a = merge_blocks(current_state, distance_to_block(a.p + nmvect));
+                                auto mid_state_b = merge_blocks(current_state, distance_to_block(b.p - nmvect));
+                                mid_state_a['F'] = mid_state_b['F'] = std::max(next_state['F'], current_state['F']);
+                                mid_state_a['G'] = mid_state_b['G'] = next_state['G'];
+                                nsubprog.push_back(mid_state_a);
+                                nsubprog.push_back(mid_state_b);
+                                nsubprog.push_back(next_state);
+                            } else {
+                                auto mid_state = merge_blocks(current_state, distance_to_block(block_to_distance_t(current_state) + move_vec));
+                                mid_state['G'] = next_state['G'];
+                                mid_state['F'] = std::max(next_state['F'], current_state['F']);
+                                nsubprog.push_back(mid_state);
+                                nsubprog.push_back(next_state);
+                            }                        }
                         current_state = next_state;
                     } else {
                         if (block.at('G') == 92) {
@@ -335,7 +355,7 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
                     path_node_t pnA = {.p = A, .v = current_state['F']};
                     path_node_t pnB = {.p = B, .v = next_state['F']};
                     double a_AB = acceleration_between(pnA, pnB);
-                    if( (a_AB >= (-std::abs(max_a))) &&  (a_AB <= std::abs(max_a))) {
+                    if( (a_AB > (-std::abs(max_a))) &&  (a_AB < std::abs(max_a))) {
                         result.push_back(next_state);
                     } else {
                         double range = std::abs(acceleration_between(pnA, pnB))/2.0;
@@ -347,8 +367,12 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
                             } else if (l < r) {
                                 pnB.v = (pnB.v+range)*((max_a > 0)?1.0:-1.0);
                             } else break;
-                            if (pnB.v > next_state['F']) pnB.v = next_state['F'];
-                            if (pnB.v < 0) pnB.v = 0;
+                            if (pnB.v > next_state['F']) {
+                                pnB.v = next_state['F'];
+                            }
+                            if (pnB.v < 0.01) {
+                                pnB.v = 0.01;
+                            }
                             
                             range = range / 2;
                         }

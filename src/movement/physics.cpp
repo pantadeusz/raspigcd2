@@ -131,11 +131,11 @@ path_node_t calculate_transition_point(const path_node_t &a, const path_node_t &
     if (vf2 > 0) ret.v = std::sqrt(vf2);
     if (((ret.v > b.v) && (acceleration > 0)) ||
        ((vf2 < 0) && (acceleration < 0))) {
-        //std::cout << "A: v final " << (ret.v) << " pos: " <<ret.p << std::endl;
+        std::cout << "A: v final " << (ret.v) << " pos: " <<ret.p << std::endl;
         // v=s/t
         // a = v2-v1/t => t = v2-v1/a
         double t = (b.v-a.v)/acceleration;
-//        std::cout << t << std::endl;
+        std::cout << t << std::endl;
         double s = a.v * t + acceleration*t*t/2.0;
         ret.v = b.v;
         ret.p = a.p + (b.p-a.p)/(b.p-a.p).length() *s;
