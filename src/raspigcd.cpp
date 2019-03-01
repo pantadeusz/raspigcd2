@@ -154,7 +154,7 @@ public:
 int main(int argc, char** argv)
 {
     #ifdef HAVE_SDL2
-    std::cout << "WITH SDL!!! " << std::endl;
+    //std::cout << "WITH SDL!!! " << std::endl;
     if ( SDL_Init( SDL_INIT_VIDEO ) != 0 ) throw std::invalid_argument ( "SDL_Init" );
     #endif
 
@@ -169,22 +169,31 @@ int main(int argc, char** argv)
         if ((args.at(i) == "-h") || (args.at(i) == "--help")) {
             std::cout << "NAME" << std::endl;
             std::cout << "\t" << args[0] << " - raspigcd runner program." << std::endl;
+            std::cout << std::endl;
             std::cout << "SYNOPSIS" << std::endl;
             std::cout << "\t" << args[0] << " [options]" << std::endl;
+            std::cout << std::endl;
             std::cout << "DESCRIPTION" << std::endl;
             std::cout << "\tIt allows for execution of gcode on Raspberry Pi and simulation of such on desktop." << std::endl;
-            std::cout << "\t-c" << std::endl;
+            std::cout << std::endl;
+            std::cout << "\t-c <configfile>" << std::endl;
             std::cout << "\t\tprovide configuration file json" << std::endl;
+            std::cout << std::endl;
             std::cout << "\t-f <filename>" << std::endl;
             std::cout << "\t\tgcode file to execute" << std::endl;
+            std::cout << std::endl;
             std::cout << "\t-h" << std::endl;
             std::cout << "\t\thelp screen" << std::endl;
+            std::cout << std::endl;
             std::cout << "\t--raw" << std::endl;
             std::cout << "\t\tTreat the file as raw - no additional processing. No limits check." << std::endl;
+            std::cout << std::endl;
             std::cout << "AUTHOR" << std::endl;
             std::cout << "\tTadeusz Puźniakowski" << std::endl;
+            std::cout << std::endl;
             std::cout << "REPORTING BUGS" << std::endl;
             std::cout << "\tOnline at <https://github.com/pantadeusz/raspigcd2>" << std::endl;
+            std::cout << std::endl;
             std::cout << "COPYRIGHT" << std::endl;
             std::cout << "\t" << std::endl;
             std::cout << "\tRaspberry Pi G-CODE interpreter" << std::endl;
