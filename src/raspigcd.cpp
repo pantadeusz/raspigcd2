@@ -40,14 +40,124 @@ This is simple program that uses the library. It will execute given GCode.
 #include <fstream>
 #include <streambuf>
 #include <string>
+#include <mutex>
 
 using namespace raspigcd;
 using namespace raspigcd::hardware;
 using namespace raspigcd::gcd;
 
+/// Visualization part
+
+#ifdef HAVE_SDL2
+
+#include <SDL2/SDL.h>
+class video_sdl {
+public:
+    std::shared_ptr<SDL_Window> window;
+    std::shared_ptr<SDL_Renderer> renderer;
+
+    std::atomic<bool> active;
+
+    std::thread loop_thread;
+
+    steps_t current_steps;
+
+    std::list<steps_t> movements_track;
+    steps_t steps_scale;
+
+    std::mutex list_mutex;
+    configuration::global *cfg;
+
+    void set_steps(const steps_t&st) {
+        std::lock_guard<std::mutex> guard(list_mutex);
+        current_steps = st/steps_scale;
+        if (!(movements_track.back() == current_steps)) {
+            movements_track.push_back(current_steps);    
+        }
+
+    }
+
+    video_sdl(configuration::global *cfg_, int width = 640, int height = 480) {
+        cfg = cfg_;
+        
+        steps_scale = {cfg->steppers[0].steps_per_mm,cfg->steppers[1].steps_per_mm,cfg->steppers[2].steps_per_mm,cfg->steppers[3].steps_per_mm};
+        movements_track.push_back({0,0,0,0});
+        loop_thread = std::thread([this,width,height](){
+            std::cout << "loop thread..." << std::endl;
+
+            SDL_Window *win = SDL_CreateWindow( "Witaj w Swiecie",
+                                                SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                                width, height, SDL_WINDOW_SHOWN );
+            if ( win == nullptr ) throw std::invalid_argument ( "SDL_CreateWindow - error" );
+            window = std::shared_ptr<SDL_Window> ( win, []( SDL_Window * ptr ) {
+                SDL_DestroyWindow( ptr );
+            } );
+            
+            SDL_Renderer *ren = SDL_CreateRenderer( window.get(), -1, SDL_RENDERER_ACCELERATED );
+            if ( ren == nullptr ) throw std::invalid_argument ( "SDL_CreateRenderer" );
+            renderer = std::shared_ptr<SDL_Renderer> ( ren, []( SDL_Renderer * ptr ) {
+                SDL_DestroyRenderer( ptr );
+            } );
+            for ( ; active; ) {
+                    SDL_Event event;
+                    while ( SDL_PollEvent( &event ) ) {
+                        if ( event.type == SDL_QUIT ) active = false;
+                    }
+                    
+                    SDL_SetRenderDrawColor(renderer.get(),0,0,0,255);
+                    SDL_RenderClear( renderer.get() );
+                    
+                    SDL_SetRenderDrawColor(renderer.get(),255,255,255,255);
+                    steps_t s;
+                    std::list<steps_t> t;
+
+                    {
+                    std::lock_guard<std::mutex> guard(list_mutex);
+                    s = current_steps;
+                    t = movements_track;
+                    }
+                    for (auto e : t) {
+                        SDL_RenderDrawPoint(renderer.get(), e[0]+width/2, e[1]+height/2);    
+                    }
+                    SDL_RenderDrawPoint(renderer.get(), s[0]+width/2-s[2], s[1]+s[2]+height/2);
+                    //std::cout << "step.. " << s[0] << ", " << s[1] << ", " << s[2] << std::endl;
+
+                    SDL_RenderPresent( renderer.get() );
+                    SDL_Delay( 33 );
+                    
+            }
+        });
+
+    }
+    virtual ~video_sdl(){
+        //active = false;
+        loop_thread.join();
+    }
+};
+
+#else
+class video_sdl {
+public:
+    void set_steps(const steps_t&st) {
+    }
+
+    video_sdl(configuration::global *cfg_, int width = 640, int height = 480) {
+    }
+    virtual ~video_sdl(){
+    }
+};
+#endif
+/// end of visualization
+
+
 
 int main(int argc, char** argv)
 {
+    #ifdef HAVE_SDL2
+    std::cout << "WITH SDL!!! " << std::endl;
+    if ( SDL_Init( SDL_INIT_VIDEO ) != 0 ) throw std::invalid_argument ( "SDL_Init" );
+    #endif
+
     using namespace std::chrono_literals;
     std::vector<std::string> args(argv, argv + argc);
     configuration::global cfg;
@@ -67,25 +177,34 @@ int main(int argc, char** argv)
 
             std::shared_ptr<low_steppers> raspi3;
             std::shared_ptr<low_spindles_pwm> spindles;
-
+            std::shared_ptr<video_sdl> video;
             steps_t position_for_fake;
             try {
                 auto rp = std::make_shared<driver::raspberry_pi_3>(cfg);
                 raspi3 = rp;
                 spindles = rp;
             } catch (...) {
+                video = std::make_shared<video_sdl>(&cfg);
                 auto fk = std::make_shared<driver::inmem>();
-                fk->set_step_callback([&position_for_fake](const steps_t&st){
-                    // if (!(position_for_fake == st)) {
-                    //     std::cout << ";; " 
-                    //     << st[0] << " " 
-                    //     << st[1] << " " 
-                    //     << st[2] << std::endl;
-                    // }
+                fk->set_step_callback([&position_for_fake, &video](const steps_t&st){
+                    //if (!(position_for_fake == st)) {
+                    //    std::cout << ";; " 
+                    //    << st[0] << " " 
+                    //    << st[1] << " " 
+                    //    << st[2] << std::endl;
+                    //}
+                    if (!(position_for_fake == st)) {
+                        if (video.get() != nullptr) video->set_steps(st);
+                    }
                     position_for_fake = st;
                     //
                 });
                 raspi3 = fk;
+                spindles = std::make_shared<raspigcd::hardware::driver::low_spindles_pwm_fake>(
+                    [](const int s_i, const double p_i){
+                        std::cout << "SPINDLE " << s_i << " POWER: " << p_i << std::endl;
+                    }
+                );
             }
             //std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
             std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
@@ -93,13 +212,13 @@ int main(int argc, char** argv)
 
             std::shared_ptr<raspigcd::hardware::low_timers>timer_drv;
             switch (cfg.lowleveltimer) {
-                case raspigcd::configuration::low_timers_e::FAKE: timer_drv = std::make_shared<hardware::driver::low_timers_busy_wait>(); break;
+                case raspigcd::configuration::low_timers_e::WAIT_FOR: timer_drv = std::make_shared<hardware::driver::low_timers_busy_wait>(); break;
                 case raspigcd::configuration::low_timers_e::BUSY_WAIT: timer_drv = std::make_shared<hardware::driver::low_timers_wait_for>(); break;
-                case raspigcd::configuration::low_timers_e::WAIT_FOR: timer_drv = std::make_shared<hardware::driver::low_timers_fake>(); break;
+                case raspigcd::configuration::low_timers_e::FAKE: timer_drv = std::make_shared<hardware::driver::low_timers_fake>(); break;
             }
             stepping_simple_timer stepping(cfg, raspi3, timer_drv);
-            i++;
 
+            i++;
             std::ifstream gcd_file(args.at(i));
             if (!gcd_file.is_open()) throw std::invalid_argument("file should be opened");
             std::string gcode_text((std::istreambuf_iterator<char>(gcd_file)),
@@ -107,8 +226,11 @@ int main(int argc, char** argv)
 
             auto program = gcode_to_maps_of_arguments(gcode_text);
             auto program_parts = group_gcode_commands(program);
-
+            std::cout << "Initial GCODE: " << std::endl << back_to_gcode(program_parts) << std::endl;
             block_t machine_state = {{'F', 0.5}};
+
+            program_t prepared_program;
+            if (!raw_gcode) {
             for (auto& ppart : program_parts) {
                 if (ppart.size() != 0) {
                     if (ppart[0].count('M') == 0) {
@@ -118,23 +240,52 @@ int main(int argc, char** argv)
                             std::cout << "Dwell not supported" << std::endl;
                             break;
                         case 0:
-                            if (!raw_gcode) {
-                                ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
-                            }
-                            std::cout << "g0 -> g1: ";
-                            for (auto& ms : ppart) {
-                                for (auto& s : ms) {
-                                    std::cout << s.first << ":" << s.second << " ";
-                                }
-                                std::cout << std::endl;
-                            }
-                            [[fallthrough]];
+                            ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
+                            for (auto &e : ppart) e['G'] = 0;
+                            prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                            machine_state = last_state_after_program_execution(ppart,machine_state);
+                            break;
                         case 1:
-                            if (!raw_gcode) {
-                                // ppart = g1_moves_optimizer(ppart, cfg, machine_state);
-                                ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
-
+                            ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
+                            prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                            machine_state = last_state_after_program_execution(ppart,machine_state);
+                            break;
+                        }
+                    } else {
+                        std::cout << "M PART: " << ppart.size() << std::endl;
+                        for (auto& m : ppart) {
+                            switch ((int)(m['M'])) {
+                                case 18:
+                                case 3:
+                                case 5:
+                                case 17:
+                                prepared_program.push_back(m);
+                                break;
                             }
+                        }
+                    }
+                }
+            }
+
+
+            std::cout << "Prepared GCODE INIT: " << std::endl << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
+            std::cout << "Prepared GCODE NO DUPLICATES: " << std::endl << back_to_gcode({remove_duplicate_blocks(prepared_program,{})}) << std::endl;
+            program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program,{}));
+            //program_parts = group_gcode_commands(prepared_program);
+            std::cout << "Prepared GCODE: " << std::endl << back_to_gcode(program_parts) << std::endl;
+            machine_state = {{'F', 0.5}};
+            }
+
+            for (auto& ppart : program_parts) {
+                if (ppart.size() != 0) {
+                    if (ppart[0].count('M') == 0) {
+                        std::cout << "G PART: " << ppart.size() << std::endl;
+                        switch ((int)(ppart[0]['G'])) {
+                        case 4:
+                            std::cout << "Dwell not supported" << std::endl;
+                            break;
+                        case 0:
+                        case 1:
                             auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t& result) {
                                     machine_state = result;
@@ -168,13 +319,18 @@ int main(int argc, char** argv)
                         }
                     }
                 }
+                std::cout << "[MS] Machine state" << std::endl;
                 for (auto& s : machine_state) {
                     std::cout << s.first << ":" << s.second << " ";
                 }
                 std::cout << "  OK" << std::endl;
             }
+
         }
     }
+    #ifdef HAVE_SDL2
+    SDL_Quit();
+    #endif
     /*raspigcd::gcd::gcode_interpreter_objects_t objs{};
     objs.motor_layout = hardware::motor_layout::get_instance(cfg);
     objs.configuration.motion_layout = cfg.motion_layout;

@@ -108,6 +108,9 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns", "[gcd][gcode_interp
     SECTION("two steps along X axis - second step")
     {
         auto ret = apply_limits_for_turns(x_axis_move_program, machine_limits);
+        INFO(back_to_gcode({x_axis_move_program}));
+        INFO(back_to_gcode({remove_duplicate_blocks(x_axis_move_program,{})}));
+        INFO(back_to_gcode({ret}));
         REQUIRE(ret.at(1).at('F') == Approx(machine_limits.max_no_accel_velocity_mm_s[0]));
     }
     SECTION("two steps along X axis - size should be the same - 3 steps")
@@ -348,6 +351,83 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program wi
         auto ret = apply_limits_for_turns(turn_135_program, machine_limits);
         REQUIRE(ret[1].at('F') == Approx (5.0));
     }
+}
+
+
+TEST_CASE("Found bugs - apply_limits_for_turns","[gcd][gcode_interpreter][apply_limits_for_turns][bugs]") {
+    configuration::limits machine_limits(
+        {100, 101, 102, 103}, // acceleration
+        {150, 151, 152, 153},     // max velocity
+        {1, 1, 1, 1});        // no accel velocity
+
+    SECTION("program with duplicate blocks")
+    {
+    auto duplicate_node_program = gcode_to_maps_of_arguments(R"(
+        G1X0Y0Z0A0F5
+        G1X10Y0Z0A0F5
+        G1X10Y0Z0A0F5
+        G1X0Y0Z0A0F5
+        )");
+        program_t ret;
+        REQUIRE_NOTHROW(ret = apply_limits_for_turns(duplicate_node_program, machine_limits));
+        //REQUIRE(ret[0].at('F') == Approx (1.0));
+        //REQUIRE(ret[1].at('F') == Approx (5.0));
+    }
+}
+
+TEST_CASE("gcode_interpreter_test - remove_duplicate_blocks", "[gcd][gcode_interpreter][remove_duplicate_blocks]") {
+configuration::limits machine_limits(
+        {100, 101, 102, 103}, // acceleration
+        {150, 151, 152, 153},     // max velocity
+        {1, 1, 1, 1});        // no accel velocity
+
+    SECTION("program with duplicate blocks should not throw")
+    {
+    auto duplicate_node_program = gcode_to_maps_of_arguments(R"(
+        G1X0Y0Z0A0F5
+        G1X10Y0Z0A0F5
+        G1X10Y0Z0A0F5
+        G1X0Y0Z0A0F5
+        )");
+        program_t ret;
+        REQUIRE_NOTHROW(ret = remove_duplicate_blocks(duplicate_node_program, {}));
+    }    
+    SECTION("program with duplicate blocks should have repeated blocks removed. Sample 1")
+    {
+    auto duplicate_node_program = gcode_to_maps_of_arguments(R"(
+        G1X0Y0Z0A0F5
+        G1X10Y0Z0A0F5
+        M3
+        G1X10Y0Z0A0F5
+        G1X0Y0Z0A0F5
+        M5
+        )");
+        program_t ret;
+        REQUIRE_NOTHROW(ret = remove_duplicate_blocks(duplicate_node_program, {}));
+        INFO(back_to_gcode({ret}));
+        REQUIRE(ret.size() == (duplicate_node_program.size()-1));
+    }
+    
+    SECTION("duplicate removal should also remove unnecessary duplicate node parts")
+    {
+    auto duplicate_node_program = gcode_to_maps_of_arguments(R"(
+        G1X0Y0Z0A0F5
+        G1X10Y0Z0A0F5
+        M3
+        G1X10Y0Z0A0F5
+        G1X0Y0Z0A0F0.1
+        M5
+        )");
+        program_t ret;
+        REQUIRE_NOTHROW(ret = remove_duplicate_blocks(duplicate_node_program, {}));
+        INFO(back_to_gcode({ret}));
+        REQUIRE(ret[0].size() == 2);
+        REQUIRE(ret[1].size() == 2);
+        REQUIRE(ret[2].size() == 1);
+        REQUIRE(ret[3].size() == 3);
+        REQUIRE(ret[4].size() == 1);
+    }
+    
 }
 
 

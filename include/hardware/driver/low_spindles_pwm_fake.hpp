@@ -36,13 +36,14 @@ public:
     std::map<int,double> spindle_values;
     
     std::function<void(const int, const double)> on_spindle_pwm_power;
-        void spindle_pwm_power(const int i, const double v){
+
+    void spindle_pwm_power(const int i, const double v) {
         spindle_values[i]=v;
         on_spindle_pwm_power(i,v);
     };
 
-    low_spindles_pwm_fake(){
-        on_spindle_pwm_power = [](const int, const double){};
+    low_spindles_pwm_fake(const std::function<void(const int, const double)> f = [](const int, const double){}){
+        on_spindle_pwm_power = f;
     }
 };
 

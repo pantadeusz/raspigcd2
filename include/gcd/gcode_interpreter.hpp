@@ -44,6 +44,11 @@ using program_t = std::vector<block_t>;               // represents whole progra
 using partitioned_program_t = std::vector<program_t>; // represents program partitioned into different sections for optimization and interpretation
 
 /**
+ * @brief removed duplicate blocks. If the feedrate is different, then it interprets it as rapid velocity shift and does not remove
+ */
+program_t remove_duplicate_blocks(const program_t& program_states, const block_t &initial_state);
+
+/**
  * @brief calculates last state after execution of the program.
  */
 block_t last_state_after_program_execution(const program_t &program_, const block_t &initial_state_);

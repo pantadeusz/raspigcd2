@@ -96,10 +96,55 @@ block_t last_state_after_program_execution(const program_t& program_, const bloc
 }
 
 
+program_t remove_duplicate_blocks(const program_t& program_states, const block_t &initial_state) {
+    program_t ret;
+    ret.reserve(program_states.size());
+    auto current_state = merge_blocks({
+        {'X',0.0},
+        {'Y',0.0},
+        {'Z',0.0},
+        {'A',0.0},
+        {'F',0.1},
+    }, initial_state);
+    for (auto s : program_states) {
+        if (s.count('M') == 0) {
+            if (s.count('G') && 
+            ((s.at('G') == 0) || (s.at('G') == 1) || (s.at('G') == 92)) )
+             {
+                auto new_state = merge_blocks(current_state, s);
+                if (!((blocks_to_vector_move(new_state, current_state).length() == 0) && 
+                (new_state['F'] == current_state['F']))) {
+                    auto nblock = diff_blocks(new_state, current_state);
+                    nblock['G'] = new_state['G'];
+                    ret.push_back(nblock);
+                    //ret.push_back(new_state);
+                    current_state = new_state;
+                    //block_t diff_blocks(const block_t& destination, const block_t& source);
+
+                } else {
+                    current_state = new_state;
+                }
+                continue;
+            }
+        }
+        ret.push_back(s);
+    }
+    ret.shrink_to_fit();
+    return ret;
+}
+
 program_t apply_limits_for_turns(const program_t& program_states,
     const configuration::limits& machine_limits)
 {
-    auto ret_states = program_states;
+    auto ret_states = remove_duplicate_blocks(program_states,{});
+    auto current_state = merge_blocks({},{});
+    for (auto &e : ret_states) {
+        if (e.count('G')) {
+            current_state = merge_blocks(current_state, e);
+            e = current_state;
+        }
+    }
+    //std::vector < std::pair < distance_t, double >
     if (ret_states.size() == 0) {
         return {};
     }
@@ -118,10 +163,19 @@ program_t apply_limits_for_turns(const program_t& program_states,
     {
         // first block, and last block
         auto first_diff = blocks_to_vector_move(ret_states[0], ret_states[1]);
-        ret_states[0]['F'] = std::min(
-            machine_limits.proportional_max_no_accel_velocity_mm_s(first_diff / first_diff.length()),
-            ret_states[0]['F']);
-        if (std::isnan(ret_states[0]['F'])) throw std::invalid_argument("A: ret_states[0]['F'] cannot be nan!!");
+        auto orig_state_f =  ret_states[0]['F'];
+        if (first_diff.length() > 0) {
+            ret_states[0]['F'] = std::min(
+                machine_limits.proportional_max_no_accel_velocity_mm_s(first_diff / first_diff.length()),
+                orig_state_f);
+        }
+        if (std::isnan(ret_states[0]['F'])) {
+            throw std::invalid_argument("A: ret_states[0]['F'] cannot be nan!!");
+        }
+        if (ret_states.size() == 2) {
+            ret_states[1]['F'] = ret_states[0]['F'];
+            return ret_states;
+        }
     }
     //block_t previous_block;
     if (ret_states.size() > 2) {

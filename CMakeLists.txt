@@ -14,23 +14,29 @@ if(NOT CMAKE_BUILD_TYPE)
   #set(CMAKE_BUILD_TYPE Debug)
 endif()
 
+include(CheckLibraryExists)
+
 set(CMAKE_CXX_FLAGS "-std=c++17 -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-ggdb ")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 add_definitions(-Wall)
 
+
 install(DIRECTORY include/ DESTINATION include/raspigcd2
         FILES_MATCHING PATTERN "*.hpp")
 
-
+find_package(Catch2)
 find_package(Git)
 find_package(Threads)
-
-# Require dot, treat the other components as optional
-find_package(Doxygen
+find_package(Doxygen 
              REQUIRED dot
              OPTIONAL_COMPONENTS mscgen dia)
+
+find_package(SDL2)
+if(SDL2_FOUND)
+  add_definitions(-DHAVE_SDL2)
+endif()
 
 
 # FIND_PACKAGE( OpenMP )
@@ -46,7 +52,6 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 include_directories("${PROJECT_SOURCE_DIR}/thirdparty")
 
 
-
 set(raspigcd2_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/raspigcd.cpp )
 file(GLOB_RECURSE lib_SOURCES "src/*.cpp" "src/*/*.cpp")
 file(GLOB_RECURSE raspigcd2_TESTS "tests/*.cpp")
@@ -56,9 +61,13 @@ add_library(raspigcd2 SHARED ${lib_SOURCES})
 add_executable(gcd ${raspigcd2_SOURCES} ${lib_SOURCES})
 target_link_libraries(gcd ${CMAKE_THREAD_LIBS_INIT})
 
+if(SDL2_FOUND)
+  include_directories(${SDL2_INCLUDE_DIRS})
+  target_link_libraries(gcd ${SDL2_LIBRARIES})
+endif()
+
 install (TARGETS raspigcd2 DESTINATION lib)
 install (TARGETS gcd DESTINATION bin)
-
 
 ## file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/tests/*_test.cpp")
 ## foreach(file ${files})
@@ -74,7 +83,7 @@ add_executable(tests ${tests_SOURCES} "tests/tests.cpp" "thirdparty/lodepng/lode
 target_link_libraries(tests raspigcd2 ${CMAKE_THREAD_LIBS_INIT}  Catch2::Catch2)
 # add_test(NAME ${fn_target} COMMAND "${CMAKE_BINARY_DIR}/${fn_target}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 
-
+if(Doxygen_FOUND)
 set(DOXYGEN_GENERATE_HTML YES)
 set(DOXYGEN_GENERATE_MAN YES)
 set(DOXYGEN_RECURSIVE YES)
@@ -98,13 +107,14 @@ doxygen_add_docs(
     "${PROJECT_SOURCE_DIR}"
     COMMENT "Generate man pages"
 )
+endif()
 
 
-find_package(Catch2 REQUIRED)
-
-include(CTest)
-include(Catch)
-catch_discover_tests(tests)
+if(Catch2_FOUND)
+  include(CTest)
+  include(Catch)
+  catch_discover_tests(tests)
+endif()
 
 SET(CPACK_PACKAGE_VERSION_MAJOR ${raspigcd2_VERSION_MAJOR})
 SET(CPACK_PACKAGE_VERSION_MINOR ${raspigcd2_VERSION_MINOR})
