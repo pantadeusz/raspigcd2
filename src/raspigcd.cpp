@@ -60,32 +60,35 @@ public:
 
     std::thread loop_thread;
 
-    steps_t current_steps;
+    distance_t current_position;
 
-    std::list<steps_t> movements_track;
+    std::list<distance_t> movements_track;
     steps_t steps_scale;
 
     std::mutex list_mutex;
     configuration::global *cfg;
+    std::shared_ptr<motor_layout> ml;
 
     void set_steps(const steps_t&st) {
         std::lock_guard<std::mutex> guard(list_mutex);
-        current_steps = st/steps_scale;
-        if (!(movements_track.back() == current_steps)) {
-            movements_track.push_back(current_steps);    
+        current_position = ml->steps_to_cartesian(st);
+        steps_t reduced_a;
+        steps_t reduced_b;
+
+        for (int i = 0; i < 4; i++) {
+            reduced_a[i] = current_position[i];///(int)(cfg->steppers[i].steps_per_mm);
+            reduced_b[i] = movements_track.back()[i];///(int)(cfg->steppers[i].steps_per_mm);
+        }
+        if (!(reduced_a == reduced_b)) {
+            movements_track.push_back(current_position);    
         }
 
     }
 
     video_sdl(configuration::global *cfg_, int width = 640, int height = 480) {
         cfg = cfg_;
+        ml = motor_layout::get_instance(*cfg);
         
-        steps_scale = {
-            (int)(cfg->steppers[0].steps_per_mm),
-            (int)(cfg->steppers[1].steps_per_mm),
-            (int)(cfg->steppers[2].steps_per_mm),
-            (int)(cfg->steppers[3].steps_per_mm)
-            };
         movements_track.push_back({0,0,0,0});
         loop_thread = std::thread([this,width,height](){
             std::cout << "loop thread..." << std::endl;
@@ -112,20 +115,24 @@ public:
                         }
                     }
                     
+                    
                     SDL_SetRenderDrawColor(renderer.get(),0,0,0,255);
                     SDL_RenderClear( renderer.get() );
                     
                     SDL_SetRenderDrawColor(renderer.get(),255,255,255,255);
-                    steps_t s;
-                    std::list<steps_t> t;
+                    distance_t s;
+                    std::list<distance_t> t;
 
                     {
                     std::lock_guard<std::mutex> guard(list_mutex);
-                    s = current_steps;
+                    s = current_position;
                     t = movements_track;
                     }
                     for (auto e : t) {
-                        SDL_RenderDrawPoint(renderer.get(), e[0]+width/2, e[1]+height/2);    
+                        if (e[2] <= 0) {
+                            SDL_SetRenderDrawColor(renderer.get(),255-(e[2]*255/5),255,255,255);
+                            SDL_RenderDrawPoint(renderer.get(), e[0]+width/2, e[1]+height/2);    
+                        }
                     }
                     SDL_SetRenderDrawColor(renderer.get(),255,128,128,255);
                     for (int i = 0; i < std::abs(s[2]); i++ ) {
@@ -144,7 +151,6 @@ public:
         loop_thread.join();
     }
 };
-
 #else
 class video_sdl {
 public:
@@ -395,7 +401,7 @@ int main(int argc, char** argv)
                     if (!(video->active)) break;
                 }
             }
-
+            std::cout << "FINISHED" << std::endl;
         }
     }
     #ifdef HAVE_SDL2
