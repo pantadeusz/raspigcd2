@@ -43,6 +43,8 @@ using block_t = std::map<char, double>;             // represents N001G0X10Y20
 using program_t = std::vector<block_t>;               // represents whole program without empty lines
 using partitioned_program_t = std::vector<program_t>; // represents program partitioned into different sections for optimization and interpretation
 
+partitioned_program_t insert_additional_nodes_inbetween(partitioned_program_t &partitioned_program_, const block_t &initial_state, const configuration::limits &machine_limits);
+
 /**
  * @brief removed duplicate blocks. If the feedrate is different, then it interprets it as rapid velocity shift and does not remove
  */

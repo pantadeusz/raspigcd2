@@ -37,21 +37,6 @@
 namespace raspigcd {
 namespace gcd {
 
-/* movement::path_intent_t generate_path_intent(const program_t &parsed_program_) {
-    // todo..
-    movement::path_intent_t ret;
-    std::map<char,double> g_state = {
-        {'X',0.0},{'Y',0.0},{'Z',0.0},{'A',0.0}
-    };
-    auto get_pos = [&](){return distance_t{
-        g_state['X'], g_state['Y'], g_state['Z'], g_state['A']
-        }; };
-    for (const auto &elem : parsed_program_) {
-
-    }
-    return {};
-} */
-
 /// UNTESTED
 distance_t block_to_distance_t(const block_t& block)
 {
@@ -93,6 +78,11 @@ block_t last_state_after_program_execution(const program_t& program_, const bloc
         result = merge_blocks(result, e);
     }
     return result;
+}
+
+
+partitioned_program_t insert_additional_nodes_inbetween(partitioned_program_t &partitioned_program_, const block_t &initial_state, const configuration::limits &machine_limits) {
+    return {};
 }
 
 
