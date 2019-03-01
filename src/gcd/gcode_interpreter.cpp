@@ -350,7 +350,8 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
                 } else {
                     double max_a = machine_limits.proportional_max_accelerations_mm_s2(ABvec / s);
                     //double max_v = machine_limits.proportional_max_velocity_mm_s(ABvec / s);
-                    //double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s);
+                    double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s)/2.0;
+                    min_v = std::min(min_v, next_state['F']);
 
                     path_node_t pnA = {.p = A, .v = current_state['F']};
                     path_node_t pnB = {.p = B, .v = next_state['F']};
@@ -370,8 +371,8 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
                             if (pnB.v > next_state['F']) {
                                 pnB.v = next_state['F'];
                             }
-                            if (pnB.v < 0.01) {
-                                pnB.v = 0.01;
+                            if (pnB.v < min_v) {
+                                pnB.v = min_v;
                             }
                             
                             range = range / 2;
