@@ -58,13 +58,13 @@
       "dir": 27,
       "en": 10,
       "step": 22,
-      "steps_per_mm": 40.0
+      "steps_per_mm": 80.0
     },
     {
       "dir": 4,
       "en": 10,
       "step": 17,
-      "steps_per_mm": 40.0
+      "steps_per_mm": 80.0
     },
     {
       "dir": 9,
@@ -79,5 +79,5 @@
       "steps_per_mm": 55.0
     }
   ],
-  "tick_duration_us": 100
+  "tick_duration_us": 60
 }
