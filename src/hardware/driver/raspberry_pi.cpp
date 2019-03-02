@@ -189,16 +189,35 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
     });
 }
 
-/**
- * @brief delay in seconds. This can be fraction of a second
- * 
- * @param t 
- */
-void raspberry_pi_3::wait_s(const double t) {
-        auto prevTime = std::chrono::steady_clock::now();
-        prevTime = prevTime + std::chrono::microseconds((int)(t * 1000000.0));
-        std::this_thread::sleep_until(prevTime);
+//  /**
+//   * @brief delay in seconds. This can be fraction of a second
+//   * 
+//   * @param t 
+//   */
+//  void raspberry_pi_3::wait_s(const double t) {
+//          auto prevTime = std::chrono::steady_clock::now();
+//          prevTime = prevTime + std::chrono::microseconds((int)(t * 1000000.0));
+//          std::this_thread::sleep_until(prevTime);
+//  }
+
+
+
+void raspberry_pi_3::key_down(int btn, std::function<void(int)> callback_) {
+    throw std::invalid_argument("unimplemented");
 }
+void raspberry_pi_3::key_up  (int btn, std::function<void(int)> callback_) {
+    throw std::invalid_argument("unimplemented");
+}
+std::function<void(int)> raspberry_pi_3::key_down(int btn) {
+    throw std::invalid_argument("unimplemented");
+}
+std::function<void(int)> raspberry_pi_3::key_up  (int btn) {
+    throw std::invalid_argument("unimplemented");
+}
+std::vector < int > raspberry_pi_3::keys_state() {
+    throw std::invalid_argument("unimplemented");
+}
+
 
 raspberry_pi_3::~raspberry_pi_3()
 {

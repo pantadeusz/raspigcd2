@@ -64,9 +64,36 @@ private:
 
     struct bcm2835_peripheral gpio;
 
-
+    std::vector < std::function<void(int)> > _key_down_callbacks;
+    std::vector < std::function<void(int)> > _key_up_callbacks;
+    std::vector < int > _keys_state;
 
 public:
+
+    /**
+     * @brief attach callback to button down. It will throw exception for not supported button
+     * @param callback_ the callback function that will receive button number
+     */
+    void key_down(int btn, std::function<void(int)> callback_);
+    /**
+     * @brief attach callback to button up. It will throw exception for not supported button
+     * @param callback_ the callback function that will receive button number
+     */
+    void key_up  (int btn, std::function<void(int)> callback_);
+    /**
+     * @brief returns current handler for key down
+     */
+    std::function<void(int)> key_down(int btn);
+    /**
+     * @brief returns the current handler for key up
+     */
+    std::function<void(int)> key_up  (int btn);
+    /**
+     * @brief returns the key state
+     */
+    std::vector < int > keys_state();
+
+
     /**
 	 * @brief execute single step command. That is the single most basic "step-dir" action
 	 *
@@ -92,12 +119,12 @@ public:
 	 */
     void spindle_pwm_power(const int i, const double v);
 
-    /**
-     * @brief delay in seconds. This can be fraction of a second
-     * 
-     * @param t 
-     */
-    void wait_s(const double t);
+    // /**
+    //  * @brief delay in seconds. This can be fraction of a second
+    //  * 
+    //  * @param t 
+    //  */
+    // void wait_s(const double t);
 
     /**
 	 * @brief Construct a new raspberry pi 3 object

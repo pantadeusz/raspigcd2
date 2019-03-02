@@ -29,6 +29,7 @@ This is simple program that uses the library. It will execute given GCode.
 #include <hardware/driver/inmem.hpp>
 #include <hardware/driver/low_buttons_fake.hpp>
 #include <hardware/driver/low_spindles_pwm_fake.hpp>
+#include <hardware/driver/low_buttons_fake.hpp>
 #include <hardware/driver/low_timers_busy_wait.hpp>
 #include <hardware/driver/low_timers_wait_for.hpp>
 #include <hardware/driver/low_timers_fake.hpp>
@@ -242,14 +243,18 @@ int main(int argc, char** argv)
             using namespace raspigcd;
             using namespace raspigcd::hardware;
 
-            std::shared_ptr<low_steppers> raspi3;
-            std::shared_ptr<low_spindles_pwm> spindles;
+            std::shared_ptr<low_steppers> steppers_drv;
+            std::shared_ptr<low_spindles_pwm> spindles_drv;
+            std::shared_ptr<low_buttons> buttons_drv;
+            
             std::shared_ptr<video_sdl> video;
+
             steps_t position_for_fake;
             try {
                 auto rp = std::make_shared<driver::raspberry_pi_3>(cfg);
-                raspi3 = rp;
-                spindles = rp;
+                steppers_drv = rp;
+                spindles_drv = rp;
+                buttons_drv = rp;
             } catch (...) {
                 video = std::make_shared<video_sdl>(&cfg);
                 auto fk = std::make_shared<driver::inmem>();
@@ -266,14 +271,15 @@ int main(int argc, char** argv)
                     position_for_fake = st;
                     //
                 });
-                raspi3 = fk;
-                spindles = std::make_shared<raspigcd::hardware::driver::low_spindles_pwm_fake>(
+                steppers_drv = fk;
+                spindles_drv = std::make_shared<raspigcd::hardware::driver::low_spindles_pwm_fake>(
                     [](const int s_i, const double p_i){
                         std::cout << "SPINDLE " << s_i << " POWER: " << p_i << std::endl;
                     }
                 );
+                buttons_drv =  std::make_shared<driver::low_buttons_fake>();
             }
-            //std::shared_ptr<driver::raspberry_pi_3> raspi3 = std::make_shared<driver::raspberry_pi_3>(cfg);
+            //std::shared_ptr<driver::raspberry_pi_3> steppers_drv = std::make_shared<driver::raspberry_pi_3>(cfg);
             std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
             motor_layout_->set_configuration(cfg);
 
@@ -283,7 +289,7 @@ int main(int argc, char** argv)
                 case raspigcd::configuration::low_timers_e::BUSY_WAIT: timer_drv = std::make_shared<hardware::driver::low_timers_wait_for>(); break;
                 case raspigcd::configuration::low_timers_e::FAKE: timer_drv = std::make_shared<hardware::driver::low_timers_fake>(); break;
             }
-            stepping_simple_timer stepping(cfg, raspi3, timer_drv);
+            stepping_simple_timer stepping(cfg, steppers_drv, timer_drv);
 
             i++;
             std::ifstream gcd_file(args.at(i));
@@ -379,16 +385,16 @@ int main(int argc, char** argv)
                         for (auto& m : ppart) {
                             switch ((int)(m['M'])) {
                             case 17:
-                                raspi3->enable_steppers({true});
+                                steppers_drv->enable_steppers({true});
                                 break;
                             case 18:
-                                raspi3->enable_steppers({false});
+                                steppers_drv->enable_steppers({false});
                                 break;
                             case 3:
-                                spindles->spindle_pwm_power(0, 1.0);
+                                spindles_drv->spindle_pwm_power(0, 1.0);
                                 break;
                             case 5:
-                                spindles->spindle_pwm_power(0, 0.0);
+                                spindles_drv->spindle_pwm_power(0, 0.0);
                                 break;
                             }
                         }

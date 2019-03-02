@@ -21,6 +21,9 @@
 #ifndef __RASPIGCD_HARDWARE_LOW_LEVEL_BUTTONS_T_HPP__
 #define __RASPIGCD_HARDWARE_LOW_LEVEL_BUTTONS_T_HPP__
 
+#include <functional>
+#include <vector>
+
 namespace raspigcd {
 namespace hardware {
 
@@ -29,7 +32,28 @@ class low_buttons
 {
 private:
 public:
-    // todo
+    /**
+     * @brief attach callback to button down. It will throw exception for not supported button
+     * @param callback_ the callback function that will receive button number
+     */
+    virtual void key_down(int btn, std::function<void(int)> callback_) = 0;
+    /**
+     * @brief attach callback to button up. It will throw exception for not supported button
+     * @param callback_ the callback function that will receive button number
+     */
+    virtual void key_up  (int btn, std::function<void(int)> callback_) = 0;
+    /**
+     * @brief returns current handler for key down
+     */
+    virtual std::function<void(int)> key_down(int btn) = 0;
+    /**
+     * @brief returns the current handler for key up
+     */
+    virtual std::function<void(int)> key_up  (int btn) = 0;
+    /**
+     * @brief returns the key state
+     */
+    virtual std::vector < int > keys_state() = 0;
 };
 
 } // namespace hardware

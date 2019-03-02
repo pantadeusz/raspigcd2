@@ -31,7 +31,30 @@ namespace driver {
 class low_buttons_fake : public low_buttons {
 private:
 public:
-
+    /**
+     * @brief attach callback to button down. It will throw exception for not supported button
+     * @param callback_ the callback function that will receive button number
+     */
+    void key_down(int btn, std::function<void(int)> callback_){}
+    /**
+     * @brief attach callback to button up. It will throw exception for not supported button
+     * @param callback_ the callback function that will receive button number
+     */
+    void key_up  (int btn, std::function<void(int)> callback_){}
+    /**
+     * @brief returns current handler for key down
+     */
+    std::function<void(int)> key_down(int btn){}
+    /**
+     * @brief returns the current handler for key up
+     */
+    std::function<void(int)> key_up  (int btn){}
+    /**
+     * @brief returns the key state
+     */
+    std::vector < int > keys_state(){
+        return {};
+    }
 };
 
 }
