@@ -64,9 +64,6 @@ private:
 
     struct bcm2835_peripheral gpio;
 
-    std::vector < std::function<void(int)> > _key_down_callbacks;
-    std::vector < std::function<void(int)> > _key_up_callbacks;
-    std::vector < int > _keys_state;
 
 public:
     /**

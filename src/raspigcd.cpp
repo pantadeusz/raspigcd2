@@ -383,6 +383,7 @@ int main(int argc, char** argv)
 
 
             for (int i = 0; i < buttons_drv->keys_state().size(); i++) {
+                std::cout << "Handler for key " << i << std::endl;
                 buttons_drv->on_key(i, [&stepping](int k, int s) {
                     std::cout << "Key " << k << " is " << ((s == 0) ? "UP" : "DOWN") << std::endl;
                     if ((k == 0) && (s == 1)) stepping.terminate(1000);
