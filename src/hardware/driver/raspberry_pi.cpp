@@ -177,7 +177,7 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
             for (int k_i = 0; k_i < buttons.size(); k_i++) {
                 auto e = buttons[k_i];
                 int v = (unsigned char)(1 - ((GPIO_READ(e.pin)) >> (e.pin)));
-                if (buttons_state.count(k_i)) {
+                //if (buttons_state.count(k_i)) {
                     if (buttons_state[k_i] != v) {
                         // // button down
                         // if (v > 0) kv.second(k_i);
@@ -185,7 +185,7 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
                         // // if (v <= 0) kv.second (kv.first);
                         buttons_callbacks.at(k_i)(k_i,v);
                     }
-                }
+                //}
                 buttons_state[k_i] = v;
             }
             std::this_thread::sleep_for(10ms);
