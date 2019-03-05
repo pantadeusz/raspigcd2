@@ -154,6 +154,7 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
     for (auto& e : buttons) {
         INP_GPIO(e.pin);
         if (e.pullup) pull_value |= 1 << e.pin;
+        buttons_state.push_back(0);
     }
 
     // enable pull-up on selected gpios
@@ -189,13 +190,13 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
 
 
 void raspberry_pi_3::on_key(int btn, std::function<void(int,int)> callback_) {
-    throw std::invalid_argument("unimplemented");
+    buttons_callbacks.at(btn) = callback_;
 }
 std::function<void(int,int)>  raspberry_pi_3::on_key(int btn) {
-    throw std::invalid_argument("unimplemented");
+    return buttons_callbacks.at(btn);
 }
 std::vector < int > raspberry_pi_3::keys_state() {
-    throw std::invalid_argument("unimplemented");
+    return buttons_state;
 }
 
 

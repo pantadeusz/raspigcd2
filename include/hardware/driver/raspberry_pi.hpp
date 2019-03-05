@@ -53,6 +53,8 @@ private:
     std::vector<configuration::spindle_pwm> spindles;
     std::vector<configuration::stepper> steppers;
     std::vector<configuration::button> buttons;
+    std::vector<int> buttons_state;
+    std::vector<std::function<void(int,int)> > buttons_callbacks;
 
     bool _threads_alive;
     std::vector<std::thread> _spindle_threads;
