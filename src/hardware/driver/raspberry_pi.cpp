@@ -155,6 +155,7 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
         INP_GPIO(e.pin);
         if (e.pullup) pull_value |= 1 << e.pin;
         buttons_state.push_back(0);
+        buttons_callbacks.push_back([](int,int){});
     }
 
     // enable pull-up on selected gpios
@@ -167,10 +168,6 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
     GPIO_PULL = 0;
     GPIO_PULLCLK0 = 0;
 
-    for (int k_i = 0; k_i < buttons.size(); k_i++) {
-        buttons_state.push_back(0);
-        buttons_callbacks.push_back([](int,int){});
-    }
     _btn_thread = std::thread([this]() {
         while (_threads_alive) {
             using namespace std::chrono_literals;
