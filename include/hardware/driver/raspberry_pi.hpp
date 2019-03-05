@@ -61,7 +61,6 @@ private:
     std::vector<double> _spindle_duties;
 
     std::thread _btn_thread;
-    std::map<int, int> _button_prev_values;
 
     struct bcm2835_peripheral gpio;
 
