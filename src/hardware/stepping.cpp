@@ -127,19 +127,23 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
     std::chrono::high_resolution_clock::time_point prev_timer = _low_timer->start_timing();
     _terminate_execution = 0;
     int counter_delay = 1000;
+    int start_counter_delay = 0;
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
             if (_terminate_execution > 0) {
+                if (start_counter_delay == 0) {start_counter_delay = _terminate_execution;}
                 if (_terminate_execution == 1) {
                     throw execution_terminated(hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index));
                 } else {
                     _terminate_execution--;
-                    counter_delay = counter_delay * 12 / 10;
+                    //counter_delay = 1000+(start_counter_delay - _terminate_execution);//1000+std::log((start_counter_delay - _terminate_execution))*1000;
+                    counter_delay = 1000+std::log((start_counter_delay - _terminate_execution))*1000;
+                    //std::cout << "delay counter_delay = " << counter_delay << std::endl;
                 }
             }
             _steppers_driver->do_step(s.b);
             _tick_index++;
-            prev_timer = _low_timer->wait_for_tick_s(prev_timer, _delay_microseconds);//*counter_delay/1000);
+            prev_timer = _low_timer->wait_for_tick_s(prev_timer, _delay_microseconds*counter_delay/1000);
         }
     }
     //return _steps;

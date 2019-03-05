@@ -30,30 +30,46 @@ namespace driver {
 
 class low_buttons_fake : public low_buttons {
 private:
+    std::vector<std::function<void(int,int)> > _key_callbacks;
+    std::vector<int> _key_state;
 public:
     /**
      * @brief attach callback to button down. It will throw exception for not supported button
-     * @param callback_ the callback function that will receive button number
+     * @param callback_ the callback function that will receive button number and new status
      */
-    void key_down(int btn, std::function<void(int)> callback_){}
-    /**
-     * @brief attach callback to button up. It will throw exception for not supported button
-     * @param callback_ the callback function that will receive button number
-     */
-    void key_up  (int btn, std::function<void(int)> callback_){}
+    void on_key(int btn, std::function<void(int,int)> callback_) {
+        if (btn < _key_callbacks.size()) _key_callbacks[btn] = callback_;
+    };
+
     /**
      * @brief returns current handler for key down
      */
-    std::function<void(int)> key_down(int btn){}
-    /**
-     * @brief returns the current handler for key up
-     */
-    std::function<void(int)> key_up  (int btn){}
+    std::function<void(int,int)> on_key(int btn) {
+        return _key_callbacks.at(btn);
+    };
+    
     /**
      * @brief returns the key state
      */
-    std::vector < int > keys_state(){
-        return {};
+    virtual std::vector < int > keys_state(){
+        return _key_state;
+    };
+
+    void trigger_button_down(int n) {
+        trigger_button(n, 1);
+    }
+    void trigger_button_up(int n) {
+        trigger_button(n, 0);
+    }
+    void trigger_button(int n, int v) {
+        _key_state.at(n) = v;
+        _key_callbacks.at(n)(n,_key_state[n]);
+    }
+    low_buttons_fake(int max_supported_keys) {
+        for (int i = 0; i < max_supported_keys; i++) {
+            _key_callbacks.push_back([](int,int){});
+            _key_state.push_back(0);
+        }
     }
 };
 

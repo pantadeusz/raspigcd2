@@ -156,8 +156,6 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
         if (e.pullup) pull_value |= 1 << e.pin;
     }
 
-    // tricky stuff on pullups
-
     // enable pull-up on selected gpios
     GPIO_PULL = 2;
     std::this_thread::sleep_for(10us);
@@ -189,29 +187,11 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
     });
 }
 
-//  /**
-//   * @brief delay in seconds. This can be fraction of a second
-//   * 
-//   * @param t 
-//   */
-//  void raspberry_pi_3::wait_s(const double t) {
-//          auto prevTime = std::chrono::steady_clock::now();
-//          prevTime = prevTime + std::chrono::microseconds((int)(t * 1000000.0));
-//          std::this_thread::sleep_until(prevTime);
-//  }
 
-
-
-void raspberry_pi_3::key_down(int btn, std::function<void(int)> callback_) {
+void raspberry_pi_3::on_key(int btn, std::function<void(int,int)> callback_) {
     throw std::invalid_argument("unimplemented");
 }
-void raspberry_pi_3::key_up  (int btn, std::function<void(int)> callback_) {
-    throw std::invalid_argument("unimplemented");
-}
-std::function<void(int)> raspberry_pi_3::key_down(int btn) {
-    throw std::invalid_argument("unimplemented");
-}
-std::function<void(int)> raspberry_pi_3::key_up  (int btn) {
+std::function<void(int,int)>  raspberry_pi_3::on_key(int btn) {
     throw std::invalid_argument("unimplemented");
 }
 std::vector < int > raspberry_pi_3::keys_state() {
