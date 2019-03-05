@@ -170,20 +170,21 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
     _btn_thread = std::thread([this]() {
         while (_threads_alive) {
             using namespace std::chrono_literals;
-            for (auto kv : _button_callbacks) {
-                auto e = buttons[kv.first];
+            for (int k_i = 0; k_i < buttons.size(); k_i++) {
+                auto e = buttons[k_i];
                 int v = (unsigned char)(1 - ((GPIO_READ(e.pin)) >> (e.pin)));
-                if (_button_prev_values.count(kv.first)) {
-                    if (_button_prev_values[kv.first] != v) {
-                        // button down
-                        if (v > 0) kv.second(kv.first);
-                        // button up
-                        // if (v <= 0) kv.second (kv.first);
+                if (_button_prev_values.count(k_i)) {
+                    if (_button_prev_values[k_i] != v) {
+                        // // button down
+                        // if (v > 0) kv.second(k_i);
+                        // // button up
+                        // // if (v <= 0) kv.second (kv.first);
+                        buttons_callbacks.at(k_i)(k_i,v);
                     }
                 }
-                _button_prev_values[kv.first] = v;
+                _button_prev_values[k_i] = v;
             }
-            std::this_thread::sleep_for(100ms);
+            std::this_thread::sleep_for(10ms);
         }
     });
 }
