@@ -18,11 +18,11 @@
     }
   ],
   "lasers": [],
-  "lowleveltimer": "low_timers_busy_wait",
+  "lowleveltimer": "low_timers_wait_for",
   "max_accelerations_mm_s2": [
     200.0,
     200.0,
-    200.0,
+    3.0,
     200.0
   ],
   "max_no_accel_velocity_mm_s": [
@@ -32,10 +32,10 @@
     2.0
   ],
   "max_velocity_mm_s": [
-    220.0,
-    220.0,
-    10.0,
-    220.0
+    200.0,
+    200.0,
+    25.0,
+    20.0
   ],
   "motion_layout": "cartesian",
   "scale": [
@@ -79,5 +79,5 @@
       "steps_per_mm": 55.0
     }
   ],
-  "tick_duration_us": 60
+  "tick_duration_us": 45
 }

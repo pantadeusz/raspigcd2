@@ -136,8 +136,8 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
                     throw execution_terminated(hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index));
                 } else {
                     _terminate_execution--;
-                    //counter_delay = 1000+(start_counter_delay - _terminate_execution);//1000+std::log((start_counter_delay - _terminate_execution))*1000;
-                    counter_delay = 1000+std::log((start_counter_delay - _terminate_execution))*1000;
+                    counter_delay = 1000+(start_counter_delay - _terminate_execution);//1000+std::log((start_counter_delay - _terminate_execution))*1000;
+                    //counter_delay = 1000+std::log((start_counter_delay - _terminate_execution))*1000;
                     //std::cout << "delay counter_delay = " << counter_delay << std::endl;
                 }
             }
