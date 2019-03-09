@@ -134,22 +134,30 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
     _terminate_execution = 0;
     int counter_delay = 1000;
     int start_counter_delay = 0;
-
+    int termination_procedure_ddt = 0;
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
             if (_terminate_execution > 0) {
-                if (start_counter_delay == 0) start_counter_delay = _terminate_execution;
-                if (_terminate_execution == 1) {
-                    if (on_execution_break({},_tick_index)) {
+                if (termination_procedure_ddt == 0) {
+                    start_counter_delay = _terminate_execution;
+                    termination_procedure_ddt = -1;
+                } else if (termination_procedure_ddt > 0) {
+                    if (counter_delay == 1000) {
                         _terminate_execution = 0;
-                        counter_delay = 1000;
                         start_counter_delay = 0;
+                        termination_procedure_ddt = 0;
+                    }
+                }
+                if ((_terminate_execution == 1) && (termination_procedure_ddt < 0)) {
+                    if (on_execution_break({},_tick_index)) {
+                        termination_procedure_ddt = 1;
+                        _terminate_execution = 1;
                     } else {
                     throw execution_terminated(
                         hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index)
                     );}
                 } else {
-                    _terminate_execution--;
+                    _terminate_execution += termination_procedure_ddt;
                     counter_delay = 1000+(start_counter_delay - _terminate_execution);
                 }
             }
@@ -162,3 +170,4 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
 
 } // namespace hardware
 } // namespace raspigcd
+
