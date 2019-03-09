@@ -45,7 +45,9 @@ public:
      * @brief wait for the tick to end.
      * Remember to run start_timing first!
      */
-    std::chrono::high_resolution_clock::time_point wait_for_tick_us(const std::chrono::high_resolution_clock::time_point &, const double);
+    std::chrono::high_resolution_clock::time_point wait_for_tick_us(
+        const std::chrono::high_resolution_clock::time_point &,
+        const int64_t t);
 
     std::function<void(const double)> on_wait_s;
     low_timers_fake(std::function<void(const double)> callback = [](const double){}){on_wait_s = callback;}

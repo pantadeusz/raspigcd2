@@ -40,7 +40,9 @@ std::chrono::high_resolution_clock::time_point low_timers_busy_wait::start_timin
      * @brief wait for the tick to end.
      * Remember to run start_timing first!
      */
-std::chrono::high_resolution_clock::time_point low_timers_busy_wait::wait_for_tick_us(const std::chrono::high_resolution_clock::time_point& prev_timer, const double t)
+std::chrono::high_resolution_clock::time_point low_timers_busy_wait::wait_for_tick_us(
+    const std::chrono::high_resolution_clock::time_point& prev_timer,
+    const int64_t t)
 {
     auto ttime = std::chrono::microseconds((unsigned long)(t));
     auto nextT = prev_timer + ttime;

@@ -43,7 +43,9 @@ public:
      * @brief wait for the tick to end. Delay is in microseconds
      * Remember to run start_timing first!
      */
-    std::chrono::high_resolution_clock::time_point wait_for_tick_us(const std::chrono::high_resolution_clock::time_point &prev_timer, const double t);
+    std::chrono::high_resolution_clock::time_point wait_for_tick_us(
+        const std::chrono::high_resolution_clock::time_point &prev_timer,
+        const int64_t t);
 };
 
 }
