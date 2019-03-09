@@ -149,7 +149,7 @@ public:
     std::function<int (const steps_t steps_from_start, const int command_index) > on_execution_break = [](auto,auto){return 0;});
 
     void terminate(const int n = 0) {
-        _terminate_execution = 1+n;
+        if (_terminate_execution == 0) _terminate_execution = 1+n;
     }
     void reset_after_terminate() {_terminate_execution = 0;};
 

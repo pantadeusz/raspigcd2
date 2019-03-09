@@ -152,6 +152,7 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
                     if (on_execution_break({},_tick_index)) {
                         termination_procedure_ddt = 1;
                         _terminate_execution = 1;
+                        prev_timer = _low_timer->start_timing();
                     } else {
                     throw execution_terminated(
                         hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index)

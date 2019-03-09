@@ -57,6 +57,8 @@ void inmem::enable_steppers(const std::vector<bool> en)
     enabled = en;
     on_enable_steppers(en);
 };
+
+
 inmem::inmem()
 {
     current_steps = {0,0,0,0};

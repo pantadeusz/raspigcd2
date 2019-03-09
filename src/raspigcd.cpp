@@ -382,18 +382,48 @@ int main(int argc, char** argv)
             } // if prepare paths
 
 
+            std::atomic<int> break_execution_result = -1;
+            std::function<void(int,int)> on_pause_execution;
+            auto on_resume_execution = [&stepping, buttons_drv,&on_pause_execution,&break_execution_result](int k, int s) {
+                if (s == 1) {
+                    std::cout << "######## resume" << std::endl;
+                    break_execution_result = 1;
+                    buttons_drv->on_key(k,on_pause_execution);
+                }
+            };
+            auto on_stop_execution = [&stepping, buttons_drv,&break_execution_result](int k, int s) {
+                if ((k == 1) && (s == 1)) {
+                    break_execution_result = 0;
+                    stepping.terminate(1000);
+                }
+            };
+            on_pause_execution = [&stepping, buttons_drv, &on_resume_execution,&break_execution_result](int k, int s) {
+                std::cout << "######## Key " << k << " is " << ((s == 0) ? "UP" : "DOWN") << std::endl;
+                if ((k == 0) && (s == 1)) {
+                    break_execution_result = -1;
+                    buttons_drv->on_key(k, on_resume_execution);
+                    stepping.terminate(1000);
+                }
+            };
+
             for (unsigned int i = 0; i < buttons_drv->keys_state().size(); i++) {
                 std::cout << "Handler for key " << i << std::endl;
-                buttons_drv->on_key(i, [&stepping](int k, int s) {
-                    std::cout << "Key " << k << " is " << ((s == 0) ? "UP" : "DOWN") << std::endl;
-                    if ((k == 0) && (s == 1)) stepping.terminate(1000);
-                });
+                if (i == 0) {
+                    buttons_drv->on_key(i, on_pause_execution);
+                } else if (i == 1) {
+                    buttons_drv->on_key(i, on_stop_execution);
+                } else {
+                    buttons_drv->on_key(i, [&stepping, buttons_drv](int k, int s) {
+                        std::cout << "Key " << k << " is " << ((s == 0) ? "UP" : "DOWN") << std::endl;
+                    });
+                }
             }
 
 
             std::cout << "STARTING" << std::endl;
 
             machine_state = {{'F', 0.5}};
+            std::map<int,double> spindles_status;
             for (auto& ppart : program_parts) {
                 std::cout << "Put part: " << ppart.size() << std::endl;
                 if (ppart.size() != 0) {
@@ -413,9 +443,23 @@ int main(int argc, char** argv)
                                     // std::cout << std::endl;
                                 });
                             try {
-                            stepping.exec(m_commands);
+                                stepping.exec(m_commands, [&spindles_status, timer_drv,spindles_drv, &break_execution_result](auto a, auto tick_n) -> int {
+                                    std::cout << "break at " << tick_n << " tick" << std::endl;
+                                    while (break_execution_result < 0) {
+                                        timer_drv->wait_us(10000);
+                                    }
+                                    if (break_execution_result) {
+                                        for (auto e : spindles_status) {
+                                            spindles_drv->spindle_pwm_power(e.first, e.second);
+                                        }
+                                    }
+                                    return break_execution_result;
+                                });
                             } catch (...) {
-                                std::cout << "exceptional exception" << std::endl;
+                                steppers_drv->enable_steppers({false});
+                                spindles_drv->spindle_pwm_power(0, 0.0);
+                                std::cout << "skipped fragment" << std::endl;
+                                break;
                             }
                             //std::list<steps_t> steps = hardware_commands_to_steps(m_commands);
                             //std::cout << "steps: " << motor_layout_->steps_to_cartesian(steps.back()) << std::endl;
@@ -433,9 +477,11 @@ int main(int argc, char** argv)
                                 break;
                             case 3:
                                 spindles_drv->spindle_pwm_power(0, 1.0);
+                                spindles_status[0]=1.0;
                                 break;
                             case 5:
                                 spindles_drv->spindle_pwm_power(0, 0.0);
+                                spindles_status[0]=0.0;
                                 break;
                             }
                         }

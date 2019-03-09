@@ -180,7 +180,8 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
                         // if (v > 0) kv.second(k_i);
                         // // button up
                         // // if (v <= 0) kv.second (kv.first);
-                        buttons_callbacks.at(k_i)(k_i,v);
+                        auto f = buttons_callbacks.at(k_i);
+                        f(k_i,v);
                     }
                 //}
                 buttons_state[k_i] = v;
@@ -256,6 +257,7 @@ void raspberry_pi_3::do_step(const single_step_command* b)
 
 void raspberry_pi_3::enable_steppers(const std::vector<bool> en)
 {
+    _enabled_steppers = en;
     for (unsigned i = 0; i < en.size(); i++) {
         auto c = steppers.at(i);
         if (en.at(i)) {
@@ -265,6 +267,7 @@ void raspberry_pi_3::enable_steppers(const std::vector<bool> en)
         }
     }
 }
+
 
 void raspberry_pi_3::spindle_pwm_power(const int i, const double pwr0)
 {

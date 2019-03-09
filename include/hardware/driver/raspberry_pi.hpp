@@ -60,6 +60,8 @@ private:
     std::vector<std::thread> _spindle_threads;
     std::vector<double> _spindle_duties;
 
+    std::vector<bool> _enabled_steppers;
+
     std::thread _btn_thread;
 
     struct bcm2835_peripheral gpio;

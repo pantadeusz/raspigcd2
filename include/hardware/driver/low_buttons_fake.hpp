@@ -38,7 +38,9 @@ public:
      * @param callback_ the callback function that will receive button number and new status
      */
     void on_key(int btn, std::function<void(int,int)> callback_) {
-        if (btn < (int)(_key_callbacks.size())) _key_callbacks[btn] = callback_;
+        if ((unsigned)btn < _key_callbacks.size()) {
+            _key_callbacks[btn] = callback_;
+        }
     };
 
     /**
@@ -63,7 +65,8 @@ public:
     }
     void trigger_button(int n, int v) {
         _key_state.at(n) = v;
-        _key_callbacks.at(n)(n,_key_state[n]);
+        auto f = _key_callbacks.at(n);
+        f(n,_key_state[n]);
     }
     low_buttons_fake(int max_supported_keys) {
         for (int i = 0; i < max_supported_keys; i++) {
