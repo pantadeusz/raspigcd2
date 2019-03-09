@@ -280,12 +280,14 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
 
         m.lock();
         n.lock();
+        bool throwed = false;
         std::thread worker([&]() {
             try {
                 stepping.get()->exec(commands_to_do, [](const steps_t steps_from_start, const int command_index) {
                     return 0;
                 });
             } catch (const raspigcd::hardware::execution_terminated& e) {
+                throwed = true;
             }
         });
         //worker.detach();
@@ -294,11 +296,7 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         n.unlock();
 
         worker.join();
-        REQUIRE(stepping.get()->get_tick_index() == 2);
-        REQUIRE(stepping.get()->get_tick_index() == i);
-        std::list<steps_t> steps_from_commands_ = hardware_commands_to_steps(commands_to_do);
-        std::vector<steps_t> steps_from_commands(steps_from_commands_.begin(), steps_from_commands_.end());
-        REQUIRE(current_steps == steps_from_commands[stepping.get()->get_tick_index() - 1]);
+        REQUIRE(throwed);
     }
 
     SECTION("break execution - callback rules that exception should be throwed - stepping_simple_timer")
@@ -342,5 +340,87 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         n.unlock();
         worker.join();
         REQUIRE(throwed);
+    }
+
+
+    SECTION("break execution - callback rules that exception should be throwed - stepping_sim")
+    {
+        int i = 0;
+
+        steps_t current_steps;
+        std::shared_ptr<hardware::stepping> stepping = std::make_shared<raspigcd::hardware::stepping_sim>(
+            steps_t{0, 0, 0, 0},
+            [&](const steps_t& s) {
+                if (i == 1) {
+                    m.unlock();
+                    n.lock();
+                }
+                current_steps = s;
+                i++;
+            });
+
+        m.lock();
+        n.lock();
+        bool throwed = false;
+        std::thread worker([&]() {
+            try {
+                stepping.get()->exec(commands_to_do, [](const steps_t steps_from_start, const int command_index) {
+                    return 1;
+                });
+            } catch (const raspigcd::hardware::execution_terminated& e) {
+                throwed = true;
+            }
+        });
+        //worker.detach();
+        m.lock();
+        stepping.get()->terminate();
+        n.unlock();
+
+        worker.join();
+        REQUIRE(!throwed);
+    }
+
+    SECTION("break execution - callback rules that exception should be throwed - stepping_simple_timer")
+    {
+        int i = 0;
+
+        steps_t current_steps;
+        std::shared_ptr<raspigcd::hardware::driver::inmem> low_steppers_drv_a = std::make_shared<raspigcd::hardware::driver::inmem>();
+        std::shared_ptr<hardware::low_steppers> low_steppers_drv = low_steppers_drv_a;
+        low_steppers_drv_a->set_step_callback([&](const steps_t& s) {
+            if (i == 1) {
+                m.unlock();
+                n.lock();
+            }
+            current_steps = s;
+            i++;
+        });
+
+        std::shared_ptr<hardware::low_timers> low_timers_drv = std::make_shared<raspigcd::hardware::driver::low_timers_wait_for>();
+        // TODO
+        std::shared_ptr<hardware::stepping> stepping = std::make_shared<raspigcd::hardware::stepping_simple_timer>(
+            100,
+            low_steppers_drv,
+            low_timers_drv);
+
+        m.lock();
+        n.lock();
+        bool throwed = false;
+        std::thread worker([&]() {
+            try {
+                stepping.get()->exec(commands_to_do, [](const steps_t steps_from_start, const int command_index) {
+                    std::cout << "Break at " << command_index << std::endl;
+                    return 1;
+                });
+            } catch (const raspigcd::hardware::execution_terminated& e) {
+                throwed = true;
+            }
+        });
+        //worker.detach();
+        m.lock();
+        stepping.get()->terminate();
+        n.unlock();
+        worker.join();
+        REQUIRE(!throwed);
     }
 }

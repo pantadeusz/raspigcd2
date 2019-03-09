@@ -92,7 +92,11 @@ void stepping_sim::exec(const std::vector<multistep_command>& commands_to_do,
     for (auto& steps : hardware_commands_to_steps(commands_to_do)) {
         if (_terminate_execution > 0) {
             if (_terminate_execution == 1) {
-                throw execution_terminated();
+                if (on_execution_break({}, _tick_index)) {
+                    _terminate_execution = 0;
+                } else {
+                    throw execution_terminated();
+                }
             } else {
                 _terminate_execution--;
             }
@@ -133,13 +137,16 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
             if (_terminate_execution > 0) {
-                if (start_counter_delay == 0) {
-                    start_counter_delay = _terminate_execution;
-                }
+                if (start_counter_delay == 0) start_counter_delay = _terminate_execution;
                 if (_terminate_execution == 1) {
+                    if (on_execution_break({},_tick_index)) {
+                        _terminate_execution = 0;
+                        counter_delay = 1000;
+                        start_counter_delay = 0;
+                    } else {
                     throw execution_terminated(
                         hardware_commands_to_last_position_after_given_steps(commands_to_do, _tick_index)
-                    );
+                    );}
                 } else {
                     _terminate_execution--;
                     counter_delay = 1000+(start_counter_delay - _terminate_execution);
