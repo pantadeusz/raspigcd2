@@ -18,8 +18,8 @@
 */
 
 
-#define CATCH_CONFIG_DISABLE_MATCHERS
-#define CATCH_CONFIG_FAST_COMPILE
+// #define CATCH_CONFIG_DISABLE_MATCHERS
+// #define CATCH_CONFIG_FAST_COMPILE
 #include <catch2/catch.hpp>
 #include <chrono>
 #include <condition_variable>
@@ -49,19 +49,6 @@ using namespace raspigcd::configuration;
 // void path_intent_executor::execute_pure_path_intent(const movement::path_intent_t& path_intent) {
 TEST_CASE("path_intent_executor terminate procedure for stepping_simple_timer.", "[gcd][path_intent_executor][stepping_simple_timer][execute_pure_path_intent]")
 {
-    auto steppers_drv = std::make_shared<hardware::driver::inmem>();
-    auto timers_drv = std::make_shared<hardware::driver::low_timers_fake>();
-
-    std::shared_ptr<hardware::stepping> stepping = std::make_shared<hardware::stepping_simple_timer>(50, steppers_drv, timers_drv);
-
-
-    hardware::driver::inmem* inmem_ptr = (hardware::driver::inmem*)steppers_drv.get();
-    //hardware::driver::low_timers_fake* low_timers_fake_ptr = (hardware::driver::low_timers_fake*)timers_drv.get();
-    std::mutex m;
-    std::mutex n;
-
-    SECTION("break execution and check that the steps performed are less than requested")
-    {
         multistep_commands_t commands_to_do;
         for (int i = 0; i < 4; i++) {
             //int n = 0;
@@ -79,6 +66,20 @@ TEST_CASE("path_intent_executor terminate procedure for stepping_simple_timer.",
             cmnd.b[i].dir = 0;
             commands_to_do.push_back(cmnd);
         }
+
+    auto steppers_drv = std::make_shared<hardware::driver::inmem>();
+    auto timers_drv = std::make_shared<hardware::driver::low_timers_fake>();
+
+    std::shared_ptr<hardware::stepping> stepping = std::make_shared<hardware::stepping_simple_timer>(50, steppers_drv, timers_drv);
+
+
+    hardware::driver::inmem* inmem_ptr = (hardware::driver::inmem*)steppers_drv.get();
+    //hardware::driver::low_timers_fake* low_timers_fake_ptr = (hardware::driver::low_timers_fake*)timers_drv.get();
+    std::mutex m;
+    std::mutex n;
+
+    SECTION("break execution and check that the steps performed are less than requested")
+    {
 
 
         int i = 0;
@@ -150,7 +151,7 @@ TEST_CASE("path_intent_executor terminate procedure for stepping_simple_timer.",
 TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verification.", "[gcd][path_intent_executor][stepping_sim][execute_pure_path_intent]")
 {
     multistep_commands_t commands_to_do;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 40; i++) {
         multistep_command cmnd;
         cmnd.count = 1;
         cmnd.b[0].step = 0;
@@ -161,8 +162,8 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         cmnd.b[2].dir = 0;
         cmnd.b[3].step = 0;
         cmnd.b[3].dir = 0;
-        cmnd.b[i].step = 1;
-        cmnd.b[i].dir = 0;
+        cmnd.b[i%4].step = 1;
+        cmnd.b[i%4].dir = 0;
         commands_to_do.push_back(cmnd);
     }
     std::mutex m;
@@ -423,4 +424,51 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         worker.join();
         REQUIRE(!throwed);
     }
+
+
+
+    SECTION("break execution with slowdown should do the exact number of steps before stop - stepping_simple_timer")
+    {
+        int i = 0;
+
+        steps_t current_steps;
+        std::shared_ptr<raspigcd::hardware::driver::inmem> low_steppers_drv_a = std::make_shared<raspigcd::hardware::driver::inmem>();
+        std::shared_ptr<hardware::low_steppers> low_steppers_drv = low_steppers_drv_a;
+        low_steppers_drv_a->set_step_callback([&](const steps_t& s) {
+            if (i == 1) {
+                m.unlock();
+                n.lock();
+            }
+            current_steps = s;
+            i++;
+        });
+
+        std::shared_ptr<hardware::low_timers> low_timers_drv = std::make_shared<raspigcd::hardware::driver::low_timers_wait_for>();
+        // TODO
+        std::shared_ptr<hardware::stepping> stepping = std::make_shared<raspigcd::hardware::stepping_simple_timer>(
+            100,
+            low_steppers_drv,
+            low_timers_drv);
+
+        m.lock();
+        n.lock();
+        std::thread worker([&]() {
+            try {
+                stepping.get()->exec(commands_to_do);
+            } catch (const raspigcd::hardware::execution_terminated& e) {
+            }
+        });
+        //worker.detach();
+        m.lock();
+        stepping.get()->terminate(5);
+        n.unlock();
+
+        worker.join();
+        REQUIRE(stepping.get()->get_tick_index() == 2+5);
+        REQUIRE(stepping.get()->get_tick_index() == i);
+        std::list<steps_t> steps_from_commands_ = hardware_commands_to_steps(commands_to_do);
+        std::vector<steps_t> steps_from_commands(steps_from_commands_.begin(), steps_from_commands_.end());
+        REQUIRE(current_steps == steps_from_commands[stepping.get()->get_tick_index() - 1]);
+    }
+
 }

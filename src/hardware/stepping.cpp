@@ -134,6 +134,7 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
     _terminate_execution = 0;
     int counter_delay = 1000;
     int start_counter_delay = 0;
+
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
             if (_terminate_execution > 0) {
@@ -157,7 +158,6 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
             prev_timer = _low_timer->wait_for_tick_s(prev_timer, _delay_microseconds*counter_delay/1000);
         }
     }
-    //return _steps;
 }
 
 } // namespace hardware
