@@ -25,7 +25,7 @@
 namespace raspigcd {
 namespace hardware {
 namespace driver {
-void low_timers_fake::wait_s(const double t)
+void low_timers_fake::wait_us(const double t)
 {
     last_delay = t;
     on_wait_s(t);
@@ -47,7 +47,7 @@ std::chrono::high_resolution_clock::time_point low_timers_fake::start_timing()
      * @brief wait for the tick to end.
      * Remember to run start_timing first!
      */
-std::chrono::high_resolution_clock::time_point low_timers_fake::wait_for_tick_s(const std::chrono::high_resolution_clock::time_point&, const double dt)
+std::chrono::high_resolution_clock::time_point low_timers_fake::wait_for_tick_us(const std::chrono::high_resolution_clock::time_point&, const double dt)
 {
     on_wait_s(dt);
     return std::chrono::system_clock::now();

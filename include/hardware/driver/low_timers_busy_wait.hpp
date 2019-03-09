@@ -38,7 +38,7 @@ public:
      * 
      * @param t 
      */
-    void wait_s(const double t) ;
+    void wait_us(const double t) ;
 
     /**
      * @brief start the timer
@@ -50,7 +50,7 @@ public:
      * @brief wait for the tick to end.
      * Remember to run start_timing first!
      */
-    std::chrono::high_resolution_clock::time_point wait_for_tick_s(const std::chrono::high_resolution_clock::time_point &prev_timer, const double t);
+    std::chrono::high_resolution_clock::time_point wait_for_tick_us(const std::chrono::high_resolution_clock::time_point &prev_timer, const double t);
 };
 
 }

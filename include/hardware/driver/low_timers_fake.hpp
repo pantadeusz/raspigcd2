@@ -35,11 +35,11 @@ public:
    
     double last_delay;
     /**
-     * @brief delay in seconds. This can be fraction of a second
+     * @brief delay in microseconds
      * 
      * @param t 
      */
-    void wait_s(const double t) ;
+    void wait_us(const double t) ;
 
     /**
      * @brief start the timer
@@ -51,7 +51,7 @@ public:
      * @brief wait for the tick to end.
      * Remember to run start_timing first!
      */
-    std::chrono::high_resolution_clock::time_point wait_for_tick_s(const std::chrono::high_resolution_clock::time_point &, const double);
+    std::chrono::high_resolution_clock::time_point wait_for_tick_us(const std::chrono::high_resolution_clock::time_point &, const double);
 
     std::function<void(const double)> on_wait_s;
     low_timers_fake(std::function<void(const double)> callback = [](const double){}){on_wait_s = callback;}

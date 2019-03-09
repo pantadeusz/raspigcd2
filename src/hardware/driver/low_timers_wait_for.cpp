@@ -25,7 +25,7 @@
 namespace raspigcd {
 namespace hardware {
 namespace driver {
-void low_timers_wait_for::wait_s(const double t)
+void low_timers_wait_for::wait_us(const double t)
 {
     // auto prevTime = std::chrono::steady_clock::now();
     // prevTime = prevTime + std::chrono::microseconds((int)(t * 1000000.0));
@@ -47,7 +47,7 @@ std::chrono::high_resolution_clock::time_point low_timers_wait_for::start_timing
      * @brief wait for the tick to end.
      * Remember to run start_timing first!
      */
-std::chrono::high_resolution_clock::time_point low_timers_wait_for::wait_for_tick_s(const std::chrono::high_resolution_clock::time_point& prev_timer, const double t)
+std::chrono::high_resolution_clock::time_point low_timers_wait_for::wait_for_tick_us(const std::chrono::high_resolution_clock::time_point& prev_timer, const double t)
 {
     auto ttime = std::chrono::microseconds((unsigned long)(t));
     auto nextT = prev_timer + ttime;

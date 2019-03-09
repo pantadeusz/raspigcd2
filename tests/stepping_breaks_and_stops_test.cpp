@@ -254,10 +254,10 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         steps_t current_steps;
         std::shared_ptr<raspigcd::hardware::driver::inmem> low_steppers_drv_a = std::make_shared<raspigcd::hardware::driver::inmem>();
         std::shared_ptr<hardware::low_steppers> low_steppers_drv = low_steppers_drv_a;
-        low_steppers_drv_a->set_step_callback([&](const steps_t& s) {});
+        low_steppers_drv_a->set_step_callback([&](const steps_t&) {});
         std::shared_ptr<hardware::low_timers> low_timers_drv = std::make_shared<raspigcd::hardware::driver::low_timers_wait_for>();
         std::shared_ptr<hardware::stepping> stepping = std::make_shared<raspigcd::hardware::stepping_simple_timer>(100, low_steppers_drv, low_timers_drv);
-        REQUIRE_NOTHROW(stepping.get()->exec(commands_to_do, [](const steps_t steps_from_start, const int command_index) {
+        REQUIRE_NOTHROW(stepping.get()->exec(commands_to_do, [](const steps_t, const int ) {
             return 0;
         }));
     }
@@ -509,7 +509,7 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         n.lock();
         std::thread worker([&]() {
             try {
-                stepping.get()->exec(commands_to_do,[&](auto spos, auto tick_count){
+                stepping.get()->exec(commands_to_do,[&](auto , auto ){
                     return 1;
                 });
             } catch (const raspigcd::hardware::execution_terminated& e) {

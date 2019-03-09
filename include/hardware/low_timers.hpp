@@ -32,11 +32,11 @@ class low_timers
 private:
 public:
     /**
-     * @brief delay in seconds. This can be fraction of a second
+     * @brief delay in seconds. This can be fraction of a second (1/1000000 s)
      * 
      * @param t 
      */
-    virtual void wait_s(const double t) = 0;
+    virtual void wait_us(const double t) = 0;
 
     /**
      * @brief start the timer
@@ -45,10 +45,10 @@ public:
     virtual std::chrono::high_resolution_clock::time_point start_timing() = 0;
 
     /**
-     * @brief wait for the tick to end.
+     * @brief wait for the tick to end. Time is microseconds! (1/1000000 s)
      * Remember to run start_timing first!
      */
-    virtual std::chrono::high_resolution_clock::time_point wait_for_tick_s(const std::chrono::high_resolution_clock::time_point &prev_timer, const double t) = 0;
+    virtual std::chrono::high_resolution_clock::time_point wait_for_tick_us(const std::chrono::high_resolution_clock::time_point &prev_timer, const double t) = 0;
 };
 
 } // namespace hardware
