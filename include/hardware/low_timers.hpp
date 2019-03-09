@@ -36,7 +36,7 @@ public:
      * 
      * @param t 
      */
-    void wait_us(const double t) {
+    inline void wait_us(const int64_t t) {
         wait_for_tick_us(start_timing(),t);
     }
 
@@ -50,7 +50,9 @@ public:
      * @brief wait for the tick to end. Time is microseconds! (1/1000000 s)
      * Remember to run start_timing first!
      */
-    virtual std::chrono::high_resolution_clock::time_point wait_for_tick_us(const std::chrono::high_resolution_clock::time_point &prev_timer, const double t) = 0;
+    virtual std::chrono::high_resolution_clock::time_point wait_for_tick_us(
+        const std::chrono::high_resolution_clock::time_point &prev_timer,
+        const int64_t t) = 0;
 };
 
 } // namespace hardware
