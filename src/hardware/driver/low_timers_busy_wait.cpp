@@ -28,9 +28,9 @@ namespace driver {
 
 
 /**
-     * @brief start the timer
-     * 
-     */
+ * @brief start the timer
+ * 
+ */
 std::chrono::high_resolution_clock::time_point low_timers_busy_wait::start_timing()
 {
     return std::chrono::system_clock::now();
@@ -44,8 +44,6 @@ std::chrono::high_resolution_clock::time_point low_timers_busy_wait::wait_for_ti
 {
     auto ttime = std::chrono::microseconds((unsigned long)(t));
     auto nextT = prev_timer + ttime;
-    //nextT = t + ttime*step_number;
-    // always busy wait - better timing, but more resource consuming
     for (; std::chrono::system_clock::now() < nextT;){
         std::this_thread::yield();
     }
