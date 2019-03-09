@@ -34,13 +34,6 @@ private:
 public:
    
     /**
-     * @brief delay in seconds. This can be fraction of a second
-     * 
-     * @param t 
-     */
-    void wait_us(const double t) ;
-
-    /**
      * @brief start the timer
      * 
      */

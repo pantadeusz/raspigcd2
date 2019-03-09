@@ -25,13 +25,6 @@
 namespace raspigcd {
 namespace hardware {
 namespace driver {
-void low_timers_busy_wait::wait_us(const double t)
-{
-    // auto prevTime = std::chrono::steady_clock::now();
-    // prevTime = prevTime + std::chrono::microseconds((int)(t * 1000000.0));
-    //std::this_thread::sleep_until(prevTime);
-    std::this_thread::sleep_for(std::chrono::microseconds((int)(t * 1000000.0)));
-}
 
 
 /**

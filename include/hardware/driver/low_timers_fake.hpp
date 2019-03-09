@@ -34,12 +34,6 @@ private:
 public:
    
     double last_delay;
-    /**
-     * @brief delay in microseconds
-     * 
-     * @param t 
-     */
-    void wait_us(const double t) ;
 
     /**
      * @brief start the timer

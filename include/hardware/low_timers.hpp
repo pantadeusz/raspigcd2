@@ -36,7 +36,9 @@ public:
      * 
      * @param t 
      */
-    virtual void wait_us(const double t) = 0;
+    void wait_us(const double t) {
+        wait_for_tick_us(start_timing(),t);
+    }
 
     /**
      * @brief start the timer

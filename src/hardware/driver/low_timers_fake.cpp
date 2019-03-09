@@ -25,14 +25,6 @@
 namespace raspigcd {
 namespace hardware {
 namespace driver {
-void low_timers_fake::wait_us(const double t)
-{
-    last_delay = t;
-    on_wait_s(t);
-    // auto prevTime = std::chrono::steady_clock::now();
-    // prevTime = prevTime + std::chrono::microseconds((int)(t * 1000000.0));
-    // std::this_thread::sleep_until(prevTime);
-}
 
 /**
      * @brief start the timer
@@ -49,6 +41,7 @@ std::chrono::high_resolution_clock::time_point low_timers_fake::start_timing()
      */
 std::chrono::high_resolution_clock::time_point low_timers_fake::wait_for_tick_us(const std::chrono::high_resolution_clock::time_point&, const double dt)
 {
+    last_delay = dt;
     on_wait_s(dt);
     return std::chrono::system_clock::now();
 };
