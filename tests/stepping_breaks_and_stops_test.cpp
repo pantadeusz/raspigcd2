@@ -268,5 +268,34 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         std::vector<steps_t> steps_from_commands(steps_from_commands_.begin(),steps_from_commands_.end());
         REQUIRE(current_steps == steps_from_commands[stepping.get()->get_tick_index()-1]);
     }
+
+    SECTION("callback function on break should be available")
+    {
+        multistep_commands_t commands_to_do;
+        for (int i = 0; i < 4; i++) {
+            multistep_command cmnd;
+            cmnd.count = 1;
+            cmnd.b[0].step = 0;
+            cmnd.b[0].dir = 0;
+            cmnd.b[1].step = 0;
+            cmnd.b[1].dir = 0;
+            cmnd.b[2].step = 0;
+            cmnd.b[2].dir = 0;
+            cmnd.b[3].step = 0;
+            cmnd.b[3].dir = 0;
+            cmnd.b[i].step = 1;
+            cmnd.b[i].dir = 0;
+            commands_to_do.push_back(cmnd);
+        }
+        steps_t current_steps;
+         std::shared_ptr<raspigcd::hardware::driver::inmem> low_steppers_drv_a = std::make_shared<raspigcd::hardware::driver::inmem>(        );
+        std::shared_ptr<hardware::low_steppers> low_steppers_drv = low_steppers_drv_a;
+        low_steppers_drv_a->set_step_callback([&](const steps_t&s) { });
+        std::shared_ptr<hardware::low_timers> low_timers_drv = std::make_shared<raspigcd::hardware::driver::low_timers_wait_for>();
+        std::shared_ptr<hardware::stepping> stepping = std::make_shared<raspigcd::hardware::stepping_simple_timer>(100,low_steppers_drv,low_timers_drv);
+        REQUIRE_NOTHROW( stepping.get()->exec(commands_to_do,[](const steps_t steps_from_start, const int command_index){
+            return 0;
+        }) );
+    }
 }
 

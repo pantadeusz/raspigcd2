@@ -83,7 +83,8 @@ int hardware_commands_to_steps_count(const std::vector<multistep_command>& comma
 
 
 
-void stepping_sim::exec(const std::vector<multistep_command>& commands_to_do)
+void stepping_sim::exec(const std::vector<multistep_command>& commands_to_do,
+    std::function<int (const steps_t steps_from_start, const int command_index) > on_execution_break)
 {
     _terminate_execution = 0;
     _tick_index = 0;
@@ -120,7 +121,8 @@ void stepping_simple_timer::set_low_level_timers(std::shared_ptr<low_timers> tim
 }
 
 
-void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_to_do)
+void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_to_do,
+    std::function<int (const steps_t steps_from_start, const int command_index) > on_execution_break)
 {
     set_thread_realtime();
     _tick_index = 0;

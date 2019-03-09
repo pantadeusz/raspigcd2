@@ -382,7 +382,7 @@ int main(int argc, char** argv)
             } // if prepare paths
 
 
-            for (int i = 0; i < buttons_drv->keys_state().size(); i++) {
+            for (unsigned int i = 0; i < buttons_drv->keys_state().size(); i++) {
                 std::cout << "Handler for key " << i << std::endl;
                 buttons_drv->on_key(i, [&stepping](int k, int s) {
                     std::cout << "Key " << k << " is " << ((s == 0) ? "UP" : "DOWN") << std::endl;

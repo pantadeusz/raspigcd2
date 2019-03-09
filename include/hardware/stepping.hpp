@@ -65,7 +65,8 @@ public:
 	* // @param on_step_ function to execute on each step. This function can throw exceptions to break execution of steps
 	* @return steps_t final position of the machine in steps
 	*/
-    virtual void exec(const multistep_commands_t& commands_to_do) = 0;
+    virtual void exec(const multistep_commands_t& commands_to_do,
+    std::function<int (const steps_t steps_from_start, const int command_index) > on_execution_break = [](auto,auto){return 0;}) = 0;
     /**
      * returns current tick index. This is not in the terms of commands. There will be at least as many ticks as commands.#pragma endregion
      * */
@@ -97,7 +98,8 @@ public:
 
     virtual int get_tick_index() const {return _tick_index;};
 // const steps_t& start_steps, std::function<void(const steps_t&)> on_step_
-    void exec(const multistep_commands_t& commands_to_do);
+    void exec(const multistep_commands_t& commands_to_do,
+    std::function<int (const steps_t steps_from_start, const int command_index) > on_execution_break = [](auto,auto){return 0;});
 
     void terminate(const int n= 0) {
         _terminate_execution = 1+n;
@@ -143,7 +145,8 @@ public:
 
     void set_low_level_timers(std::shared_ptr<low_timers> timer_drv_);
 
-    void exec(const multistep_commands_t& commands_to_do);
+    void exec(const multistep_commands_t& commands_to_do,
+    std::function<int (const steps_t steps_from_start, const int command_index) > on_execution_break = [](auto,auto){return 0;});
 
     void terminate(const int n = 0) {
         _terminate_execution = 1+n;

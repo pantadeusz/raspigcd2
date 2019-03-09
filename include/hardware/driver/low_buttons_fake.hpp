@@ -38,7 +38,7 @@ public:
      * @param callback_ the callback function that will receive button number and new status
      */
     void on_key(int btn, std::function<void(int,int)> callback_) {
-        if (btn < _key_callbacks.size()) _key_callbacks[btn] = callback_;
+        if (btn < (int)(_key_callbacks.size())) _key_callbacks[btn] = callback_;
     };
 
     /**
