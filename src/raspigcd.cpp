@@ -383,23 +383,23 @@ int main(int argc, char** argv)
 
 
             std::atomic<int> break_execution_result = -1;
-            std::function<void(int,int)> on_pause_execution;
-            auto on_resume_execution = [&stepping, buttons_drv,&on_pause_execution,&break_execution_result](int k, int s) {
+            std::function<void(int, int)> on_pause_execution;
+            auto on_resume_execution = [&stepping, buttons_drv, &on_pause_execution, &break_execution_result](int k, int s) {
                 if (s == 1) {
                     std::cout << "######## resume" << std::endl;
                     break_execution_result = 1;
-                    buttons_drv->on_key(k,on_pause_execution);
+                    buttons_drv->on_key(k, on_pause_execution);
                 }
             };
-            auto on_stop_execution = [&stepping, buttons_drv,&break_execution_result](int k, int s) {
+            auto on_stop_execution = [&stepping, buttons_drv, &break_execution_result](int k, int s) {
                 if ((k == 1) && (s == 1)) {
                     break_execution_result = 0;
                     stepping.terminate(1000);
                 }
             };
-            on_pause_execution = [&stepping, buttons_drv, &on_resume_execution,&break_execution_result](int k, int s) {
+            on_pause_execution = [&stepping, buttons_drv, &on_resume_execution, &break_execution_result](int k, int s) {
                 std::cout << "######## Key " << k << " is " << ((s == 0) ? "UP" : "DOWN") << std::endl;
-                if ((k == 0) && (s == 1)) {
+                if ((k == 0) && (s == 1) && (break_execution_result == -1)) {
                     break_execution_result = -1;
                     buttons_drv->on_key(k, on_resume_execution);
                     stepping.terminate(1000);
@@ -423,7 +423,7 @@ int main(int argc, char** argv)
             std::cout << "STARTING" << std::endl;
 
             machine_state = {{'F', 0.5}};
-            std::map<int,double> spindles_status;
+            std::map<int, double> spindles_status;
             for (auto& ppart : program_parts) {
                 std::cout << "Put part: " << ppart.size() << std::endl;
                 if (ppart.size() != 0) {
@@ -433,6 +433,7 @@ int main(int argc, char** argv)
                         case 0:
                         case 1:
                         case 4:
+
                             auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t& result) {
                                     machine_state = result;
@@ -443,58 +444,70 @@ int main(int argc, char** argv)
                                     // std::cout << std::endl;
                                 });
                             try {
-                                stepping.exec(m_commands, [&spindles_status, timer_drv,spindles_drv, &break_execution_result](auto a, auto tick_n) -> int {
+                                stepping.exec(m_commands, [&spindles_status, timer_drv, spindles_drv, &break_execution_result](auto a, auto tick_n) -> int {
                                     std::cout << "break at " << tick_n << " tick" << std::endl;
+                                    for (auto e : spindles_status) {
+                                        spindles_drv->spindle_pwm_power(e.first, 0);
+                                    }
                                     while (break_execution_result < 0) {
                                         timer_drv->wait_us(10000);
                                     }
-                                    if (break_execution_result) {
+                                    if ((int)(break_execution_result) == 1) {
                                         for (auto e : spindles_status) {
                                             spindles_drv->spindle_pwm_power(e.first, e.second);
+                                            using namespace std::chrono_literals;
+                                            std::cout << "wait for spindle..." << std::endl;
+                                            std::this_thread::sleep_for(7s);
+                                            std::cout << "wait for spindle... OK" << std::endl;
                                         }
                                     }
-                                    return break_execution_result;
+                                    int r = break_execution_result;
+                                    break_execution_result = -1;
+                                    return r;
                                 });
                             } catch (...) {
                                 steppers_drv->enable_steppers({false});
                                 spindles_drv->spindle_pwm_power(0, 0.0);
-                                std::cout << "skipped fragment" << std::endl;
-                                break;
                             }
-                            //std::list<steps_t> steps = hardware_commands_to_steps(m_commands);
-                            //std::cout << "steps: " << motor_layout_->steps_to_cartesian(steps.back()) << std::endl;
                             break;
                         }
                     } else {
-                        //std::cout << "M PART: " << ppart.size() << std::endl;
+                        auto wait_for_component_to_start = [](auto m) {
+                            double t = 3000;
+                            if (m.count('P') == 1) {
+                                t = m.at('P');
+                            } else if (m.count('X') == 1) {
+                                t = 1000 * m.at('X');
+                            }
+                            if (t > 0)
+                                std::this_thread::sleep_for(std::chrono::milliseconds((int)t));
+                        };
                         for (auto& m : ppart) {
                             switch ((int)(m['M'])) {
                             case 17:
                                 steppers_drv->enable_steppers({true});
+                                wait_for_component_to_start(m);
                                 break;
                             case 18:
                                 steppers_drv->enable_steppers({false});
+                                wait_for_component_to_start(m);
                                 break;
                             case 3:
-                                spindles_drv->spindle_pwm_power(0, 1.0);
-                                spindles_status[0]=1.0;
+                                spindles_status[0] = 1.0;
+                                spindles_drv->spindle_pwm_power(0, spindles_status[0]);
+                                wait_for_component_to_start(m);
                                 break;
                             case 5:
-                                spindles_drv->spindle_pwm_power(0, 0.0);
-                                spindles_status[0]=0.0;
+                                spindles_status[0] = 0.0;
+                                spindles_drv->spindle_pwm_power(0, spindles_status[0]);
+                                wait_for_component_to_start(m);
                                 break;
                             }
                         }
                     }
                 }
-                //std::cout << "[MS] Machine state:  ";
-                //for (auto& s : machine_state) {
-                //    std::cout << s.first << ":" << s.second << " ";
-                //}
-                //std::cout << "  OK" << std::endl;
                 if (video.get() != nullptr) {
                     if (!(video->active)) {
-                        std::cout << "video is not active" << std::endl;
                         stepping.terminate();
                         break;
                     }
