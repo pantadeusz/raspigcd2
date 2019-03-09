@@ -47,8 +47,9 @@ std::chrono::high_resolution_clock::time_point low_timers_fake::start_timing()
      * @brief wait for the tick to end.
      * Remember to run start_timing first!
      */
-std::chrono::high_resolution_clock::time_point low_timers_fake::wait_for_tick_s(const std::chrono::high_resolution_clock::time_point&, const double)
+std::chrono::high_resolution_clock::time_point low_timers_fake::wait_for_tick_s(const std::chrono::high_resolution_clock::time_point&, const double dt)
 {
+    on_wait_s(dt);
     return std::chrono::system_clock::now();
 };
 } // namespace driver

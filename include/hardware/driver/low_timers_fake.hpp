@@ -54,7 +54,7 @@ public:
     std::chrono::high_resolution_clock::time_point wait_for_tick_s(const std::chrono::high_resolution_clock::time_point &, const double);
 
     std::function<void(const double)> on_wait_s;
-    low_timers_fake(){on_wait_s = [](const double){};}
+    low_timers_fake(std::function<void(const double)> callback = [](const double){}){on_wait_s = callback;}
 };
 
 }

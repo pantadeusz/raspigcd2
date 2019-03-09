@@ -148,7 +148,7 @@ TEST_CASE("path_intent_executor terminate procedure for stepping_simple_timer.",
 }
 
 
-TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verification.", "[gcd][path_intent_executor][stepping_sim][execute_pure_path_intent]")
+TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verification.", "[gcd][path_intent_executor][stepping_sim][execute_pure_path_intent][stepping_simple_timer]")
 {
     multistep_commands_t commands_to_do;
     for (int i = 0; i < 40; i++) {
@@ -410,7 +410,6 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         std::thread worker([&]() {
             try {
                 stepping.get()->exec(commands_to_do, [](const steps_t steps_from_start, const int command_index) {
-                    std::cout << "Break at " << command_index << std::endl;
                     return 1;
                 });
             } catch (const raspigcd::hardware::execution_terminated& e) {
@@ -443,10 +442,14 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
             i++;
         });
 
-        std::shared_ptr<hardware::low_timers> low_timers_drv = std::make_shared<raspigcd::hardware::driver::low_timers_wait_for>();
+        std::list < double > low_timers_drv_history;
+        std::shared_ptr<hardware::low_timers> low_timers_drv = 
+        std::make_shared<raspigcd::hardware::driver::low_timers_fake>([&](auto t){
+            low_timers_drv_history.push_back(t);
+        });
         // TODO
         std::shared_ptr<hardware::stepping> stepping = std::make_shared<raspigcd::hardware::stepping_simple_timer>(
-            100,
+            1000,
             low_steppers_drv,
             low_timers_drv);
 
@@ -469,6 +472,10 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         std::list<steps_t> steps_from_commands_ = hardware_commands_to_steps(commands_to_do);
         std::vector<steps_t> steps_from_commands(steps_from_commands_.begin(), steps_from_commands_.end());
         REQUIRE(current_steps == steps_from_commands[stepping.get()->get_tick_index() - 1]);
+        
+        auto expected_low_timers_drv_history = low_timers_drv_history;
+        expected_low_timers_drv_history = {1000,1000,1001,1002,1003,1004,1005};
+        REQUIRE(low_timers_drv_history == expected_low_timers_drv_history);
     }
 
 }
