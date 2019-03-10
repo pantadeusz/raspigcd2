@@ -483,7 +483,7 @@ int main(int argc, char** argv)
                                     // std::cout << std::endl;
                                 });
                             try {
-                                stepping.exec(m_commands, [motor_layout_,&spindles_status, timer_drv, spindles_drv, &break_execution_result](auto steps_from_origin, auto tick_n) -> int {
+                                stepping.exec(m_commands, [motor_layout_,&spindles_status, timer_drv, spindles_drv, &break_execution_result,machine_state_prev](auto steps_from_origin, auto tick_n) -> int {
                                     std::cout << "break at " << tick_n << " tick" << std::endl;
                                     steps_from_origin = steps_from_origin + motor_layout_->cartesian_to_steps(block_to_distance_t(machine_state_prev));
                                     std::cout << "Position: " << motor_layout_->steps_to_cartesian(steps_from_origin) << std::endl;
