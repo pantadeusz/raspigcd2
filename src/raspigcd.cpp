@@ -236,7 +236,10 @@ void help_text(const std::vector<std::string>& args)
     std::cout << "\tIt allows for execution of gcode on Raspberry Pi and simulation of such on desktop." << std::endl;
     std::cout << std::endl;
     std::cout << "\t-c <configfile>" << std::endl;
-    std::cout << "\t\tprovide configuration file json" << std::endl;
+    std::cout << "\t\tprovide configuration file JSON" << std::endl;
+    std::cout << std::endl;
+    std::cout << "\t-C" << std::endl;
+    std::cout << "\t\tdisplay current configuration in JSON format" << std::endl;
     std::cout << std::endl;
     std::cout << "\t-f <filename>" << std::endl;
     std::cout << "\t\tgcode file to execute" << std::endl;
@@ -359,23 +362,23 @@ int main(int argc, char** argv)
                     p['F'] = *std::max_element(std::begin(cfg.max_velocity_mm_s), std::end(cfg.max_velocity_mm_s));
             }
             auto program_parts = group_gcode_commands(program);
-            std::cout << "Initial GCODE: " << std::endl
-                      << back_to_gcode(program_parts) << std::endl;
+            // std::cout << "Initial GCODE: " << std::endl
+            //           << back_to_gcode(program_parts) << std::endl;
             block_t machine_state = {{'F', 0.5}};
             program_parts = insert_additional_nodes_inbetween(program_parts, machine_state, cfg);
-            std::cout << "Initial GCODE w additional parts: " << std::endl
-                      << back_to_gcode(program_parts) << std::endl;
+            // std::cout << "Initial GCODE w additional parts: " << std::endl
+            //           << back_to_gcode(program_parts) << std::endl;
 
             program_t prepared_program;
             if (!raw_gcode) {
                 for (auto& ppart : program_parts) {
                     if (ppart.size() != 0) {
                         if (ppart[0].count('M') == 0) {
-                            std::cout << "G PART: " << ppart.size() << std::endl;
+                            //std::cout << "G PART: " << ppart.size() << std::endl;
                             switch ((int)(ppart[0]['G'])) {
                             case 4:
-                                std::cout << "Dwell not supported" << std::endl;
-                                break;
+                                //std::cout << "Dwell not supported" << std::endl;
+                                //break;
                             case 0:
                                 //ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
                                 //for (auto &e : ppart) e['G'] = 0;
@@ -389,7 +392,7 @@ int main(int argc, char** argv)
                                 break;
                             }
                         } else {
-                            std::cout << "M PART: " << ppart.size() << std::endl;
+                            //std::cout << "M PART: " << ppart.size() << std::endl;
                             for (auto& m : ppart) {
                                 switch ((int)(m['M'])) {
                                 case 18:
@@ -404,16 +407,16 @@ int main(int argc, char** argv)
                     }
                 }
 
-                std::cout << "Prepared GCODE NO GROUPING INIT: " << std::endl
-                          << back_to_gcode({prepared_program}) << std::endl;
-                std::cout << "Prepared GCODE INIT: " << std::endl
-                          << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
-                std::cout << "Prepared GCODE NO DUPLICATES: " << std::endl
-                          << back_to_gcode({remove_duplicate_blocks(prepared_program, {})}) << std::endl;
+                //std::cout << "Prepared GCODE NO GROUPING INIT: " << std::endl
+                //          << back_to_gcode({prepared_program}) << std::endl;
+                //std::cout << "Prepared GCODE INIT: " << std::endl
+                //          << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
+                //std::cout << "Prepared GCODE NO DUPLICATES: " << std::endl
+                //          << back_to_gcode({remove_duplicate_blocks(prepared_program, {})}) << std::endl;
                 program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program, {}));
                 //program_parts = group_gcode_commands(prepared_program);
-                std::cout << "Prepared GCODE: " << std::endl
-                          << back_to_gcode(program_parts) << std::endl;
+                //std::cout << "Prepared GCODE: " << std::endl
+                //          << back_to_gcode(program_parts) << std::endl;
                 machine_state = {{'F', 0.5}};
             } // if prepare paths
 
@@ -508,8 +511,7 @@ int main(int argc, char** argv)
                             break;
                         }
                     } else {
-                        auto wait_for_component_to_start = [](auto m) {
-                            double t = 3000;
+                        auto wait_for_component_to_start = [](auto m, int t = 3000) {
                             if (m.count('P') == 1) {
                                 t = m.at('P');
                             } else if (m.count('X') == 1) {
@@ -522,21 +524,21 @@ int main(int argc, char** argv)
                             switch ((int)(m['M'])) {
                             case 17:
                                 steppers_drv->enable_steppers({true});
-                                wait_for_component_to_start(m);
+                                wait_for_component_to_start(m,200);
                                 break;
                             case 18:
                                 steppers_drv->enable_steppers({false});
-                                wait_for_component_to_start(m);
+                                wait_for_component_to_start(m,200);
                                 break;
                             case 3:
                                 spindles_status[0] = 1.0;
                                 spindles_drv->spindle_pwm_power(0, spindles_status[0]);
-                                wait_for_component_to_start(m);
+                                wait_for_component_to_start(m,3000);
                                 break;
                             case 5:
                                 spindles_status[0] = 0.0;
                                 spindles_drv->spindle_pwm_power(0, spindles_status[0]);
-                                wait_for_component_to_start(m);
+                                wait_for_component_to_start(m,3000);
                                 break;
                             }
                         }
