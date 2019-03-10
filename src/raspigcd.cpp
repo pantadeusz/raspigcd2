@@ -472,7 +472,7 @@ int main(int argc, char** argv)
                         case 0:
                         case 1:
                         case 4:
-
+                            auto machine_state_prev = machine_state;
                             auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t& result) {
                                     machine_state = result;
@@ -483,8 +483,10 @@ int main(int argc, char** argv)
                                     // std::cout << std::endl;
                                 });
                             try {
-                                stepping.exec(m_commands, [&spindles_status, timer_drv, spindles_drv, &break_execution_result](auto a, auto tick_n) -> int {
+                                stepping.exec(m_commands, [motor_layout_,&spindles_status, timer_drv, spindles_drv, &break_execution_result](auto steps_from_origin, auto tick_n) -> int {
                                     std::cout << "break at " << tick_n << " tick" << std::endl;
+                                    steps_from_origin = steps_from_origin + motor_layout_->cartesian_to_steps(block_to_distance_t(machine_state_prev));
+                                    std::cout << "Position: " << motor_layout_->steps_to_cartesian(steps_from_origin) << std::endl;
                                     for (auto e : spindles_status) {
                                         spindles_drv->spindle_pwm_power(e.first, 0);
                                     }
@@ -498,6 +500,11 @@ int main(int argc, char** argv)
                                             std::cout << "wait for spindle..." << std::endl;
                                             std::this_thread::sleep_for(7s);
                                             std::cout << "wait for spindle... OK" << std::endl;
+                                            
+//                                            machine_state['X'] = ;
+//                                            machine_state['Y'] = ;
+//                                            machine_state['Z'] = ;
+//                                            machine_state['A'] = ;
                                         }
                                     }
                                     int r = break_execution_result;
