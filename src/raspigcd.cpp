@@ -36,6 +36,7 @@ This is simple program that uses the library. It will execute given GCode.
 #include <hardware/motor_layout.hpp>
 #include <hardware/stepping.hpp>
 
+#include <configuration_json.hpp>
 
 #include <fstream>
 #include <future>
@@ -72,6 +73,13 @@ public:
     configuration::global* cfg;
     std::shared_ptr<motor_layout> ml;
 
+
+    int z_p_x; // 1000x
+    int z_p_y; // 1000x
+    int view_x;
+    int view_y;
+
+
     void set_steps(const steps_t& st)
     {
         current_position = ml->steps_to_cartesian(st);
@@ -88,29 +96,50 @@ public:
         }
     }
 
+    void draw_path(std::shared_ptr<SDL_Renderer> renderer, int width, int height, const std::list<distance_t> &t) {
+        std::map < int, int > z_buffer;
+        
+        for (auto &e : t) {
+                    int x = e[0];
+                    int y = e[1];
+                    int z = e[2];
+                    if (e[2] <= 0) {
+                        if ((z_buffer.count (y*width+x) == 0) || (z_buffer[y*width+x] >= z) ) {
+                            SDL_SetRenderDrawColor(renderer.get(), 255 - (e[2] * 255 / 5), 255, 255, 255);
+                            SDL_RenderDrawPoint(renderer.get(), (x + view_x)+z*z_p_x/1000, (-y + view_y)-z*z_p_y/1000);
+                            z_buffer[y*width+x] = z;
+                        }
+                    }
+                }
+    }
+
     video_sdl(configuration::global* cfg_, driver::low_buttons_fake* buttons_drv, int width = 640, int height = 480)
     {
         active = true;
         cfg = cfg_;
-        ml = motor_layout::get_instance(*cfg);
 
+        z_p_x = 500; // 1000x
+        z_p_y = 500; // 1000x
+        view_x = width / 2;
+        view_y = height / 2;
+
+        ml = motor_layout::get_instance(*cfg);
         movements_track.push_back({0, 0, 0, 0});
         loop_thread = std::thread([this, width, height, buttons_drv]() {
             std::cout << "loop thread..." << std::endl;
 
-            SDL_Window* win = SDL_CreateWindow("Witaj w Swiecie",
+            window = std::shared_ptr<SDL_Window>(SDL_CreateWindow("Witaj w Swiecie",
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                width, height, SDL_WINDOW_SHOWN);
-            if (win == nullptr) throw std::invalid_argument("SDL_CreateWindow - error");
-            window = std::shared_ptr<SDL_Window>(win, [](SDL_Window* ptr) {
+                width, height, SDL_WINDOW_SHOWN), [](SDL_Window* ptr) {
                 SDL_DestroyWindow(ptr);
             });
-
-            SDL_Renderer* ren = SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED);
-            if (ren == nullptr) throw std::invalid_argument("SDL_CreateRenderer");
-            renderer = std::shared_ptr<SDL_Renderer>(ren, [](SDL_Renderer* ptr) {
+            if (window == nullptr) throw std::invalid_argument("SDL_CreateWindow - error");
+            
+            renderer = std::shared_ptr<SDL_Renderer>(SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED), [](SDL_Renderer* ptr) {
                 SDL_DestroyRenderer(ptr);
             });
+            if (renderer == nullptr) throw std::invalid_argument("SDL_CreateRenderer");
+
             for (; active;) {
                 SDL_Event event;
                 while (SDL_PollEvent(&event)) {
@@ -122,7 +151,17 @@ public:
                         break;
                     case SDL_KEYDOWN:
                         k = event.key.keysym.sym - SDLK_0;
-                        if ((k >= 0) && (k < 10)) buttons_drv->trigger_button_down(k);
+                        if ((k >= 0) && (k < 10)) {
+                            buttons_drv->trigger_button_down(k);
+                        } else if (event.key.keysym.sym == SDLK_LEFT) {
+                            view_x++;
+                        } else if (event.key.keysym.sym == SDLK_RIGHT) {
+                            view_x--;
+                        } else if (event.key.keysym.sym == SDLK_UP) {
+                            view_y++;
+                        } else if (event.key.keysym.sym == SDLK_DOWN) {
+                            view_y--;
+                        }
                         break;
                     case SDL_KEYUP:
                         k = event.key.keysym.sym - SDLK_0;
@@ -130,7 +169,6 @@ public:
                         break;
                     }
                 }
-
 
                 SDL_SetRenderDrawColor(renderer.get(), 0, 0, 0, 255);
                 SDL_RenderClear(renderer.get());
@@ -144,15 +182,12 @@ public:
                     s = current_position;
                     t = movements_track;
                 }
-                for (auto e : t) {
-                    if (e[2] <= 0) {
-                        SDL_SetRenderDrawColor(renderer.get(), 255 - (e[2] * 255 / 5), 255, 255, 255);
-                        SDL_RenderDrawPoint(renderer.get(), e[0] + width / 2, e[1] + height / 2);
-                    }
-                }
+                draw_path(renderer, width, height, t);
                 SDL_SetRenderDrawColor(renderer.get(), 255, 128, 128, 255);
                 for (int i = 0; i < std::abs(s[2]); i++) {
-                    SDL_RenderDrawPoint(renderer.get(), s[0] + width / 2 - i * (s[2] / std::abs(s[2])), s[1] + i * (s[2] / std::abs(s[2])) + height / 2);
+                    SDL_RenderDrawPoint(renderer.get(), 
+                     s[0] + view_x + i * (s[2] / std::abs(s[2]))*z_p_x/1000, 
+                    -s[1] + view_y + i * (-s[2] / std::abs(s[2]))*z_p_y/1000 );
                 }
                 //std::cout << "step.. " << s[0] << ", " << s[1] << ", " << s[2] << std::endl;
 
@@ -241,7 +276,6 @@ void help_text(const std::vector<std::string>& args)
 int main(int argc, char** argv)
 {
 #ifdef HAVE_SDL2
-    //std::cout << "WITH SDL!!! " << std::endl;
     if (SDL_Init(SDL_INIT_VIDEO) != 0) throw std::invalid_argument("SDL_Init");
 #endif
 
@@ -258,6 +292,8 @@ int main(int argc, char** argv)
         } else if (args.at(i) == "-c") {
             i++;
             cfg.load(args.at(i));
+        } else if (args.at(i) == "-C") {
+            std::cout << cfg << std::endl;
         } else if (args.at(i) == "--raw") {
             raw_gcode = true;
         } else if (args.at(i) == "-f") {
@@ -407,7 +443,6 @@ int main(int argc, char** argv)
             };
 
             for (unsigned int i = 0; i < buttons_drv->keys_state().size(); i++) {
-                std::cout << "Handler for key " << i << std::endl;
                 if (i == 0) {
                     buttons_drv->on_key(i, on_pause_execution);
                 } else if (i == 1) {
@@ -425,7 +460,8 @@ int main(int argc, char** argv)
             machine_state = {{'F', 0.5}};
             std::map<int, double> spindles_status;
             for (auto& ppart : program_parts) {
-                std::cout << "Put part: " << ppart.size() << std::endl;
+                
+                //std::cout << "Put part: " << ppart.size() << std::endl;
                 if (ppart.size() != 0) {
                     if (ppart[0].count('M') == 0) {
                         //std::cout << "G PART: " << ppart.size() << std::endl;
@@ -512,6 +548,11 @@ int main(int argc, char** argv)
                         break;
                     }
                 }
+                std::string s = "";
+                for (auto e: machine_state) {
+                    s = s + ((s.size())?" ":"") + e.first+std::to_string(e.second);
+                }
+                std::cout << s << std::endl;
             }
             std::cout << "FINISHED" << std::endl;
         }
