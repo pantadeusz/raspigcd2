@@ -472,8 +472,7 @@ int main(int argc, char** argv)
                             break;
                         }
                     } else {
-                        auto wait_for_component_to_start = [](auto m) {
-                            double t = 3000;
+                        auto wait_for_component_to_start = [](auto m, int t = 3000) {
                             if (m.count('P') == 1) {
                                 t = m.at('P');
                             } else if (m.count('X') == 1) {
@@ -486,21 +485,21 @@ int main(int argc, char** argv)
                             switch ((int)(m['M'])) {
                             case 17:
                                 steppers_drv->enable_steppers({true});
-                                wait_for_component_to_start(m);
+                                wait_for_component_to_start(m,200);
                                 break;
                             case 18:
                                 steppers_drv->enable_steppers({false});
-                                wait_for_component_to_start(m);
+                                wait_for_component_to_start(m,200);
                                 break;
                             case 3:
                                 spindles_status[0] = 1.0;
                                 spindles_drv->spindle_pwm_power(0, spindles_status[0]);
-                                wait_for_component_to_start(m);
+                                wait_for_component_to_start(m,3000);
                                 break;
                             case 5:
                                 spindles_status[0] = 0.0;
                                 spindles_drv->spindle_pwm_power(0, spindles_status[0]);
-                                wait_for_component_to_start(m);
+                                wait_for_component_to_start(m,3000);
                                 break;
                             }
                         }
