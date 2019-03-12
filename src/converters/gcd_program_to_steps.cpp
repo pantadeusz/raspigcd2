@@ -139,10 +139,10 @@ hardware::multistep_commands_t program_to_steps(
         } else if (next_state.at('G') == 4) {
             //std::cout << "G4: " << std::endl;
             double t = 0;
-            if (next_state.count('X')) { // seconds
-                t = next_state.at('X');
-            } else if (next_state.count('P')) {
-                t = next_state.at('P')/ 1000.0;
+            if (block.count('X')) { // seconds
+                t = block.at('X');
+            } else if (block.count('P')) {
+                t = block.at('P')/ 1000.0;
             }
             hardware::multistep_command executor_command = {};
             executor_command.count = t/dt;

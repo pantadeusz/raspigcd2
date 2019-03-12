@@ -128,7 +128,7 @@ public:
         loop_thread = std::thread([this, width, height, buttons_drv]() {
             std::cout << "loop thread..." << std::endl;
 
-            window = std::shared_ptr<SDL_Window>(SDL_CreateWindow("Witaj w Swiecie",
+            window = std::shared_ptr<SDL_Window>(SDL_CreateWindow("GCD Execution Simulator By Tadeusz Puzniakowski",
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                 width, height, SDL_WINDOW_SHOWN), [](SDL_Window* ptr) {
                 SDL_DestroyWindow(ptr);
@@ -376,9 +376,6 @@ int main(int argc, char** argv)
                         if (ppart[0].count('M') == 0) {
                             //std::cout << "G PART: " << ppart.size() << std::endl;
                             switch ((int)(ppart[0]['G'])) {
-                            case 4:
-                                //std::cout << "Dwell not supported" << std::endl;
-                                //break;
                             case 0:
                                 //ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
                                 //for (auto &e : ppart) e['G'] = 0;
@@ -389,6 +386,9 @@ int main(int argc, char** argv)
                                 ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
                                 prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
                                 machine_state = last_state_after_program_execution(ppart, machine_state);
+                                break;
+                            case 4:
+                                prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
                                 break;
                             }
                         } else {
@@ -462,6 +462,7 @@ int main(int argc, char** argv)
 
             machine_state = {{'F', 0.5}};
             std::map<int, double> spindles_status;
+            long int last_spindle_on_delay = 7000;
             for (auto& ppart : program_parts) {
                 
                 //std::cout << "Put part: " << ppart.size() << std::endl;
@@ -483,7 +484,7 @@ int main(int argc, char** argv)
                                     // std::cout << std::endl;
                                 });
                             try {
-                                stepping.exec(m_commands, [motor_layout_,&spindles_status, timer_drv, spindles_drv, &break_execution_result,machine_state_prev](auto steps_from_origin, auto tick_n) -> int {
+                                stepping.exec(m_commands, [motor_layout_,&spindles_status, timer_drv, spindles_drv, &break_execution_result,machine_state_prev,last_spindle_on_delay](auto steps_from_origin, auto tick_n) -> int {
                                     std::cout << "break at " << tick_n << " tick" << std::endl;
                                     steps_from_origin = steps_from_origin + motor_layout_->cartesian_to_steps(block_to_distance_t(machine_state_prev));
                                     std::cout << "Position: " << motor_layout_->steps_to_cartesian(steps_from_origin) << std::endl;
@@ -498,9 +499,8 @@ int main(int argc, char** argv)
                                             spindles_drv->spindle_pwm_power(e.first, e.second);
                                             using namespace std::chrono_literals;
                                             std::cout << "wait for spindle..." << std::endl;
-                                            std::this_thread::sleep_for(7s);
+                                            std::this_thread::sleep_for(std::chrono::milliseconds(last_spindle_on_delay));
                                             std::cout << "wait for spindle... OK" << std::endl;
-                                            
 //                                            machine_state['X'] = ;
 //                                            machine_state['Y'] = ;
 //                                            machine_state['Z'] = ;
@@ -526,6 +526,7 @@ int main(int argc, char** argv)
                             }
                             if (t > 0)
                                 std::this_thread::sleep_for(std::chrono::milliseconds((int)t));
+                            return t;
                         };
                         for (auto& m : ppart) {
                             switch ((int)(m['M'])) {
@@ -540,7 +541,7 @@ int main(int argc, char** argv)
                             case 3:
                                 spindles_status[0] = 1.0;
                                 spindles_drv->spindle_pwm_power(0, spindles_status[0]);
-                                wait_for_component_to_start(m,3000);
+                                last_spindle_on_delay = wait_for_component_to_start(m,3000);
                                 break;
                             case 5:
                                 spindles_status[0] = 0.0;
