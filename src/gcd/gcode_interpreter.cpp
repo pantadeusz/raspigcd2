@@ -95,7 +95,7 @@ partitioned_program_t insert_additional_nodes_inbetween(partitioned_program_t &p
                     if ((block.at('G') == 0) || (block.at('G') == 1)) {
                         auto next_state = merge_blocks(current_state, block);
                         distance_t move_vec = blocks_to_vector_move(current_state, next_state);
-                        if (move_vec.length() == 0) {
+                        if (move_vec.length() < 0.01) {
                             nsubprog.push_back(block);
                         } else {
                             double max_accel = machine_limits.proportional_max_accelerations_mm_s2(move_vec);
@@ -106,9 +106,9 @@ partitioned_program_t insert_additional_nodes_inbetween(partitioned_program_t &p
                                 a, 
                                 b, 
                                 max_accel);
-                             move_vec = move_vec * 0.5;
+                            move_vec = move_vec * 0.5;
                             if ((transition_point.p-a.p).length() < move_vec.length()) {
-                                //std::cout << "a.p " << a.p << "  transition_point.p " << transition_point.p << "   b.p " << b.p << std::endl;
+                                //std::cout << "++ a.p " << a.p << "  transition_point.p " << transition_point.p << "   b.p " << b.p << std::endl;
                                 auto nmvect = (move_vec/move_vec.length())*(transition_point.p-a.p).length();
                                 auto mid_state_a = merge_blocks(current_state, distance_to_block(a.p + nmvect));
                                 auto mid_state_b = merge_blocks(current_state, distance_to_block(b.p - nmvect));
@@ -118,6 +118,7 @@ partitioned_program_t insert_additional_nodes_inbetween(partitioned_program_t &p
                                 nsubprog.push_back(mid_state_b);
                                 nsubprog.push_back(next_state);
                             } else {
+                                //std::cout << "-- a.p " << a.p << "  transition_point.p " << transition_point.p << "   b.p " << b.p << std::endl;
                                 auto mid_state = merge_blocks(current_state, distance_to_block(block_to_distance_t(current_state) + move_vec));
                                 mid_state['G'] = next_state['G'];
                                 mid_state['F'] = std::max(next_state['F'], current_state['F']);
@@ -258,13 +259,18 @@ program_t apply_limits_for_turns(const program_t& program_states,
                 auto C_B = (C - B).length();
                 B_A = (B_A <= 0)?0.0000001:B_A;
                 C_B = (C_B <= 0)?0.0000001:C_B;
-                auto y = linear_interpolation(angle, 
+                auto angle_transformed = ((angle-M_PI / 2.0)/(M_PI / 2.0));
+                angle_transformed *= angle_transformed;
+                angle_transformed = angle_transformed*(M_PI / 2.0) + M_PI / 2.0;
+                auto y = linear_interpolation(
+                    angle_transformed
+                    , 
                     M_PI / 2.0, 
                     std::min(
                         machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / B_A),
                         machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / C_B)),
-                        M_PI, 
-                        std::min(machine_limits.proportional_max_velocity_mm_s((B - A) / B_A),
+                    M_PI, 
+                    std::min(machine_limits.proportional_max_velocity_mm_s((B - A) / B_A),
                         machine_limits.proportional_max_velocity_mm_s((C - B) / C_B)));
                 if (std::isnan(y)) y = ret_states[i]['F'];
                 if (ret_states[i]['F'] == 0.0) throw std::invalid_argument("feedrate cannot be 0");
@@ -305,7 +311,7 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
     if (program_states.size() == 0) throw std::invalid_argument("there must be at least one G0 or G1 code in the program!");
     program_t result;
     result.reserve(program_states.size()+1024);
-    block_t current_state = merge_blocks({{'X',0.0},{'Y',0.0},{'Z',0.0},{'A',0.0},{'F',0.1},},  current_state0);
+    block_t current_state = merge_blocks({{'X',0.0},{'Y',0.0},{'Z',0.0},{'A',0.0},{'F',0.1}},  current_state0);
     result.push_back(current_state);
     for (const auto& ps_input : program_states) {
         auto next_state = merge_blocks(current_state, ps_input);
@@ -332,21 +338,21 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
     auto result_with_limits = apply_limits_for_turns(result, machine_limits);
     auto do_the_acceleration_limiting = [&machine_limits](auto program) {
         auto current_state = merge_blocks({{'X',0.0},{'Y',0.0},{'Z',0.0},{'A',0.0},{'F',0.1},}, program.front());
-        program_t result;
-        result.push_back(current_state);
-        for (unsigned int i = 1; i < program.size(); i ++) {
-            auto ps_input = program[i];
-            auto next_state = merge_blocks(current_state, ps_input);
+        program_t result = program;
+        //result.push_back(current_state);
+        int walk_direction = 1;
+        for (unsigned int i = 1; (i < program.size()) && (i > 0); i += walk_direction) {
+            auto next_state = program[i];
             //current_state
             auto A = block_to_distance_t(current_state);
             auto B = block_to_distance_t(next_state);
             auto ABvec = B - A;
             double s = ABvec.length();
             if (s == 0) {
-                result.push_back(next_state);
+                //result.push_back(next_state);
             } else {
                 if (current_state['F'] == next_state['F']) {
-                    result.push_back(next_state);
+                    //result.push_back(next_state);
                 } else {
                     double max_a = machine_limits.proportional_max_accelerations_mm_s2(ABvec / s);
                     //double max_v = machine_limits.proportional_max_velocity_mm_s(ABvec / s);
@@ -356,32 +362,45 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
                     path_node_t pnA = {.p = A, .v = current_state['F']};
                     path_node_t pnB = {.p = B, .v = next_state['F']};
                     double a_AB = acceleration_between(pnA, pnB);
-                    if( (a_AB > (-std::abs(max_a))) &&  (a_AB < std::abs(max_a))) {
-                        result.push_back(next_state);
+
+                    bool inverted_order = false;
+                    if (a_AB < 0) {
+                        inverted_order = true;
+                        std::swap(pnA,pnB);
+                    }
+
+                    if (a_AB <= std::abs(max_a)) {
+                        //result.push_back(next_state);
                     } else {
                         double range = std::abs(acceleration_between(pnA, pnB))/2.0;
+                        auto r = std::abs(max_a);
                         for (int i = 0; i < 16; i++){
                             auto l = std::abs(acceleration_between(pnA, pnB));
-                            auto r = std::abs(max_a);
                             if (l>r) {
-                                pnB.v = (pnB.v-range)*((max_a > 0)?1.0:-1.0);
+                                pnB.v = pnB.v-range;
+                                if (pnB.v < 0.0001) pnB.v = 0.0001;
                             } else if (l < r) {
-                                pnB.v = (pnB.v+range)*((max_a > 0)?1.0:-1.0);
+                                pnB.v = pnB.v+range;
                             } else break;
-                            if (pnB.v > next_state['F']) {
-                                pnB.v = next_state['F'];
-                            }
                             if (pnB.v < min_v) {
                                 pnB.v = min_v;
                             }
-                            
+                            if (pnB.v > next_state['F']) {
+                                pnB.v = next_state['F'];
+                            }
                             range = range / 2;
                         }
+                        if (inverted_order) {
+                            std::swap(pnA,pnB);
+                            walk_direction *= -1;
+                        }
                         next_state['F'] = pnB.v;
-                        result.push_back(next_state);
+                        //result.push_back(next_state);
+                        result[i] = next_state;
                     }
                 }
             }
+            if ((i == 1) && (walk_direction == -1)) walk_direction = 1; 
             current_state = next_state;
         }
         return result;
@@ -604,6 +623,99 @@ std::map<char, double> command_to_map_of_arguments(const std::string& command__)
     return ret;
 }
 
+
+double point_segment_distance_3d(const distance_t& A, const distance_t& B, const distance_t& C)
+    {
+        double l = (C - B).length();
+        if (l <= 0)
+            return (A - B).length();
+        auto d = (C - B) / l;
+        auto v = A - B;
+        double t = v.dot_product(d);
+        auto P = B + (d * t);
+
+        return (P - A).length();
+    }
+
+ program_t optimize_path_douglas_peucker(const program_t &program_, const double epsilon, const block_t &p0_)
+    {
+        std::vector < distance_t > path;
+        path.reserve(program_.size());
+        auto is_block_a_new_position = [](const block_t &e) {
+            if (e.count('M') == 0) {
+                switch ((int)(e.at('G'))) {
+                    case 0:
+                    case 1:
+                    return true;
+                }
+            }
+            return false;
+        };
+        block_t machine_state = merge_blocks({{'X',0},{'Y',0},{'Z', 0},{'F',0.1}}, p0_);
+        path.push_back(block_to_distance_t(machine_state));
+        for (const auto &e: program_) {
+            if (is_block_a_new_position(e)) {
+                machine_state = merge_blocks(machine_state, e);
+                auto p = block_to_distance_t(machine_state);
+                p[3] = machine_state.at('F');
+                path.push_back(p);
+            }
+        }
+
+        std::vector<char> toDelete(path.size());
+        for (auto& e : toDelete)
+            e = false;
+        //DouglasPeucker algorithm
+        std::function<void(double, int, int)> optimizePathDP = [&](double epsilon, int start, int end) {
+            double dmax = 0;
+            int index = 0;
+            for (int i = start + 1; i < end; i++) {
+                if (!toDelete[i]) {
+                    auto d = point_segment_distance_3d(path[i], path[start], path[end]);
+                    if (d > dmax) {
+                        index = i;
+                        dmax = d;
+                    }
+                }
+            }
+            if (dmax > epsilon) {
+                optimizePathDP(epsilon, start, index);
+                optimizePathDP(epsilon, index, end);
+            } else {
+                if (start == end)
+                    return;
+                else {
+                    for (int i = start + 1; i < end; i++) {
+                        toDelete[i] = true;
+                    }
+                }
+            }
+        };
+        optimizePathDP(epsilon, 0, path.size() - 1);
+        program_t ret;
+        ret.reserve(program_.size());
+        unsigned int idx_in_program = 0;
+        for (unsigned int i = 1; i < path.size(); i++) {
+            //std::cout << "++ i " << i << "  idx_in_program " << idx_in_program << std::endl;
+            while ((idx_in_program < program_.size()) && !is_block_a_new_position(program_.at(idx_in_program))) {
+                //std::cout << "   i " << i << "  idx_in_program " << idx_in_program << std::endl;
+                ret.push_back(program_.at(idx_in_program));
+                idx_in_program++;
+            }
+            if (!toDelete[i]) {
+                //std::cout << "     push " << idx_in_program << std::endl;
+                //path.push_back(tmp[i]);
+                if (idx_in_program < program_.size())
+                ret.push_back(program_.at(idx_in_program));
+                else 
+                std::cout << "     push failed[" << i << "]:: " << idx_in_program << std::endl;
+                
+            }
+            idx_in_program++;
+        }
+        ret.shrink_to_fit();
+        return ret;
+    }
 
 } // namespace gcd
 } // namespace raspigcd

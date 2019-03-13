@@ -364,6 +364,18 @@ int main(int argc, char** argv)
                 if ((p.count('G')) && (p['G'] == 0))
                     p['F'] = *std::max_element(std::begin(cfg.max_velocity_mm_s), std::end(cfg.max_velocity_mm_s));
             }
+            if (save_to_files_list.size() > 0) {
+                std::cout << "SAVING RAW FILE TO: " << (save_to_files_list.front()+".stage0") << std::endl;
+                std::fstream f (save_to_files_list.front()+".stage0", std::fstream::out);
+                f << back_to_gcode(group_gcode_commands(program)) << std::endl;
+            }
+            program = optimize_path_douglas_peucker(program, 0.0125);
+            if (save_to_files_list.size() > 0) {
+                std::cout << "SAVING optimize_path_douglas_peucker FILE TO: " << (save_to_files_list.front()+".stage1") << std::endl;
+                std::fstream f (save_to_files_list.front()+".stage1", std::fstream::out);
+                f << back_to_gcode(group_gcode_commands(program)) << std::endl;
+            }
+
             auto program_parts = group_gcode_commands(program);
             // std::cout << "Initial GCODE: " << std::endl
             //           << back_to_gcode(program_parts) << std::endl;
@@ -371,6 +383,11 @@ int main(int argc, char** argv)
             program_parts = insert_additional_nodes_inbetween(program_parts, machine_state, cfg);
             // std::cout << "Initial GCODE w additional parts: " << std::endl
             //           << back_to_gcode(program_parts) << std::endl;
+            if (save_to_files_list.size() > 0) {
+                std::cout << "SAVING insert_additional_nodes_inbetween FILE TO: " << (save_to_files_list.front()+".stage2") << std::endl;
+                std::fstream f (save_to_files_list.front()+".stage2", std::fstream::out);
+                f << back_to_gcode(program_parts) << std::endl;
+            }
 
             program_t prepared_program;
             if (!raw_gcode) {
@@ -416,14 +433,18 @@ int main(int argc, char** argv)
                 //          << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
                 //std::cout << "Prepared GCODE NO DUPLICATES: " << std::endl
                 //          << back_to_gcode({remove_duplicate_blocks(prepared_program, {})}) << std::endl;
+                if (save_to_files_list.size() > 0) {
+                    std::cout << "SAVING prepared_program without DP FILE TO: " << (save_to_files_list.front()+".stage3") << std::endl;
+                    std::fstream f (save_to_files_list.front()+".stage3", std::fstream::out);
+                    f << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
+                }
+                prepared_program = optimize_path_douglas_peucker(prepared_program, 0.0125);
                 program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program, {}));
                 //program_parts = group_gcode_commands(prepared_program);
                 //std::cout << "Prepared GCODE: " << std::endl
                 //          << back_to_gcode(program_parts) << std::endl;
                 machine_state = {{'F', 0.5}};
             } // if prepare paths
-
-
             std::atomic<int> break_execution_result = -1;
             std::function<void(int, int)> on_pause_execution;
             auto on_resume_execution = [&stepping, buttons_drv, &on_pause_execution, &break_execution_result](int k, int s) {

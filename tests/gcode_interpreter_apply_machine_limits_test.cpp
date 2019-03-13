@@ -267,7 +267,12 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program", 
                 machine_limits.max_no_accel_velocity_mm_s[0],
                 machine_limits.max_no_accel_velocity_mm_s[1]
                 ))/2;
-        REQUIRE(ret[1].at('F') == Approx (target_feedrate));
+        //REQUIRE(ret[1].at('F') == Approx (target_feedrate));
+        REQUIRE(ret[1].at('F') <= target_feedrate);
+        REQUIRE(ret[1].at('F') > std::min(
+                machine_limits.max_no_accel_velocity_mm_s[0],
+                machine_limits.max_no_accel_velocity_mm_s[1]
+                ));
     }
 
     SECTION("turn of 90 deg 4x")

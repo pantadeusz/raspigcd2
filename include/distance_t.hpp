@@ -31,6 +31,9 @@
 
 namespace raspigcd {
 
+class distance_t;
+inline distance_t operator*(const distance_t& a, const distance_t& b);
+
 /**
  * The class that represents distances between points in euclidean space.
  * 
@@ -71,6 +74,11 @@ public:
                this->operator[](1) +
                this->operator[](2) +
                this->operator[](3);
+    }
+
+    inline double dot_product(const distance_t &b) const {
+        const distance_t a = *this;
+        return (a * b).sumv();
     }
 };
 

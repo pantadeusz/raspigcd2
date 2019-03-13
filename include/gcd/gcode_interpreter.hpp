@@ -168,6 +168,16 @@ program_t gcode_to_maps_of_arguments(const std::string& program_);
 
 block_t command_to_map_of_arguments(const std::string& command_);
 
+/**
+ * @brief UNTESTED: optimizes program using douglas + puecker algorithm
+ * 
+ */
+program_t optimize_path_douglas_peucker(const program_t &program_, 
+    const double epsilon = 0.0125, 
+    const block_t &initial_state = {{'X',0},{'Y',0},{'Z', 0},{'F',0.1}});
+
+
+
 auto linear_interpolation = [](auto x, auto x0, auto y0, auto x1, auto y1) {
     return y0 * (1 - (x - x0) / (x1 - x0)) + y1 * ((x - x0) / (x1 - x0)); // percentage of the max_no_accel_speed
 };
