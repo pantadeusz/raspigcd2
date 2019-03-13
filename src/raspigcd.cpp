@@ -276,6 +276,59 @@ void help_text(const std::vector<std::string>& args)
     std::cout << "\talong with this program.  If not, see <https://www.gnu.org/licenses/>." << std::endl;
 }
 
+
+partitioned_program_t preprocess_program_parts(partitioned_program_t program_parts, const configuration::global &cfg) {
+            block_t machine_state = {{'F', 0.5}};
+            program_t prepared_program;
+
+            for (auto& ppart : program_parts) {
+                    if (ppart.size() != 0) {
+                        if (ppart[0].count('M') == 0) {
+                            //std::cout << "G PART: " << ppart.size() << std::endl;
+                            switch ((int)(ppart[0]['G'])) {
+                            case 0:
+                                //ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
+                                //for (auto &e : ppart) e['G'] = 0;
+                                //prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                                //machine_state = last_state_after_program_execution(ppart,machine_state);
+                                //break;
+                            case 1:
+                                ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
+                                prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                                machine_state = last_state_after_program_execution(ppart, machine_state);
+                                break;
+                            case 4:
+                                prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                                break;
+                            }
+                        } else {
+                            //std::cout << "M PART: " << ppart.size() << std::endl;
+                            for (auto& m : ppart) {
+                                switch ((int)(m['M'])) {
+                                case 18:
+                                case 3:
+                                case 5:
+                                case 17:
+                                    prepared_program.push_back(m);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //if (save_to_files_list.size() > 0) {
+                //    std::cout << "SAVING prepared_program without DP FILE TO: " << (save_to_files_list.front()+".stage3") << std::endl;
+                //    std::fstream f (save_to_files_list.front()+".stage3", std::fstream::out);
+                //    f << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
+                //}
+                prepared_program = optimize_path_douglas_peucker(prepared_program, 0.0125);
+                program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program, {}));
+                machine_state = {{'F', 0.5}};
+    return program_parts;
+}
+
+
 int main(int argc, char** argv)
 {
 #ifdef HAVE_SDL2
@@ -377,73 +430,16 @@ int main(int argc, char** argv)
             }
 
             auto program_parts = group_gcode_commands(program);
-            // std::cout << "Initial GCODE: " << std::endl
-            //           << back_to_gcode(program_parts) << std::endl;
             block_t machine_state = {{'F', 0.5}};
             program_parts = insert_additional_nodes_inbetween(program_parts, machine_state, cfg);
-            // std::cout << "Initial GCODE w additional parts: " << std::endl
-            //           << back_to_gcode(program_parts) << std::endl;
             if (save_to_files_list.size() > 0) {
                 std::cout << "SAVING insert_additional_nodes_inbetween FILE TO: " << (save_to_files_list.front()+".stage2") << std::endl;
                 std::fstream f (save_to_files_list.front()+".stage2", std::fstream::out);
                 f << back_to_gcode(program_parts) << std::endl;
             }
 
-            program_t prepared_program;
             if (!raw_gcode) {
-                for (auto& ppart : program_parts) {
-                    if (ppart.size() != 0) {
-                        if (ppart[0].count('M') == 0) {
-                            //std::cout << "G PART: " << ppart.size() << std::endl;
-                            switch ((int)(ppart[0]['G'])) {
-                            case 0:
-                                //ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
-                                //for (auto &e : ppart) e['G'] = 0;
-                                //prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
-                                //machine_state = last_state_after_program_execution(ppart,machine_state);
-                                //break;
-                            case 1:
-                                ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
-                                prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
-                                machine_state = last_state_after_program_execution(ppart, machine_state);
-                                break;
-                            case 4:
-                                prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
-                                break;
-                            }
-                        } else {
-                            //std::cout << "M PART: " << ppart.size() << std::endl;
-                            for (auto& m : ppart) {
-                                switch ((int)(m['M'])) {
-                                case 18:
-                                case 3:
-                                case 5:
-                                case 17:
-                                    prepared_program.push_back(m);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                //std::cout << "Prepared GCODE NO GROUPING INIT: " << std::endl
-                //          << back_to_gcode({prepared_program}) << std::endl;
-                //std::cout << "Prepared GCODE INIT: " << std::endl
-                //          << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
-                //std::cout << "Prepared GCODE NO DUPLICATES: " << std::endl
-                //          << back_to_gcode({remove_duplicate_blocks(prepared_program, {})}) << std::endl;
-                if (save_to_files_list.size() > 0) {
-                    std::cout << "SAVING prepared_program without DP FILE TO: " << (save_to_files_list.front()+".stage3") << std::endl;
-                    std::fstream f (save_to_files_list.front()+".stage3", std::fstream::out);
-                    f << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
-                }
-                prepared_program = optimize_path_douglas_peucker(prepared_program, 0.0125);
-                program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program, {}));
-                //program_parts = group_gcode_commands(prepared_program);
-                //std::cout << "Prepared GCODE: " << std::endl
-                //          << back_to_gcode(program_parts) << std::endl;
-                machine_state = {{'F', 0.5}};
+                program_parts = preprocess_program_parts(program_parts,cfg);
             } // if prepare paths
             std::atomic<int> break_execution_result = -1;
             std::function<void(int, int)> on_pause_execution;
@@ -504,6 +500,8 @@ int main(int argc, char** argv)
                         case 1:
                         case 4:
                             auto machine_state_prev = machine_state;
+
+                            auto time0 = std::chrono::high_resolution_clock::now();
                             auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t& result) {
                                     machine_state = result;
@@ -513,6 +511,10 @@ int main(int argc, char** argv)
                                     // }
                                     // std::cout << std::endl;
                                 });
+                            auto time1 = std::chrono::high_resolution_clock::now();
+
+                            double dt = std::chrono::duration<double, std::milli>(time1-time0).count();
+                            std::cout << "calculations took " << dt << " milliseconds; have " << m_commands.size() << " steps to execute" << std::endl;
                             try {
                                 stepping.exec(m_commands, [motor_layout_,&spindles_status, timer_drv, spindles_drv, &break_execution_result,machine_state_prev,last_spindle_on_delay](auto steps_from_origin, auto tick_n) -> int {
                                     std::cout << "break at " << tick_n << " tick" << std::endl;

@@ -77,10 +77,10 @@ hardware::multistep_commands_t collapse_repeated_steps(
 hardware::multistep_commands_t chase_steps(const steps_t& start_pos_, steps_t destination_pos_)
 {
     hardware::multistep_commands_t ret;
-    ret.reserve(steps_remaining(start_pos_, destination_pos_) * 2 + 32);
+    int stodo = steps_remaining(start_pos_, destination_pos_);
+    ret.reserve(stodo * 2 + 32);
     auto steps = start_pos_;
     hardware::multistep_command executor_command = {};
-    int stodo = steps_remaining(steps, destination_pos_);
     do {
         // executor_command.v = 0;
         executor_command.count = 1;
@@ -94,6 +94,7 @@ hardware::multistep_commands_t chase_steps(const steps_t& start_pos_, steps_t de
         }
         ret.push_back(executor_command);
     } while ((--stodo) > 0);
+    ret.shrink_to_fit();
     return ret;
 }
 
