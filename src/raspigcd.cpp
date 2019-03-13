@@ -288,7 +288,7 @@ int main(int argc, char** argv)
     cfg.load_defaults();
 
     bool raw_gcode = false; // should I push G commands directly, without adaptation to machine
-
+    std::list < std::string> save_to_files_list;
     for (unsigned i = 1; i < args.size(); i++) {
         if ((args.at(i) == "-h") || (args.at(i) == "--help")) {
             help_text(args);
@@ -297,6 +297,9 @@ int main(int argc, char** argv)
             cfg.load(args.at(i));
         } else if (args.at(i) == "-C") {
             std::cout << cfg << std::endl;
+        } else if (args.at(i) == "-s") {
+            i++;
+            save_to_files_list.push_back(args.at(i));
         } else if (args.at(i) == "--raw") {
             raw_gcode = true;
         } else if (args.at(i) == "-f") {
@@ -460,6 +463,12 @@ int main(int argc, char** argv)
 
             std::cout << "STARTING" << std::endl;
 
+            if (save_to_files_list.size() > 0) {
+                std::cout << "SAVING PREPROCESSED FILE TO: " << save_to_files_list.front() << std::endl;
+                std::fstream f (save_to_files_list.front(), std::fstream::out);
+                save_to_files_list.pop_front();
+                f << back_to_gcode(program_parts) << std::endl;
+            }
             machine_state = {{'F', 0.5}};
             std::map<int, double> spindles_status;
             long int last_spindle_on_delay = 7000;
