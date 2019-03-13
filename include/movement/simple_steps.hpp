@@ -46,6 +46,18 @@ int steps_remaining( const steps_t& steps_, const steps_t& destination_steps_ );
  * */
 hardware::multistep_commands_t collapse_repeated_steps(const std::list<hardware::multistep_command>& ret);
 
+
+
+/**
+ * @brief generates steps to reach given destination steps
+ * @arg ret this is the container for steps
+ * @arg steps_ current steps count
+ * @arg destination_steps_ desired steps count
+ */
+void chase_steps(hardware::multistep_commands_t &ret, const steps_t& start_pos_, steps_t destination_pos_);
+//void chase_steps(std::list<hardware::multistep_command> &ret, const steps_t& start_pos_, steps_t destination_pos_);
+
+
 /**
  * @brief generates steps to reach given destination steps
  * @arg steps_ current steps count

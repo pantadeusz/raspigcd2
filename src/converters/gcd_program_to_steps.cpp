@@ -28,6 +28,25 @@
 namespace raspigcd {
 namespace converters {
 
+inline    void smart_append(std::list<raspigcd::hardware::multistep_command> &fragment, const raspigcd::hardware::multistep_commands_t &steps_todo) {
+        for (auto e : steps_todo) {
+            if (e.count > 0) {
+                if ((fragment.size() == 0) || 
+                    !(multistep_command_same_command( e, fragment.back())
+                    )) {
+                    fragment.push_back(e);
+                } else {
+                    if (fragment.back().count > 0x0fffffff) {
+                        fragment.push_back(e);
+                    } else {
+                        fragment.back().count+=e.count;
+                    }
+                }
+            }
+        }
+    };
+
+
 raspigcd::hardware::multistep_commands_t __generate_g1_steps(
     const raspigcd::gcd::block_t &state,
     const raspigcd::gcd::block_t &next_state,
@@ -47,24 +66,7 @@ raspigcd::hardware::multistep_commands_t __generate_g1_steps(
     std::list<multistep_command> fragment;   // fraagment of the commands list generated in this stage
     steps_t final_steps;                     // steps after the move
 
-
-    auto smart_append = [](std::list<multistep_command> &fragment, const multistep_commands_t &steps_todo) {
-        for (auto e : steps_todo) {
-            if (e.count > 0) {
-                if ((fragment.size() == 0) || 
-                    !(multistep_command_same_command( e, fragment.back())
-                    )) {
-                    fragment.push_back(e);
-                } else {
-                    if (fragment.back().count > 0x0fffffff) {
-                        fragment.push_back(e);
-                    } else {
-                        fragment.back().count+=e.count;
-                    }
-                }
-            }
-        }
-    };
+    multistep_commands_t steps_todo;
     if (l > 0) {
         if ((v0 == v1)) {
             if (v1 == 0) throw std::invalid_argument("the feedrate should not be 0 for non zero distance");
@@ -76,9 +78,9 @@ raspigcd::hardware::multistep_commands_t __generate_g1_steps(
                 // TODO: Create test case for this situation!!!!
                 auto np = pos_from + direction * s;
                 auto pos_to_steps = ml_.cartesian_to_steps(np); //gcd::block_to_distance_t(next_state);
-                multistep_commands_t steps_todo = chase_steps(pos_from_steps, pos_to_steps);
+                chase_steps(steps_todo, pos_from_steps, pos_to_steps);
                 smart_append(fragment,steps_todo);
-                //fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
+                steps_todo.clear();
                 pos = np;
                 pos_from_steps = pos_to_steps;
             }
@@ -95,18 +97,19 @@ raspigcd::hardware::multistep_commands_t __generate_g1_steps(
             auto p_steps = ml_.cartesian_to_steps(pos_from);
             for (int i = 1; l() < s; ++i, t = dt * i) {
                 auto pos = ml_.cartesian_to_steps(pos_from + direction * l());
-                multistep_commands_t steps_to_add = chase_steps(p_steps, pos);
-                //fragment.insert(fragment.end(), steps_to_add.begin(), steps_to_add.end());
-                smart_append(fragment,steps_to_add);
+                chase_steps(steps_todo,p_steps, pos);
+                smart_append(fragment,steps_todo);
+                steps_todo.clear();
                 p_steps = pos;
             }
             final_steps = p_steps;
         }
         auto pos_to_steps = ml_.cartesian_to_steps(pos_to);
         if (!(final_steps == pos_to_steps)) { // fix missing steps
-            multistep_commands_t steps_todo = chase_steps(final_steps, pos_to_steps);
+            chase_steps(steps_todo, final_steps, pos_to_steps);
             //fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
             smart_append(fragment,steps_todo);
+            steps_todo.clear();
         }
         auto collapsed = collapse_repeated_steps(fragment);
         return collapsed;

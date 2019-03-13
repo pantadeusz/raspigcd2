@@ -69,6 +69,52 @@ hardware::multistep_commands_t collapse_repeated_steps(
 }
 
 
+
+
+void chase_steps(hardware::multistep_commands_t &ret, const steps_t& start_pos_, steps_t destination_pos_)
+{
+    auto steps = start_pos_;
+    hardware::multistep_command executor_command = {};
+    executor_command.count = 1;
+    int did_mod = 1;
+    int pushed = 0;
+    if ((ret.capacity()-ret.size()) < 4096) ret.reserve(ret.capacity()+4096);
+    do {
+        did_mod = 0;
+        // executor_command.v = 0;
+        for (unsigned int i = 0; i < steps.size(); i++) {
+            executor_command.b[i].dir = ((destination_pos_[i] > steps[i]) ? 1 : 0);
+            executor_command.b[i].step = (destination_pos_[i] - steps[i]) ? 1 : 0;
+            if (destination_pos_[i] > steps[i]) {
+                steps[i]++;
+                did_mod = 1;
+            } else if (destination_pos_[i] < steps[i]) {
+                steps[i]--;
+                did_mod = 1;
+            }
+        }
+        if (did_mod) {
+            pushed++;
+            //ret.push_back(executor_command);
+            if ((ret.size() == 0) || 
+                !(multistep_command_same_command( executor_command, ret.back())
+                )) {
+                ret.push_back(executor_command);
+            } else {
+                if (ret.back().count > 0x0fffffff) {
+                    ret.push_back(executor_command);
+                } else {
+                    ret.back().count+=executor_command.count;
+                }
+            }
+
+        }
+    } while (did_mod);//while ((--stodo) > 0);
+    if (pushed == 0) ret.push_back(executor_command);
+    //ret.shrink_to_fit();
+}
+
+
 /**
  * @brief generates steps to reach given destination steps
  * @arg steps_ current steps count
@@ -77,24 +123,7 @@ hardware::multistep_commands_t collapse_repeated_steps(
 hardware::multistep_commands_t chase_steps(const steps_t& start_pos_, steps_t destination_pos_)
 {
     hardware::multistep_commands_t ret;
-    int stodo = steps_remaining(start_pos_, destination_pos_);
-    ret.reserve(stodo * 2 + 32);
-    auto steps = start_pos_;
-    hardware::multistep_command executor_command = {};
-    do {
-        // executor_command.v = 0;
-        executor_command.count = 1;
-        for (unsigned int i = 0; i < steps.size(); i++) {
-            executor_command.b[i].dir = ((destination_pos_[i] > steps[i]) ? 1 : 0);
-            executor_command.b[i].step = (destination_pos_[i] - steps[i]) ? 1 : 0;
-            if (destination_pos_[i] > steps[i])
-                steps[i]++;
-            else if (destination_pos_[i] < steps[i])
-                steps[i]--;
-        }
-        ret.push_back(executor_command);
-    } while ((--stodo) > 0);
-    ret.shrink_to_fit();
+    chase_steps(ret, start_pos_, destination_pos_);
     return ret;
 }
 
