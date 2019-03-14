@@ -96,7 +96,7 @@ public:
         }
     }
 
-    void draw_path(std::shared_ptr<SDL_Renderer> renderer, int width, int height, const std::list<distance_t> &t) {
+    void draw_path(std::shared_ptr<SDL_Renderer> renderer, int width, int /*height*/, const std::list<distance_t> &t) {
         std::map < int, int > z_buffer;
         
         for (auto &e : t) {

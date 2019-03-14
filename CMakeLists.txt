@@ -54,7 +54,7 @@ include_directories("${PROJECT_SOURCE_DIR}/thirdparty")
 
 set(raspigcd2_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/raspigcd.cpp )
 file(GLOB_RECURSE lib_SOURCES "src/*.cpp" "src/*/*.cpp")
-file(GLOB_RECURSE raspigcd2_TESTS "tests/*.cpp")
+# file(GLOB_RECURSE raspigcd2_TESTS "tests/*.cpp")
 list(REMOVE_ITEM lib_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/raspigcd.cpp)
 
 add_library(raspigcd2 SHARED ${lib_SOURCES})
@@ -78,9 +78,10 @@ install (TARGETS gcd DESTINATION bin)
 ##   add_test(NAME ${fn_target} COMMAND "${CMAKE_BINARY_DIR}/${fn_target}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 ## endforeach()
 
-file(GLOB_RECURSE tests_SOURCES "tests/*_test.cpp")
+file(GLOB_RECURSE tests_SOURCES "${PROJECT_SOURCE_DIR}/tests/*_test.cpp" "${PROJECT_SOURCE_DIR}/tests/*/*_test.cpp")
 add_executable(tests ${tests_SOURCES} "tests/tests.cpp" "thirdparty/lodepng/lodepng.cpp" )
 target_link_libraries(tests raspigcd2 ${CMAKE_THREAD_LIBS_INIT}  Catch2::Catch2)
+include_directories("${PROJECT_SOURCE_DIR}/tests")
 # add_test(NAME ${fn_target} COMMAND "${CMAKE_BINARY_DIR}/${fn_target}" WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" )
 
 if(Doxygen_FOUND)

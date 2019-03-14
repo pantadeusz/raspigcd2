@@ -171,7 +171,7 @@ raspberry_pi_3::raspberry_pi_3(const configuration::global& configuration)
     _btn_thread = std::thread([this]() {
         while (_threads_alive) {
             using namespace std::chrono_literals;
-            for (int k_i = 0; k_i < buttons.size(); k_i++) {
+            for (unsigned k_i = 0; k_i < buttons.size(); k_i++) {
                 auto e = buttons[k_i];
                 int v = (unsigned char)(1 - ((GPIO_READ(e.pin)) >> (e.pin)));
                 //if (buttons_state.count(k_i)) {

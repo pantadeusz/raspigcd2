@@ -581,7 +581,7 @@ program_t gcode_to_maps_of_arguments(const std::string& program_)
         try{
         auto cm = command_to_map_of_arguments(line);
         if (cm.size()) ret.push_back(cm);
-        } catch (const std::invalid_argument err) {
+        } catch (const std::invalid_argument &err) {
             throw std::invalid_argument(std::string("gcode_to_maps_of_arguments[")  + std::to_string(line_number) + "]: \"" + line + "\" ::: " + err.what());
         }
         line_number++;

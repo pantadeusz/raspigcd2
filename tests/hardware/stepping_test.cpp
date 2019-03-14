@@ -37,6 +37,8 @@
 
 /*
 Terminate the execution of steps program
+
+This tests both stepping_sim and stepping_simple_timer
 */
 
 
@@ -46,8 +48,7 @@ using namespace raspigcd::hardware;
 using namespace raspigcd::configuration;
 
 
-// void path_intent_executor::execute_pure_path_intent(const movement::path_intent_t& path_intent) {
-TEST_CASE("path_intent_executor terminate procedure for stepping_simple_timer.", "[gcd][path_intent_executor][stepping_simple_timer][execute_pure_path_intent]")
+TEST_CASE("terminate procedure for stepping_simple_timer.", "[gcd][stepping_simple_timer][execute_pure_path_intent]")
 {
         multistep_commands_t commands_to_do;
         for (int i = 0; i < 4; i++) {
@@ -148,7 +149,7 @@ TEST_CASE("path_intent_executor terminate procedure for stepping_simple_timer.",
 }
 
 
-TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verification.", "[gcd][path_intent_executor][stepping_sim][execute_pure_path_intent][stepping_simple_timer]")
+TEST_CASE("terminate procedure on stepping_sim for verification.", "[gcd][stepping_sim][execute_pure_path_intent][stepping_simple_timer]")
 {
     multistep_commands_t commands_to_do;
     for (int i = 0; i < 40; i++) {
@@ -284,7 +285,7 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         bool throwed = false;
         std::thread worker([&]() {
             try {
-                stepping.get()->exec(commands_to_do, [](const steps_t steps_from_start, const int command_index) {
+                stepping.get()->exec(commands_to_do, [](const steps_t , const int ) {
                     return 0;
                 });
             } catch (const raspigcd::hardware::execution_terminated& e) {
@@ -328,7 +329,7 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         bool throwed = false;
         std::thread worker([&]() {
             try {
-                stepping.get()->exec(commands_to_do, [](const steps_t steps_from_start, const int command_index) {
+                stepping.get()->exec(commands_to_do, [](const steps_t , const int ) {
                     return 0;
                 });
             } catch (const raspigcd::hardware::execution_terminated& e) {
@@ -365,7 +366,7 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         bool throwed = false;
         std::thread worker([&]() {
             try {
-                stepping.get()->exec(commands_to_do, [](const steps_t steps_from_start, const int command_index) {
+                stepping.get()->exec(commands_to_do, [](const steps_t , const int ) {
                     return 1;
                 });
             } catch (const raspigcd::hardware::execution_terminated& e) {
@@ -409,7 +410,7 @@ TEST_CASE("path_intent_executor terminate procedure on stepping_sim for verifica
         bool throwed = false;
         std::thread worker([&]() {
             try {
-                stepping.get()->exec(commands_to_do, [](const steps_t steps_from_start, const int command_index) {
+                stepping.get()->exec(commands_to_do, [](const steps_t , const int ) {
                     return 1;
                 });
             } catch (const raspigcd::hardware::execution_terminated& e) {
