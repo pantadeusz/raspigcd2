@@ -32,9 +32,11 @@ class low_timers
 private:
 public:
     /**
-     * @brief delay in seconds. This can be fraction of a second (1/1000000 s)
+     * @brief delay in microseconds (1/1000000 s)
      * 
-     * @param t 
+     * Internally it calls wait_for_tick_us(start_timing(),t);
+     * 
+     * @param t delay to wait. 
      */
     inline void wait_us(const int64_t t) {
         wait_for_tick_us(start_timing(),t);
@@ -42,13 +44,16 @@ public:
 
     /**
      * @brief start the timer
-     * 
+     * It actually takes the current time point.
      */
     virtual std::chrono::high_resolution_clock::time_point start_timing() = 0;
 
     /**
      * @brief wait for the tick to end. Time is microseconds! (1/1000000 s)
-     * Remember to run start_timing first!
+     * Remember to run start_timing first.
+     * 
+     * @param prev_timer
+     * @param t next tick time is prev_timer + t. It tells us when to stop waiting
      */
     virtual std::chrono::high_resolution_clock::time_point wait_for_tick_us(
         const std::chrono::high_resolution_clock::time_point &prev_timer,
