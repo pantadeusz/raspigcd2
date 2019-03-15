@@ -413,9 +413,21 @@ int main(int argc, char** argv)
                 std::istreambuf_iterator<char>());
 
             auto program = gcode_to_maps_of_arguments(gcode_text);
+            double previous_feedrate_g0 = 0.1;
             for (auto& p : program) {
-                if ((p.count('G')) && (p['G'] == 0))
-                    p['F'] = *std::max_element(std::begin(cfg.max_velocity_mm_s), std::end(cfg.max_velocity_mm_s));
+                if (p.count('G')) {
+                    if (p['G'] == 0) {
+                    p['F'] = *std::max_element(
+                        std::begin(cfg.max_velocity_mm_s), 
+                        std::end(cfg.max_velocity_mm_s));
+                    } else if (p['G'] == 1) {
+                        if (p.count('F')) {
+                            previous_feedrate_g0 = p['F'];
+                        } else {
+                            p['F'] = previous_feedrate_g0;
+                        }
+                    }
+                } 
             }
             if (save_to_files_list.size() > 0) {
                 std::cout << "SAVING RAW FILE TO: " << (save_to_files_list.front()+".stage0") << std::endl;
