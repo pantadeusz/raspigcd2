@@ -4,6 +4,7 @@
 
 The second attempt to raspberry pi gcode interpreter
 
+Recent experiments: [on YouTube](https://www.youtube.com/watch?time_continue=1&v=AFNFixXfOOk)
 
 ## Short description
 
