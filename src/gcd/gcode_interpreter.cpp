@@ -659,6 +659,10 @@ double point_segment_distance_3d(const distance_t& A, const distance_t& B, const
                 auto p = block_to_distance_t(machine_state);
                 p[3] = machine_state.at('F');
                 path.push_back(p);
+            } else {
+                auto p = block_to_distance_t(machine_state);
+                p[3] = machine_state.at('F');
+                path.push_back(p);
             }
         }
 
@@ -694,24 +698,10 @@ double point_segment_distance_3d(const distance_t& A, const distance_t& B, const
         optimizePathDP(epsilon, 0, path.size() - 1);
         program_t ret;
         ret.reserve(program_.size());
-        unsigned int idx_in_program = 0;
         for (unsigned int i = 1; i < path.size(); i++) {
-            //std::cout << "++ i " << i << "  idx_in_program " << idx_in_program << std::endl;
-            while ((idx_in_program < program_.size()) && !is_block_a_new_position(program_.at(idx_in_program))) {
-                //std::cout << "   i " << i << "  idx_in_program " << idx_in_program << std::endl;
-                ret.push_back(program_.at(idx_in_program));
-                idx_in_program++;
+            if ((!toDelete[i]) || (!is_block_a_new_position(program_.at(i-1)))) {
+                ret.push_back(program_.at(i-1));
             }
-            if (!toDelete[i]) {
-                //std::cout << "     push " << idx_in_program << std::endl;
-                //path.push_back(tmp[i]);
-                if (idx_in_program < program_.size())
-                ret.push_back(program_.at(idx_in_program));
-                else 
-                std::cout << "     push failed[" << i << "]:: " << idx_in_program << std::endl;
-                
-            }
-            idx_in_program++;
         }
         ret.shrink_to_fit();
         return ret;

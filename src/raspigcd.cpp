@@ -378,6 +378,13 @@ int main(int argc, char** argv)
                     [](const int s_i, const double p_i) {
                         std::cout << "SPINDLE " << s_i << " POWER: " << p_i << std::endl;
                     });
+                fk->on_enable_steppers = [](const std::vector<bool> m){
+                    std::cout << "steppers: ";
+                    for (auto e : m) {
+                        std::cout << (e?"+":" ");
+                    }
+                    std::cout << ";" << std::endl;
+                };
                 auto buttons_fake_fake = std::make_shared<driver::low_buttons_fake>(10);
                 buttons_drv = buttons_fake_fake;
                 video = std::make_shared<video_sdl>(&cfg, buttons_fake_fake.get());
