@@ -470,14 +470,14 @@ int main(int argc, char** argv)
                 }
             };
             auto on_stop_execution = [&stepping, buttons_drv, &break_execution_result](int k, int s) {
-                if ((k == 1) && (s == 1)) {
+                if ((k == 3) && (s == 1)) {
                     break_execution_result = 0;
                     stepping.terminate(1000);
                 }
             };
             on_pause_execution = [&stepping, buttons_drv, &on_resume_execution, &break_execution_result](int k, int s) {
                 std::cout << "######## Key " << k << " is " << ((s == 0) ? "UP" : "DOWN") << std::endl;
-                if ((k == 0) && (s == 1) && (break_execution_result == -1)) {
+                if ((k == 4) && (s == 1) && (break_execution_result == -1)) {
                     break_execution_result = -1;
                     buttons_drv->on_key(k, on_resume_execution);
                     stepping.terminate(1000);
@@ -485,9 +485,9 @@ int main(int argc, char** argv)
             };
 
             for (unsigned int i = 0; i < buttons_drv->keys_state().size(); i++) {
-                if (i == 0) {
+                if (i == 4) {
                     buttons_drv->on_key(i, on_pause_execution);
-                } else if (i == 1) {
+                } else if (i == 3) {
                     buttons_drv->on_key(i, on_stop_execution);
                 } else {
                     buttons_drv->on_key(i, [&stepping, buttons_drv](int k, int s) {

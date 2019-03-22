@@ -15,6 +15,10 @@
     {
       "pin": 12,
       "pullup": true
+    },
+    {
+      "pin": 26,
+      "pullup": true
     }
   ],
   "lasers": [],

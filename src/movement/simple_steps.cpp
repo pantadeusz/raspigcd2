@@ -71,7 +71,7 @@ hardware::multistep_commands_t collapse_repeated_steps(
 
 
 
-void chase_steps(hardware::multistep_commands_t &ret, const steps_t& start_pos_, steps_t destination_pos_)
+void chase_steps(hardware::multistep_commands_t &ret, const steps_t& start_pos_, const steps_t &destination_pos_)
 {
     auto steps = start_pos_;
     hardware::multistep_command executor_command = {};
@@ -83,14 +83,20 @@ void chase_steps(hardware::multistep_commands_t &ret, const steps_t& start_pos_,
         did_mod = 0;
         // executor_command.v = 0;
         for (unsigned int i = 0; i < steps.size(); i++) {
-            executor_command.b[i].dir = ((destination_pos_[i] > steps[i]) ? 1 : 0);
-            executor_command.b[i].step = (destination_pos_[i] - steps[i]) ? 1 : 0;
+//            executor_command.b[i].dir = ((destination_pos_[i] > steps[i]) ? 1 : 0);
+//            executor_command.b[i].step = (destination_pos_[i] - steps[i]) ? 1 : 0;
             if (destination_pos_[i] > steps[i]) {
                 steps[i]++;
+                executor_command.b[i].dir = 1;
+                executor_command.b[i].step = 1;
                 did_mod = 1;
             } else if (destination_pos_[i] < steps[i]) {
                 steps[i]--;
+                executor_command.b[i].dir = 0;
+                executor_command.b[i].step = 1;
                 did_mod = 1;
+            } else {
+                executor_command.b[i].step = 0;
             }
         }
         if (did_mod) {
@@ -107,7 +113,6 @@ void chase_steps(hardware::multistep_commands_t &ret, const steps_t& start_pos_,
                     ret.back().count+=executor_command.count;
                 }
             }
-
         }
     } while (did_mod);//while ((--stodo) > 0);
     if (pushed == 0) ret.push_back(executor_command);

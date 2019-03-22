@@ -54,7 +54,7 @@ hardware::multistep_commands_t collapse_repeated_steps(const std::list<hardware:
  * @arg steps_ current steps count
  * @arg destination_steps_ desired steps count
  */
-void chase_steps(hardware::multistep_commands_t &ret, const steps_t& start_pos_, steps_t destination_pos_);
+void chase_steps(hardware::multistep_commands_t &ret, const steps_t& start_pos_, const steps_t &destination_pos_);
 //void chase_steps(std::list<hardware::multistep_command> &ret, const steps_t& start_pos_, steps_t destination_pos_);
 
 
@@ -63,7 +63,7 @@ void chase_steps(hardware::multistep_commands_t &ret, const steps_t& start_pos_,
  * @arg steps_ current steps count
  * @arg destination_steps_ desired steps count
  */
-hardware::multistep_commands_t chase_steps( const steps_t& steps_, steps_t destination_steps_ );
+hardware::multistep_commands_t chase_steps( const steps_t& steps_, const steps_t &destination_steps_ );
 
 
 } // namespace simple_steps

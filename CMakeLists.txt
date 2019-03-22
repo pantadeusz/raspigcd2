@@ -18,7 +18,8 @@ include(CheckLibraryExists)
 
 set(CMAKE_CXX_FLAGS "-std=c++17 -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-ggdb ")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+# consider also -flto
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -frename-registers -funroll-loops -DNDEBUG")
 
 add_definitions(-Wall)
 
