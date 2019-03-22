@@ -701,6 +701,16 @@ program_t optimize_path_douglas_peucker(const program_t& program_, const double 
         }
     };
     optimizePathDP(epsilon, 0, path.size() - 1);
+
+    for (unsigned int from = 0; from < toDelete.size(); from++) {
+        int fto = from;
+        while (toDelete[fto]) {
+            fto++;
+        } 
+        std::swap(toDelete[fto],toDelete[from]);
+        from = fto;
+    }
+
     program_t ret;
     ret.reserve(program_.size());
     unsigned int idx_in_program = 0;
@@ -712,7 +722,8 @@ program_t optimize_path_douglas_peucker(const program_t& program_, const double 
         }
     };
     for (unsigned int i = 1; i < path.size(); i++) {
-        //std::cout << "++ i " << i << "  idx_in_program " << idx_in_program << std::endl;
+//        std::cout << "++ i " << i << "  idx_in_program " << idx_in_program << " ;;; toDelete: " << 
+//        (toDelete[i]?"delete":"keep") << std::endl;
         qpsh();
         if (!toDelete[i]) {
             //std::cout << "     push " << idx_in_program << std::endl;
