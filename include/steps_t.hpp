@@ -25,13 +25,14 @@
 #include <array>
 #include <iostream>
 
+#include <distance_t.hpp>
 #include <hardware_dof_conf.hpp>
 
 /**
  * main namespace for the project raspigcd
  * */
 namespace raspigcd {
-
+#ifdef BLAAA
 /**
  * the class that represents steps for each stepper motor
  * */
@@ -111,6 +112,9 @@ inline std::ostream& operator<<(std::ostream& os, steps_t const& value)
     os << "[" << value[0] << ", " << value[1] << ", " << value[2] << ", " << value[3] << "]";
     return os;
 }
+#endif
+
+using steps_t = generic_position_t<int>;
 
 } // namespace raspigcd
 #endif

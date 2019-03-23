@@ -19,10 +19,11 @@
 
 
 
-#ifndef __RASPIGCD_DISTANCE_T_HPP__
-#define __RASPIGCD_DISTANCE_T_HPP__
+#ifndef __RASPIGCD_generic_position_t_HPP__
+#define __RASPIGCD_generic_position_t_HPP__
 
 #include <array>
+#include <vector>
 #include <iostream>
 #include <cassert>
 #include <cmath>
@@ -31,23 +32,29 @@
 
 namespace raspigcd {
 
-class distance_t;
-inline distance_t operator*(const distance_t& a, const distance_t& b);
+template<class T>
+class generic_position_t;
+
+template<class T>
+inline generic_position_t<T> operator*(const generic_position_t<T>& a, const generic_position_t<T>& b);
 
 /**
  * The class that represents distances between points in euclidean space.
  * 
  * You can also call it coordinates if you want.
  * */
-class distance_t : public std::array<double, RASPIGCD_HARDWARE_DOF>
+
+template<class T>
+class generic_position_t : public std::array<T, RASPIGCD_HARDWARE_DOF>
 {
 public:
-    double& a() { return this->operator[](0); };
-    double& b() { return this->operator[](1); };
-    double& c() { return this->operator[](2); };
-    double& d() { return this->operator[](3); };
-    distance_t() : std::array<double, RASPIGCD_HARDWARE_DOF>(){};
-    distance_t(const double a_, const double b_, const double c_, const double d_) : std::array<double, RASPIGCD_HARDWARE_DOF>()
+    T& a() { return this->operator[](0); };
+    T& b() { return this->operator[](1); };
+    T& c() { return this->operator[](2); };
+    T& d() { return this->operator[](3); };
+    generic_position_t() : std::array<T, RASPIGCD_HARDWARE_DOF>(){};
+    generic_position_t(const double &a_, const double &b_, const double &c_, const double &d_) 
+    : std::array<T, RASPIGCD_HARDWARE_DOF>()
     {
         a() = a_;
         b() = b_;
@@ -66,72 +73,88 @@ public:
         return std::sqrt(length2());
     }
     
-    double angle(const distance_t & a, const distance_t & b) const;
+    double angle(const generic_position_t & a, const generic_position_t & b) const;
 
-    inline double sumv() const
-    {
-        return this->operator[](0) +
-               this->operator[](1) +
-               this->operator[](2) +
-               this->operator[](3);
-    }
+    double sumv() const;
 
-    inline double dot_product(const distance_t &b) const {
-        const distance_t a = *this;
+    inline double dot_product(const generic_position_t &b) const {
+        const generic_position_t a = *this;
         return (a * b).sumv();
     }
 };
 
-inline distance_t operator+(const distance_t& a, const distance_t& b)
+template<class T>
+inline generic_position_t<T> operator+(const generic_position_t<T>& a, const generic_position_t<T>& b)
 {
-    return distance_t(
+    return generic_position_t<T>(
         a[0] + b[0],
         a[1] + b[1],
         a[2] + b[2],
         a[3] + b[3]);
 }
-inline distance_t operator-(const distance_t& a, const distance_t& b)
+
+template<class T>
+inline generic_position_t<T> operator-(const generic_position_t<T>& a, const generic_position_t<T>& b)
 {
-    return distance_t(
+    return generic_position_t<T>(
         a[0] - b[0],
         a[1] - b[1],
         a[2] - b[2],
         a[3] - b[3]);
 }
-inline distance_t operator*(const distance_t& a, const distance_t& b)
+
+template<class T>
+inline generic_position_t<T> operator*(const generic_position_t<T>& a, const generic_position_t<T>& b)
 {
-    return distance_t(
+    return generic_position_t<T>(
         a[0] * b[0],
         a[1] * b[1],
         a[2] * b[2],
         a[3] * b[3]);
 }
-inline distance_t operator/(const distance_t& a, const distance_t& b)
+
+template<class T>
+inline generic_position_t<T> operator/(const generic_position_t<T>& a, const generic_position_t<T>& b)
 {
-    return distance_t(
+    return generic_position_t<T>(
         a[0] / b[0],
         a[1] / b[1],
         a[2] / b[2],
         a[3] / b[3]);
 }
-inline distance_t operator*(const distance_t& a, const double& b)
+
+template<class T>
+inline generic_position_t<T> operator*(const generic_position_t<T>& a, const double& b)
 {
-    return distance_t(
+    return generic_position_t<T>(
         a[0] * b,
         a[1] * b,
         a[2] * b,
         a[3] * b);
 }
-inline distance_t operator/(const distance_t& a, const double& b)
+
+template<class T>
+inline generic_position_t<T> operator/(const generic_position_t<T>& a, const double& b)
 {
-    return distance_t(
+    return generic_position_t<T>(
         a[0] / b,
         a[1] / b,
         a[2] / b,
         a[3] / b);
 }
 
-inline bool operator==(const distance_t& a, const distance_t& b)
+template<class T>
+inline double generic_position_t<T>::angle(const generic_position_t<T>& a, const generic_position_t<T>& b) const
+{
+    auto u = a - (*this);
+    auto v = b - (*this);
+    auto dotprod = (u * v).sumv();
+    if (dotprod == 0) return 3.14159265358979323846 / 2.0;
+    return acos(dotprod / (std::sqrt(u.length2()) * std::sqrt(v.length2())));
+}
+
+template<class T>
+inline bool operator==(const generic_position_t<T>& a, const generic_position_t<T>& b)
 {
     return (a[0] == b[0]) &&
            (a[1] == b[1]) &&
@@ -139,7 +162,8 @@ inline bool operator==(const distance_t& a, const distance_t& b)
            (a[3] == b[3]);
 }
 
-inline std::ostream& operator<<(std::ostream& os, distance_t const& value)
+template<class T>
+inline std::ostream& operator<<(std::ostream& os, generic_position_t<T> const& value)
 {
     os << "[" << value[0] << ", " << value[1] << ", " << value[2] << ", " << value[3] << "]";
     return os;
@@ -152,9 +176,9 @@ inline std::ostream& operator<<(std::ostream& os, distance_t const& value)
     * otherwise it blends, so if it is a limit, then applying linear limit will not exceed limits
     * it is used to calculate maximal speed for movement in any direction, as well as maximal acceleration and speed without acceleration
     */
-//double calculate_linear_coefficient_from_limits(const std::vector<double>& limits_for_axes, const distance_t& norm_vect);
+//double calculate_linear_coefficient_from_limits(const std::vector<double>& limits_for_axes, const generic_position_t& norm_vect);
 
-//double calculate_linear_coefficient_from_limits(const std::vector<double>& limits_for_axes, const distance_t& norm_vect)
+//double calculate_linear_coefficient_from_limits(const std::vector<double>& limits_for_axes, const generic_position_t& norm_vect)
 //std::vector<double>
 auto calculate_linear_coefficient_from_limits = [](const auto& limits_for_axes, const auto& norm_vect) -> double
 {
@@ -167,6 +191,12 @@ auto calculate_linear_coefficient_from_limits = [](const auto& limits_for_axes, 
     average_max_accel = average_max_accel / average_max_accel_sum;
     return average_max_accel;
 };
+
+using distance_t = generic_position_t<double>;
+
+
+
+distance_t bezier(std::vector<distance_t> p, double t);
 
 
 } // namespace raspigcd

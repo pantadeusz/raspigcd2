@@ -18,8 +18,6 @@
 */
 
 
-
-
 #include <array>
 #include <cassert>
 #include <cmath>
@@ -27,14 +25,71 @@
 
 #include <distance_t.hpp>
 
+#include <numeric>
+
 namespace raspigcd {
-double distance_t::angle(const distance_t& a, const distance_t& b) const
+
+template<>
+double generic_position_t<double>::sumv() const
 {
-    auto u = a - (*this);
-    auto v = b - (*this);
-    auto dotprod = (u * v).sumv();
-    if (dotprod == 0) return 3.14159265358979323846 / 2.0;
-    return acos(dotprod / (std::sqrt(u.length2()) * std::sqrt(v.length2())));
+    return std::accumulate(this->begin(), this->end(), 0.0);
 }
+
+template<>
+double generic_position_t<int>::sumv() const
+{
+    return std::accumulate(this->begin(), this->end(), 0);
+}
+
+
+
+namespace bezierhelper {
+inline int silnia (int n) {
+    static std::vector<int> s = {1,1};
+    int size = s.size();
+    if (n < size) return s[n];
+    if (n > 1) {
+        int ret = silnia(n-1)*n;
+        if (n == size) s.push_back(ret);
+        return ret;
+    }
+    return 1;
+}
+
+int binominal(int n,int k) {
+    return silnia(n)/(silnia(k)*silnia(n-k));
+}
+}
+inline distance_t bezier(std::vector<distance_t> p, double t)
+{
+    using namespace bezierhelper;
+    
+    distance_t ret(0,0,0,0);
+    int n = p.size()-1;
+    for (int i = 0; i <= n; i++) {
+        ret = ret + p[i]*std::pow((1-t),n-i)*std::pow(t,i)*binominal(n,i);   
+    }
+    return ret;    
+}
+
+void experimental_draw_curve(double dt = 0.01)
+{
+    std::vector<distance_t> p;
+    //double t = 0.5;
+    p.push_back({0, 0, 0, 0});
+    p.push_back({10, 0, 0, 0});
+    p.push_back({10, 10, 0, 0});
+    //double dbt = 1.0 / ((p[1]-p[0]).length() + (p[1]-p[2]).length());
+    double dbt = dt / ((p[1]-p[0]).length() + (p[1]-p[2]).length());
+    for (double t = 0.0; t <= 1.0; t += dbt)
+    {
+        for (auto e : bezier(p, t))
+            std::cout << e << " ";
+        std::cout << std::endl;
+    }
+}
+
+
+
 
 } // namespace raspigcd
