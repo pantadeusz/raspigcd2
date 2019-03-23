@@ -90,6 +90,39 @@ void experimental_draw_curve(double dt = 0.01)
 }
 
 
+void experimental_draw_curve(double v0 = 1.0, double dt0 = 0.001)
+{
+
+    std::vector<distance_t> p;
+    //double t = 0.5;
+    p.push_back({0, 0, 0, 0});
+    p.push_back({9, 0, 0, 0});
+    p.push_back({10, 1, 0, 0});
+    //p.push_back({10, 0, 0, 0});
+    p.push_back({10, 10, 0, 0});
+
+    double s0 = dt0*v0; // mimiic speed
+    double dt = 0.5;
+    double dtr = 0.5;
+    double sr; 
+    do  {
+        sr = (bezier(p, 0) - bezier(p, dt)).length();
+        dtr *= 0.5;
+        if ((s0 - sr) > 0) {
+            dt += dtr;
+        } else if ((s0 - sr) < 0) {
+            dt -= dtr;
+        } else break;
+    } while (std::abs(s0 - sr) > 0.000001);
+    if (dt > 1) dt = 1;
+    if (dt < 0) dt = 0.000001;
+    for (double t = 0.0; t <= 1.0; t += dt)
+    {
+        for (auto e : bezier(p, t))
+            std::cout << e << " ";
+        std::cout << std::endl;
+    }
+}
 
 
 } // namespace raspigcd
