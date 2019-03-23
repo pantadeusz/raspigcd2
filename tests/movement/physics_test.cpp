@@ -162,7 +162,8 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
         INFO(end_v);
         double result = std::sqrt(end_v.length2());
         double expected = 0.0;
-        REQUIRE(result == Approx(expected));
+        INFO(result);
+        REQUIRE(result == Approx(expected).margin(0.00000000000001));
     }
 }
 
