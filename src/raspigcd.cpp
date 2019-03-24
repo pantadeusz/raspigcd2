@@ -322,7 +322,7 @@ partitioned_program_t preprocess_program_parts(partitioned_program_t program_par
                 //    std::fstream f (save_to_files_list.front()+".stage3", std::fstream::out);
                 //    f << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
                 //}
-                prepared_program = optimize_path_douglas_peucker(prepared_program, 0.0125);
+                prepared_program = optimize_path_douglas_peucker(prepared_program, cfg.douglas_peucker_marigin);
                 program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program, {}));
                 machine_state = {{'F', 0.5}};
     return program_parts;
@@ -441,7 +441,7 @@ int main(int argc, char** argv)
                 std::fstream f (save_to_files_list.front()+".stage0", std::fstream::out);
                 f << back_to_gcode(group_gcode_commands(program)) << std::endl;
             }
-            program = optimize_path_douglas_peucker(program, 0.0125);
+            program = optimize_path_douglas_peucker(program, cfg.douglas_peucker_marigin);
             if (save_to_files_list.size() > 0) {
                 std::cout << "SAVING optimize_path_douglas_peucker FILE TO: " << (save_to_files_list.front()+".stage1") << std::endl;
                 std::fstream f (save_to_files_list.front()+".stage1", std::fstream::out);

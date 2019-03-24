@@ -196,7 +196,7 @@ using distance_t = generic_position_t<double>;
 
 
 
-distance_t bezier(std::vector<distance_t> p, double t);
+distance_t bezier(const std::vector<distance_t> &p, const double t);
 
 
 } // namespace raspigcd

@@ -83,5 +83,6 @@
       "steps_per_mm": 55.0
     }
   ],
-  "tick_duration_us": 45
+  "tick_duration_us": 45,
+  "douglas_peucker_marigin":0.04
 }

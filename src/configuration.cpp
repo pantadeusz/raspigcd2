@@ -50,6 +50,8 @@ global& global::load_defaults()
     tick_duration_us = 50;
     simulate_execution = false;
 
+    douglas_peucker_marigin = 1.0/64.0;
+
     motion_layout = COREXY; //"corexy";
     lowleveltimer = BUSY_WAIT;
     scale = {1.0, 1.0, 1.0, 1.0};
@@ -178,6 +180,7 @@ void to_json(nlohmann::json& j, const global& p)
     j = nlohmann::json{
         {"tick_duration_us", p.tick_duration_us},
         {"simulate_execution", p.simulate_execution},
+        {"douglas_peucker_marigin", p.douglas_peucker_marigin},
         {"lowleveltimer", lowleveltimertostring(p.lowleveltimer)},
         {"motion_layout", (p.motion_layout == COREXY) ? "corexy" : "cartesian"},
         {"scale", p.scale},
@@ -193,6 +196,7 @@ void to_json(nlohmann::json& j, const global& p)
 void from_json(const nlohmann::json& j, global& p)
 {
     p.simulate_execution = j.value("simulate_execution", p.simulate_execution);
+    p.douglas_peucker_marigin = j.value("douglas_peucker_marigin", p.douglas_peucker_marigin);
     p.tick_duration_us = j.value("tick_duration_us", p.tick_duration_us);
 
     {
@@ -244,6 +248,7 @@ bool operator==(const global& l, const global& r)
            (l.steppers == r.steppers) &&
            (l.buttons == r.buttons) &&
            (l.simulate_execution == r.simulate_execution) &&
+           (l.douglas_peucker_marigin == r.douglas_peucker_marigin) &&
            (l.lowleveltimer == r.lowleveltimer);
 }
 

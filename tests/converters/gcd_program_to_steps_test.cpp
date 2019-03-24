@@ -192,7 +192,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
                 }
             }
         }
-        REQUIRE(steps == steps_t{(int)(s*100),0,0,0});
+        REQUIRE(steps == steps_t{(int)(s*100.0),0,0,0});
         double dt = ((double) test_config.tick_duration_us)/1000000.0;
         REQUIRE(commands_count == (int)(t/dt));
     }

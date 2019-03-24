@@ -175,6 +175,7 @@ public:
  */
     double tick_duration() const; // czas ticku w sekundach. 0.00005 = 50mikrosekund
     bool simulate_execution;      // should I use simulator by default
+    double douglas_peucker_marigin;
     low_timers_e lowleveltimer;
 
     std::vector<spindle_pwm> spindles;

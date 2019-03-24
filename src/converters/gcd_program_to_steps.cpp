@@ -152,7 +152,6 @@ hardware::multistep_commands_t program_to_steps(
             result.push_back(executor_command);
             next_state = state;
         } else if ((next_state.at('G') == 1) || (next_state.at('G') == 0)) {
-        
             auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
             result.insert(result.end(), collapsed.begin(), collapsed.end());
         }
