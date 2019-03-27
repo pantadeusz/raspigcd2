@@ -413,6 +413,8 @@ int main(int argc, char** argv)
             }
             stepping_simple_timer stepping(cfg, steppers_drv, timer_drv);
 
+            auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
+
             i++;
             std::ifstream gcd_file(args.at(i));
             if (!gcd_file.is_open()) throw std::invalid_argument("file should be opened");
@@ -521,7 +523,7 @@ int main(int argc, char** argv)
                             auto machine_state_prev = machine_state;
 
                             auto time0 = std::chrono::high_resolution_clock::now();
-                            auto m_commands = converters::program_to_steps(ppart, cfg, *(motor_layout_.get()),
+                            auto m_commands = program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t& result) {
                                     machine_state = result;
                                     // std::cout << "____ program_to_steps:";

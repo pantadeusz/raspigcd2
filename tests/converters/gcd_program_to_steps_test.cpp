@@ -59,16 +59,22 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
     auto motor_layot_p = hardware::motor_layout::get_instance(test_config);
     motor_layot_p->set_configuration(test_config);
     //std::cout << "sdfdss::"<<(motor_layot_p.get()->cartesian_to_steps({1,2,3,4})) << "   <<<)))))_____  \n";
+    auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
+
     SECTION("empty program should result in empty steps list")
     {
-        REQUIRE(program_to_steps({},test_config, *(motor_layot_p.get()) ) .size() == 0);
+        REQUIRE(program_to_steps(
+            {},test_config, *(motor_layot_p.get()) 
+            ,{{'F',0}},[](const gcd::block_t &){}
+            ) .size() == 0);
     }
     SECTION("simple move along x axis for 100 steps should result in correct distance generated")
     {
         auto program = gcode_to_maps_of_arguments(R"(
            G1X1F10
         )");
-        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
+        auto result = program_to_steps(
+            program,test_config, *(motor_layot_p.get()),{{'F',0}},[](const gcd::block_t &){} );
         //REQUIRE(result.size() == 200); // empty+step * 100
         steps_t steps = {0,0,0,0};
         int commands_count = 0; 
@@ -93,7 +99,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         )");
         // 1mm/s, 
         // 1s is  1000000/test_config.tick_duration_us -> this is the time of the movement
-        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) ,{{'F',0}},[](const gcd::block_t &){});
         //REQUIRE(result.size() == 200); // empty+step * 100
         steps_t steps = {0,0,0,0};
         int commands_count = 0; 
@@ -117,7 +123,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
            G1F0
            G1X1F0
         )");
-        REQUIRE_THROWS( program_to_steps(program,test_config, *(motor_layot_p.get()) ));
+        REQUIRE_THROWS( program_to_steps(program,test_config, *(motor_layot_p.get()),{{'F',0}},[](const gcd::block_t &){} ));
     }
     SECTION("acceleration from F0 to F1 should result in correct distance")
     {
@@ -125,7 +131,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
            G1F0
            G1X1F1
         )");
-        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) ,{{'F',0}},[](const gcd::block_t &){});
         steps_t steps = {0,0,0,0};
         int commands_count = 0; 
         for (auto &e : result) {
@@ -151,7 +157,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
            )" +
            std::string("G1X") + std::to_string(s) + "F" + std::to_string(v1)
         );
-        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) ,{{'F',0}},[](const gcd::block_t &){});
         steps_t steps = {0,0,0,0};
         int commands_count = 0; 
         for (auto &e : result) {
@@ -180,7 +186,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
            std::string("G1X") + std::to_string(0) + "F" + std::to_string(v0) + "\n" +
            std::string("G1X") + std::to_string(s) + "F" + std::to_string(v1)
         );
-        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) );
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()) ,{{'F',0}},[](const gcd::block_t &){});
         steps_t steps = {0,0,0,0};
         int commands_count = 0; 
         for (auto &e : result) {
@@ -208,7 +214,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
            std::string("G1X") + std::to_string(0) + "F" + std::to_string(v0) + "\n" +
            std::string("G1X") + std::to_string(s) + "F" + std::to_string(v1)
         );
-        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()),{{'F',0}} );
+        auto result = program_to_steps(program,test_config, *(motor_layot_p.get()),{{'F',0}} ,[](const gcd::block_t &){});
         steps_t steps = {0,0,0,0};
         int commands_count = 0; 
         for (auto &e : result) {
