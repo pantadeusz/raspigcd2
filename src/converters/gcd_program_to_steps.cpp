@@ -177,7 +177,7 @@ void beizer_spline(std::vector<distance_t> &path,
                    std::function<void(const distance_t &position)> on_point,
                    double dt, double arc_l = 1.0);
 */
-
+    throw std::invalid_argument("not implemented yet");
     using namespace raspigcd::hardware;
     using namespace raspigcd::gcd;
     using namespace raspigcd::movement::simple_steps;
