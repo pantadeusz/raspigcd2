@@ -161,5 +161,77 @@ hardware::multistep_commands_t program_to_steps(
     return collapse_repeated_steps(result);
 }
 
+
+
+
+hardware::multistep_commands_t bezier_spline_program_to_steps (
+    const gcd::program_t& prog_,
+    const configuration::actuators_organization& conf_,
+    hardware::motor_layout& ml_,
+    const gcd::block_t& initial_state_,
+    std::function<void(const gcd::block_t &)> finish_callback_f_)
+{
+
+/*
+void beizer_spline(std::vector<distance_t> &path,
+                   std::function<void(const distance_t &position)> on_point,
+                   double dt, double arc_l = 1.0);
+*/
+
+    using namespace raspigcd::hardware;
+    using namespace raspigcd::gcd;
+    using namespace raspigcd::movement::simple_steps;
+    using namespace movement::physics;
+    auto state = initial_state_;
+    std::list<multistep_command> result;
+    //double dt = 0.000001 * (double)conf_.tick_duration_us;//
+    double dt = ((double)conf_.tick_duration_us) / 1000000.0;
+    //std::cout << "dt = " << dt << std::endl;
+    for (const auto& block : prog_) {
+        finish_callback_f_(state);
+        auto next_state = gcd::merge_blocks(state, block);
+
+        if (next_state.at('G') == 92) {
+            // change position, but not generate steps
+        } else if (next_state.at('G') == 4) {
+            //std::cout << "G4: " << std::endl;
+            double t = 0;
+            if (block.count('X')) { // seconds
+                t = block.at('X');
+            } else if (block.count('P')) {
+                t = block.at('P')/ 1000.0;
+            }
+            hardware::multistep_command executor_command = {};
+            executor_command.count = t/dt;
+            result.push_back(executor_command);
+            next_state = state;
+        } else if ((next_state.at('G') == 1) || (next_state.at('G') == 0)) {
+            auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
+            result.insert(result.end(), collapsed.begin(), collapsed.end());
+        }
+        state = next_state;
+    }
+    finish_callback_f_(state);
+    return collapse_repeated_steps(result);
+}
+
+
+
+
+
+program_to_steps_f_t program_to_steps_factory( const std::string f_name ) {
+    if (f_name == "program_to_steps") {
+        return program_to_steps;
+    }
+    if (f_name == "bezier_spline") {
+        return bezier_spline_program_to_steps;
+    }
+    throw std::invalid_argument("bad function name");
+}
+
+
+
+
+
 } // namespace converters
 } // namespace raspigcd
