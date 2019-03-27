@@ -27,6 +27,7 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include <functional>
 
 #include <hardware_dof_conf.hpp>
 
@@ -81,6 +82,31 @@ public:
         const generic_position_t a = *this;
         return (a * b).sumv();
     }
+
+    inline generic_position_t projection(const generic_position_t &v, const generic_position_t &w) const {
+      auto &a = v;
+      auto &b = w;
+      auto &p = *this;
+      auto ap = p - a;
+      auto ab = b - a;
+      return a + ab * ((ap).dot_product(ab) / (ab).dot_product(ab));
+      /*
+          double l = (v-w).length();
+              if (l <= 0) return *this;
+          auto nr = (v - w) / l;
+          auto nv = *this - w;
+          double t = nv.dot_product(nr);
+              return w + (nr * t);
+      */
+      /*
+
+
+        const float l2 = (v - w).length2();
+        if (l2 == 0.0) return *this;
+        const double t = std::max(0.0, std::min(1.0, (*this - v).dot_product(w - v)
+        / l2)); return v + ((w - v)*t); */
+    }
+
 };
 
 template<class T>
@@ -192,11 +218,22 @@ auto calculate_linear_coefficient_from_limits = [](const auto& limits_for_axes, 
     return average_max_accel;
 };
 
+
 using distance_t = generic_position_t<double>;
 
 
 
 distance_t bezier(const std::vector<distance_t> &p, const double t);
+
+
+/**
+ * @brief @untested
+ * @brief calculates bezier spline based on standard path. It tries to 
+ * 
+ */
+void beizer_spline(std::vector<distance_t> &path,
+                   std::function<void(const distance_t &position)> on_point,
+                   double dt, double arc_l = 1.0);
 
 
 } // namespace raspigcd
