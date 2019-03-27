@@ -120,7 +120,6 @@ void beizer_spline(std::vector<distance_t> &path,
       int i = path.size() - 2;
       auto a = path[i];
       auto b = path[i + 1];
-      auto c = path[i + 2];
       triss.push_back({a, triss.back().back(), b});
     }
 
@@ -129,7 +128,7 @@ void beizer_spline(std::vector<distance_t> &path,
 
   double t = 0;
   std::list<distance_t> bezier_points;
-  for (int i = 0; i < triss.size(); i++) {
+  for (unsigned i = 0; i < triss.size(); i++) {
     std::vector<distance_t> &p = triss[i];
 
     if (p.size() > 4)
@@ -146,13 +145,13 @@ void beizer_spline(std::vector<distance_t> &path,
     std::cerr << std::endl;
     distance_t pt;
     double l = 0.000001;
-    for (int i = 1; i < p.size(); i++) {
+    for (unsigned i = 1; i < p.size(); i++) {
       l += (p[i - 1] - p[i]).length();
     }
     for (; t <= 1.0;) {
       bezier_points.push_back(pt = bezier(p, t));
-      double range = std::max(1.0 - t, 0.1) / 2.0;
-      double tp = t + range;
+      //double range = std::max(1.0 - t, 0.1) / 2.0;
+      //double tp = t + range;
       t += 0.1 * dt / l; //*pt.back()
     }
     t = t - 1.0;
