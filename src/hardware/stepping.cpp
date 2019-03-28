@@ -163,6 +163,7 @@ void stepping_simple_timer::exec(const std::vector<multistep_command>& commands_
                 }
             }
             _steppers_driver->do_step(s.b);
+            _steps_counter += s.b[0].step + s.b[1].step + s.b[2].step;
             _tick_index++;
             prev_timer = _low_timer->wait_for_tick_us(prev_timer, _delay_microseconds*counter_delay/1000);
         }

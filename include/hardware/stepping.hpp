@@ -116,10 +116,18 @@ public:
 
 class stepping_simple_timer : public stepping
 {
+    std::atomic<int> _steps_counter; 
     std::atomic<int> _tick_index; 
     std::atomic<int> _terminate_execution;
 
 public:
+/**
+ * @brief returns the counter that is incremented whenever stepper motor performs step
+ * 
+ */
+    virtual std::atomic<int> *get_step_counter() {
+        return &_steps_counter;
+    };
     virtual int get_tick_index() const {return _tick_index;};
 
     std::atomic<int> _delay_microseconds;

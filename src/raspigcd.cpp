@@ -80,6 +80,8 @@ public:
     int view_y;
 
 
+    std::atomic<int> g_state;
+
     void set_steps(const steps_t& st)
     {
         current_position = ml->steps_to_cartesian(st);
@@ -96,22 +98,26 @@ public:
         }
     }
 
-    void draw_path(std::shared_ptr<SDL_Renderer> renderer, int width, int /*height*/, const std::list<distance_t> &t) {
-        std::map < int, int > z_buffer;
-        
-        for (auto &e : t) {
-                    int x = e[0];
-                    int y = e[1];
-                    int z = e[2];
-                    if (e[2] <= 0) {
-                        if ((z_buffer.count (y*width+x) == 0) || (z_buffer[y*width+x] >= z) ) {
-                            SDL_SetRenderDrawColor(renderer.get(), 255 - (e[2] * 255 / 5), 255, 255, 255);
-                            SDL_RenderDrawPoint(renderer.get(), (x + view_x)+z*z_p_x/1000, (-y + view_y)-z*z_p_y/1000);
-                            z_buffer[y*width+x] = z;
-                        }
-                    }
+    void draw_path(std::shared_ptr<SDL_Renderer> renderer, int width, int /*height*/, const std::list<distance_t>& t)
+    {
+        std::map<int, int> z_buffer;
+
+        for (auto& e : t) {
+            int x = e[0];
+            int y = e[1];
+            int z = e[2];
+            if (e[2] <= 0) {
+                if ((z_buffer.count(y * width + x) == 0) || (z_buffer[y * width + x] >= z)) {
+                    SDL_SetRenderDrawColor(renderer.get(), 255 - (e[2] * 255 / 5), 255, 255, 255);
+                    SDL_RenderDrawPoint(renderer.get(), (x + view_x) + z * z_p_x / 1000, (-y + view_y) - z * z_p_y / 1000);
+                    z_buffer[y * width + x] = z;
                 }
+            }
+        }
     }
+    void set_g_state(int g){
+        g_state = g;
+    };
 
     video_sdl(configuration::global* cfg_, driver::low_buttons_fake* buttons_drv, int width = 640, int height = 480)
     {
@@ -129,12 +135,13 @@ public:
             std::cout << "loop thread..." << std::endl;
 
             window = std::shared_ptr<SDL_Window>(SDL_CreateWindow("GCD Execution Simulator By Tadeusz Puzniakowski",
-                SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                width, height, SDL_WINDOW_SHOWN), [](SDL_Window* ptr) {
-                SDL_DestroyWindow(ptr);
-            });
+                                                     SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                                     width, height, SDL_WINDOW_SHOWN),
+                [](SDL_Window* ptr) {
+                    SDL_DestroyWindow(ptr);
+                });
             if (window == nullptr) throw std::invalid_argument("SDL_CreateWindow - error");
-            
+
             renderer = std::shared_ptr<SDL_Renderer>(SDL_CreateRenderer(window.get(), -1, SDL_RENDERER_ACCELERATED), [](SDL_Renderer* ptr) {
                 SDL_DestroyRenderer(ptr);
             });
@@ -183,11 +190,17 @@ public:
                     t = movements_track;
                 }
                 draw_path(renderer, width, height, t);
-                SDL_SetRenderDrawColor(renderer.get(), 255, 128, 128, 255);
+                if (g_state == 0) {
+                    SDL_SetRenderDrawColor(renderer.get(), 255, 128, 128, 255);
+                } else if (g_state == 1) {
+                    SDL_SetRenderDrawColor(renderer.get(), 0, 255, 255, 255);
+                } else {
+                    SDL_SetRenderDrawColor(renderer.get(), 64,64,64, 255);
+                }
                 for (int i = 0; i < std::abs(s[2]); i++) {
-                    SDL_RenderDrawPoint(renderer.get(), 
-                     s[0] + view_x + i * (s[2] / std::abs(s[2]))*z_p_x/1000, 
-                    -s[1] + view_y + i * (-s[2] / std::abs(s[2]))*z_p_y/1000 );
+                    SDL_RenderDrawPoint(renderer.get(),
+                        s[0] + view_x + i * (s[2] / std::abs(s[2])) * z_p_x / 1000,
+                        -s[1] + view_y + i * (-s[2] / std::abs(s[2])) * z_p_y / 1000);
                 }
                 //std::cout << "step.. " << s[0] << ", " << s[1] << ", " << s[2] << std::endl;
 
@@ -219,6 +232,9 @@ public:
     {
         active = false;
     }
+    void set_g_state(int g){
+
+    };
 };
 #endif
 /// end of visualization
@@ -277,54 +293,55 @@ void help_text(const std::vector<std::string>& args)
 }
 
 
-partitioned_program_t preprocess_program_parts(partitioned_program_t program_parts, const configuration::global &cfg) {
-            block_t machine_state = {{'F', 0.5}};
-            program_t prepared_program;
+partitioned_program_t preprocess_program_parts(partitioned_program_t program_parts, const configuration::global& cfg)
+{
+    block_t machine_state = {{'F', 0.5}};
+    program_t prepared_program;
 
-            for (auto& ppart : program_parts) {
-                    if (ppart.size() != 0) {
-                        if (ppart[0].count('M') == 0) {
-                            //std::cout << "G PART: " << ppart.size() << std::endl;
-                            switch ((int)(ppart[0]['G'])) {
-                            case 0:
-                                //ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
-                                //for (auto &e : ppart) e['G'] = 0;
-                                //prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
-                                //machine_state = last_state_after_program_execution(ppart,machine_state);
-                                //break;
-                            case 1:
-                                ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
-                                prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
-                                machine_state = last_state_after_program_execution(ppart, machine_state);
-                                break;
-                            case 4:
-                                prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
-                                break;
-                            }
-                        } else {
-                            //std::cout << "M PART: " << ppart.size() << std::endl;
-                            for (auto& m : ppart) {
-                                switch ((int)(m['M'])) {
-                                case 18:
-                                case 3:
-                                case 5:
-                                case 17:
-                                    prepared_program.push_back(m);
-                                    break;
-                                }
-                            }
-                        }
+    for (auto& ppart : program_parts) {
+        if (ppart.size() != 0) {
+            if (ppart[0].count('M') == 0) {
+                //std::cout << "G PART: " << ppart.size() << std::endl;
+                switch ((int)(ppart[0]['G'])) {
+                case 0:
+                    //ppart = g0_move_to_g1_sequence(ppart, cfg, machine_state);
+                    //for (auto &e : ppart) e['G'] = 0;
+                    //prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                    //machine_state = last_state_after_program_execution(ppart,machine_state);
+                    //break;
+                case 1:
+                    ppart = g1_move_to_g1_with_machine_limits(ppart, cfg, machine_state);
+                    prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                    machine_state = last_state_after_program_execution(ppart, machine_state);
+                    break;
+                case 4:
+                    prepared_program.insert(prepared_program.end(), ppart.begin(), ppart.end());
+                    break;
+                }
+            } else {
+                //std::cout << "M PART: " << ppart.size() << std::endl;
+                for (auto& m : ppart) {
+                    switch ((int)(m['M'])) {
+                    case 18:
+                    case 3:
+                    case 5:
+                    case 17:
+                        prepared_program.push_back(m);
+                        break;
                     }
                 }
+            }
+        }
+    }
 
-                //if (save_to_files_list.size() > 0) {
-                //    std::cout << "SAVING prepared_program without DP FILE TO: " << (save_to_files_list.front()+".stage3") << std::endl;
-                //    std::fstream f (save_to_files_list.front()+".stage3", std::fstream::out);
-                //    f << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
-                //}
-                prepared_program = optimize_path_douglas_peucker(prepared_program, cfg.douglas_peucker_marigin);
-                program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program, {}));
-                machine_state = {{'F', 0.5}};
+    //if (save_to_files_list.size() > 0) {
+    //    std::cout << "SAVING prepared_program without DP FILE TO: " << (save_to_files_list.front()+".stage3") << std::endl;
+    //    std::fstream f (save_to_files_list.front()+".stage3", std::fstream::out);
+    //    f << back_to_gcode(group_gcode_commands(prepared_program)) << std::endl;
+    //}
+    prepared_program = optimize_path_douglas_peucker(prepared_program, cfg.douglas_peucker_marigin);
+    program_parts = group_gcode_commands(remove_duplicate_blocks(prepared_program, {}));
+    machine_state = {{'F', 0.5}};
     return program_parts;
 }
 
@@ -341,7 +358,7 @@ int main(int argc, char** argv)
     cfg.load_defaults();
 
     bool raw_gcode = false; // should I push G commands directly, without adaptation to machine
-    std::list < std::string> save_to_files_list;
+    std::list<std::string> save_to_files_list;
     for (unsigned i = 1; i < args.size(); i++) {
         if ((args.at(i) == "-h") || (args.at(i) == "--help")) {
             help_text(args);
@@ -378,10 +395,10 @@ int main(int argc, char** argv)
                     [](const int s_i, const double p_i) {
                         std::cout << "SPINDLE " << s_i << " POWER: " << p_i << std::endl;
                     });
-                fk->on_enable_steppers = [](const std::vector<bool> m){
+                fk->on_enable_steppers = [](const std::vector<bool> m) {
                     std::cout << "steppers: ";
                     for (auto e : m) {
-                        std::cout << (e?"+":" ");
+                        std::cout << (e ? "+" : " ");
                     }
                     std::cout << ";" << std::endl;
                 };
@@ -426,9 +443,9 @@ int main(int argc, char** argv)
             for (auto& p : program) {
                 if (p.count('G')) {
                     if (p['G'] == 0) {
-                    p['F'] = *std::max_element(
-                        std::begin(cfg.max_velocity_mm_s), 
-                        std::end(cfg.max_velocity_mm_s));
+                        p['F'] = *std::max_element(
+                            std::begin(cfg.max_velocity_mm_s),
+                            std::end(cfg.max_velocity_mm_s));
                     } else if (p['G'] == 1) {
                         if (p.count('F')) {
                             previous_feedrate_g0 = p['F'];
@@ -436,17 +453,17 @@ int main(int argc, char** argv)
                             p['F'] = previous_feedrate_g0;
                         }
                     }
-                } 
+                }
             }
             if (save_to_files_list.size() > 0) {
-                std::cout << "SAVING RAW FILE TO: " << (save_to_files_list.front()+".stage0") << std::endl;
-                std::fstream f (save_to_files_list.front()+".stage0", std::fstream::out);
+                std::cout << "SAVING RAW FILE TO: " << (save_to_files_list.front() + ".stage0") << std::endl;
+                std::fstream f(save_to_files_list.front() + ".stage0", std::fstream::out);
                 f << back_to_gcode(group_gcode_commands(program)) << std::endl;
             }
             program = optimize_path_douglas_peucker(program, cfg.douglas_peucker_marigin);
             if (save_to_files_list.size() > 0) {
-                std::cout << "SAVING optimize_path_douglas_peucker FILE TO: " << (save_to_files_list.front()+".stage1") << std::endl;
-                std::fstream f (save_to_files_list.front()+".stage1", std::fstream::out);
+                std::cout << "SAVING optimize_path_douglas_peucker FILE TO: " << (save_to_files_list.front() + ".stage1") << std::endl;
+                std::fstream f(save_to_files_list.front() + ".stage1", std::fstream::out);
                 f << back_to_gcode(group_gcode_commands(program)) << std::endl;
             }
 
@@ -454,13 +471,13 @@ int main(int argc, char** argv)
             block_t machine_state = {{'F', 0.5}};
             program_parts = insert_additional_nodes_inbetween(program_parts, machine_state, cfg);
             if (save_to_files_list.size() > 0) {
-                std::cout << "SAVING insert_additional_nodes_inbetween FILE TO: " << (save_to_files_list.front()+".stage2") << std::endl;
-                std::fstream f (save_to_files_list.front()+".stage2", std::fstream::out);
+                std::cout << "SAVING insert_additional_nodes_inbetween FILE TO: " << (save_to_files_list.front() + ".stage2") << std::endl;
+                std::fstream f(save_to_files_list.front() + ".stage2", std::fstream::out);
                 f << back_to_gcode(program_parts) << std::endl;
             }
 
             if (!raw_gcode) {
-                program_parts = preprocess_program_parts(program_parts,cfg);
+                program_parts = preprocess_program_parts(program_parts, cfg);
             } // if prepare paths
             std::atomic<int> break_execution_result = -1;
             std::function<void(int, int)> on_pause_execution;
@@ -503,7 +520,7 @@ int main(int argc, char** argv)
 
             if (save_to_files_list.size() > 0) {
                 std::cout << "SAVING PREPROCESSED FILE TO: " << save_to_files_list.front() << std::endl;
-                std::fstream f (save_to_files_list.front(), std::fstream::out);
+                std::fstream f(save_to_files_list.front(), std::fstream::out);
                 save_to_files_list.pop_front();
                 f << back_to_gcode(program_parts) << std::endl;
             }
@@ -511,7 +528,6 @@ int main(int argc, char** argv)
             std::map<int, double> spindles_status;
             long int last_spindle_on_delay = 7000;
             for (auto& ppart : program_parts) {
-                
                 //std::cout << "Put part: " << ppart.size() << std::endl;
                 if (ppart.size() != 0) {
                     if (ppart[0].count('M') == 0) {
@@ -520,6 +536,9 @@ int main(int argc, char** argv)
                         case 0:
                         case 1:
                         case 4:
+                            if (video.get() != nullptr) {
+                                video->set_g_state((int)(ppart[0]['G']));
+                            }
                             auto machine_state_prev = machine_state;
 
                             auto time0 = std::chrono::high_resolution_clock::now();
@@ -534,10 +553,10 @@ int main(int argc, char** argv)
                                 });
                             auto time1 = std::chrono::high_resolution_clock::now();
 
-                            double dt = std::chrono::duration<double, std::milli>(time1-time0).count();
+                            double dt = std::chrono::duration<double, std::milli>(time1 - time0).count();
                             std::cout << "calculations took " << dt << " milliseconds; have " << m_commands.size() << " steps to execute" << std::endl;
                             try {
-                                stepping.exec(m_commands, [motor_layout_,&spindles_status, timer_drv, spindles_drv, &break_execution_result,machine_state_prev,last_spindle_on_delay](auto steps_from_origin, auto tick_n) -> int {
+                                stepping.exec(m_commands, [motor_layout_, &spindles_status, timer_drv, spindles_drv, &break_execution_result, machine_state_prev, last_spindle_on_delay](auto steps_from_origin, auto tick_n) -> int {
                                     std::cout << "break at " << tick_n << " tick" << std::endl;
                                     steps_from_origin = steps_from_origin + motor_layout_->cartesian_to_steps(block_to_distance_t(machine_state_prev));
                                     std::cout << "Position: " << motor_layout_->steps_to_cartesian(steps_from_origin) << std::endl;
@@ -554,10 +573,10 @@ int main(int argc, char** argv)
                                             std::cout << "wait for spindle..." << std::endl;
                                             std::this_thread::sleep_for(std::chrono::milliseconds(last_spindle_on_delay));
                                             std::cout << "wait for spindle... OK" << std::endl;
-//                                            machine_state['X'] = ;
-//                                            machine_state['Y'] = ;
-//                                            machine_state['Z'] = ;
-//                                            machine_state['A'] = ;
+                                            //                                            machine_state['X'] = ;
+                                            //                                            machine_state['Y'] = ;
+                                            //                                            machine_state['Z'] = ;
+                                            //                                            machine_state['A'] = ;
                                         }
                                     }
                                     int r = break_execution_result;
@@ -585,21 +604,21 @@ int main(int argc, char** argv)
                             switch ((int)(m['M'])) {
                             case 17:
                                 steppers_drv->enable_steppers({true});
-                                wait_for_component_to_start(m,200);
+                                wait_for_component_to_start(m, 200);
                                 break;
                             case 18:
                                 steppers_drv->enable_steppers({false});
-                                wait_for_component_to_start(m,200);
+                                wait_for_component_to_start(m, 200);
                                 break;
                             case 3:
                                 spindles_status[0] = 1.0;
                                 spindles_drv->spindle_pwm_power(0, spindles_status[0]);
-                                last_spindle_on_delay = wait_for_component_to_start(m,3000);
+                                last_spindle_on_delay = wait_for_component_to_start(m, 3000);
                                 break;
                             case 5:
                                 spindles_status[0] = 0.0;
                                 spindles_drv->spindle_pwm_power(0, spindles_status[0]);
-                                wait_for_component_to_start(m,3000);
+                                wait_for_component_to_start(m, 3000);
                                 break;
                             }
                         }
@@ -612,8 +631,8 @@ int main(int argc, char** argv)
                     }
                 }
                 std::string s = "";
-                for (auto e: machine_state) {
-                    s = s + ((s.size())?" ":"") + e.first+std::to_string(e.second);
+                for (auto e : machine_state) {
+                    s = s + ((s.size()) ? " " : "") + e.first + std::to_string(e.second);
                 }
                 std::cout << s << std::endl;
             }

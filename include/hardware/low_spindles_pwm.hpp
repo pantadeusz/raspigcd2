@@ -21,6 +21,8 @@
 #ifndef __RASPIGCD_HARDWARE_LOW_LEVEL_SPINDLES_T_HPP__
 #define __RASPIGCD_HARDWARE_LOW_LEVEL_SPINDLES_T_HPP__
 
+#include <atomic>
+
 namespace raspigcd {
 namespace hardware {
 
@@ -28,6 +30,7 @@ class low_spindles_pwm
 {
 private:
 public:
+
     /**
      * @brief Set the spindle pwm power 
      * 
