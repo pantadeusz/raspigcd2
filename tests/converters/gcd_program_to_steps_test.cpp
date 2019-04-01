@@ -34,6 +34,9 @@ using namespace raspigcd;
 using namespace raspigcd::gcd;
 using namespace raspigcd::converters;
 
+// steps_t steps_size_maker;
+const unsigned COORDINATES_COUNT = 3;
+
 TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]")
 {
     configuration::actuators_organization test_config;
@@ -42,7 +45,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
     test_config.scale = {1,1,1,1};
     test_config.tick_duration_us = 100; // 0.0001 s
 
-    for (int i = 0; i <RASPIGCD_HARDWARE_DOF;i++){
+    for (size_t i = 0; i <COORDINATES_COUNT;i++){
         // auto & stepper: test_config.steppers) {
         configuration::stepper stepper;
         stepper.dir = 1;
@@ -52,7 +55,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         test_config.steppers.push_back(stepper);
     }
     steps_t steps_per_mm_arr;
-    for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+    for (size_t i = 0; i < COORDINATES_COUNT; i++) {
         steps_per_mm_arr[i] = test_config.steppers[i].steps_per_mm;
     };
 
@@ -81,7 +84,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
                 commands_count++;
-                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                for (size_t i = 0; i < COORDINATES_COUNT; i++) {
                     auto m = e.b[i];
                     //std::cout << "s:" << m.step << " " << m.dir;
                     if (m.step) steps[i] += ((int)(m.dir)*2)-1;
@@ -106,7 +109,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
                 commands_count++;
-                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                for (size_t i = 0; i < COORDINATES_COUNT; i++) {
                     auto m = e.b[i];
                     //std::cout << "s:" << m.step << " " << m.dir;
                     if (m.step) steps[i] += ((int)(m.dir)*2)-1;
@@ -137,7 +140,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
                 commands_count++;
-                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                for (size_t i = 0; i < COORDINATES_COUNT; i++) {
                     auto m = e.b[i];
                     if (m.step) steps[i] += ((int)(m.dir)*2)-1;
                 }
@@ -163,7 +166,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
                 commands_count++;
-                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                for (size_t i = 0; i < COORDINATES_COUNT; i++) {
                     auto m = e.b[i];
                     if (m.step) steps[i] += ((int)(m.dir)*2)-1;
                 }
@@ -192,7 +195,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
                 commands_count++;
-                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                for (size_t i = 0; i < COORDINATES_COUNT; i++) {
                     auto m = e.b[i];
                     if (m.step) steps[i] += ((int)(m.dir)*2)-1;
                 }
@@ -220,7 +223,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
                 commands_count++;
-                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                for (size_t i = 0; i < COORDINATES_COUNT; i++) {
                     auto m = e.b[i];
                     if (m.step) steps[i] += ((int)(m.dir)*2)-1;
                 }
@@ -249,7 +252,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         for (auto &e : result) {
             for (int i = 0; i < e.count; i++) {
                 commands_count++;
-                for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+                for (size_t i = 0; i < COORDINATES_COUNT; i++) {
                     auto m = e.b[i];
                     if (m.step) steps[i] += ((int)(m.dir)*2)-1;
                 }
@@ -297,7 +300,7 @@ TEST_CASE("converters - program_to_steps", "[gcd][converters][program_to_steps]"
         auto ls = last_state_after_program_execution(program, {{'F',1}});
         REQUIRE(ls == machine_state);
 
-        steps_t expected_steps = steps_per_mm_arr*steps_t{-100,-100,-100,-100};
+        steps_t expected_steps = steps_per_mm_arr*steps_t{-100,-100,-100};
         std::list<steps_t> hstps = hardware_commands_to_steps(result);
         REQUIRE(hstps.back() == expected_steps);
 /*

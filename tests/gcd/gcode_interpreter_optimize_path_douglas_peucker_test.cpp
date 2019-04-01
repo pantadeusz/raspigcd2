@@ -118,6 +118,9 @@ TEST_CASE("gcode_interpreter_test - optimize_path_douglas_peucker", "[gcd][gcode
             {{'G',0},{'X',17}}
         };
         auto result =  optimize_path_douglas_peucker(input,0.0125);
+        INFO(back_to_gcode({result}));
+        INFO(back_to_gcode({expected}));
+
         REQUIRE(result == expected);
     }
     SECTION("mixed G and M codes should be interpreted correctly with removal of correct node")
@@ -131,7 +134,8 @@ TEST_CASE("gcode_interpreter_test - optimize_path_douglas_peucker", "[gcd][gcode
         program_t expected = {
             {{'M',5}},
             {{'G',0},{'X',5}},
-            {{'M',4}}
+            {{'M',4}},
+            {{'G',0},{'X',5}}
         };
         auto result =  optimize_path_douglas_peucker(input,0.0125);
         REQUIRE(result == expected);
@@ -148,7 +152,8 @@ TEST_CASE("gcode_interpreter_test - optimize_path_douglas_peucker", "[gcd][gcode
         program_t expected = {
             {{'M',5}},
             {{'G',0},{'X',5}},
-            {{'M',4}}
+            {{'M',4}},
+            {{'G',0},{'X',5}}
         };
         auto result =  optimize_path_douglas_peucker(input,0.0125);
         REQUIRE(result == expected);

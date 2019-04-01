@@ -39,7 +39,7 @@ public:
      * 
      * @param b step-dir for every stepper motor (depends on the )
      */
-    virtual void do_step(const single_step_command* b) = 0;
+    virtual void do_step(const std::array<single_step_command,4> &b) = 0;
 
     /**
      * @brief turn on or off the stepper motors. If the hardware supports it, then

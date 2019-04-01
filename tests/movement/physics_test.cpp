@@ -36,6 +36,9 @@ using namespace raspigcd::configuration;
 //using namespace raspigcd::hardware;
 using namespace raspigcd::movement::physics;
 
+// distance_t size_maker_distance;
+const unsigned COORDINATES_COUNT = 3;
+
 auto cmp_approx = [](auto lhs, auto rhs) {
     for (unsigned i = 0; i < lhs.size(); i++) {
         if (lhs.at(i) != Approx(rhs.at(i))) {
@@ -52,8 +55,8 @@ TEST_CASE("Movement physics simple formulas get_next_position", "[movement][phys
 {
     SECTION("trivial next position get_next_position for no acceleration and 0 speed")
     {
-        const distance_t s0(10, 11, 12, 13);
-        const distance_t v0(0, 0, 0, 0);
+        const distance_t s0{10, 11, 12};
+        const distance_t v0{0, 0, 0};
         const double a = 0;
         const double t = 2;
         distance_t result = get_next_position(s0, v0, a, t);
@@ -61,9 +64,9 @@ TEST_CASE("Movement physics simple formulas get_next_position", "[movement][phys
     }
     SECTION("get_next_position for no acceleration and speed of 2mm/s in one direction")
     {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            const distance_t s0(10, 11, 12, 13);
-            distance_t v0(0, 0, 0, 0);
+        for (size_t i = 0; i < COORDINATES_COUNT; i++) {
+            const distance_t s0{10, 11, 12};
+            distance_t v0{0, 0, 0};
             v0[i] = 1.0;
             const double a = 0;
             const double t = 2;
@@ -75,9 +78,9 @@ TEST_CASE("Movement physics simple formulas get_next_position", "[movement][phys
     }
     SECTION("get_next_position for speed of 2mm/s and acceleration in one direction")
     {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            const distance_t s0(10, 11, 12, 13);
-            distance_t v0(0, 0, 0, 0);
+        for (size_t i = 0; i < COORDINATES_COUNT; i++) {
+            const distance_t s0{10, 11, 12};
+            distance_t v0{0, 0, 0};
             v0[i] = 1.0;
             const double a = 2;
             const double t = 2;
@@ -92,8 +95,8 @@ TEST_CASE("Movement physics simple formulas get_next_position", "[movement][phys
 
     SECTION("get_next_position for speed of 2mm/s and negative acceleration in all directions")
     {
-        const distance_t s0(10, 11, 12, 13);
-        distance_t v0(3.0, 4.0, 0.0, 0.0);
+        const distance_t s0{10, 11, 12};
+        distance_t v0{3.0, 4.0, 0.0};
         const double a = -1;
         const double t = 5;
         INFO(v0);
@@ -111,8 +114,8 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
 {
     SECTION("trivial next position get_next_velocity for no acceleration and 0 speed")
     {
-        const distance_t s0(10, 11, 12, 13);
-        const distance_t v0(0, 0, 0, 0);
+        const distance_t s0{10, 11, 12};
+        const distance_t v0{0, 0, 0};
         const double a = 0;
         const double t = 2;
         distance_t result = get_next_velocity(v0, a, t);
@@ -121,9 +124,9 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
 
     SECTION("get_next_velocity for no acceleration and speed of 2mm/s in one direction")
     {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            const distance_t s0(10, 11, 12, 13);
-            distance_t v0(0, 0, 0, 0);
+        for (size_t i = 0; i < COORDINATES_COUNT; i++) {
+            const distance_t s0{10, 11, 12};
+            distance_t v0{0, 0, 0};
             v0[i] = 1.0;
             const double a = 0;
             const double t = 2;
@@ -135,9 +138,9 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
 
     SECTION("get_next_velocity for speed of 2mm/s and acceleration in one direction")
     {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            const distance_t s0(10, 11, 12, 13);
-            distance_t v0(0, 0, 0, 0);
+        for (size_t i = 0; i < COORDINATES_COUNT; i++) {
+            const distance_t s0{10, 11, 12};
+            distance_t v0{0, 0, 0};
             v0[i] = 10.0;
             const double a = -5;
             const double t = 2;
@@ -152,8 +155,8 @@ TEST_CASE("Movement physics simple formulas get_next_velocity", "[movement][phys
 
     SECTION("get_next_velocity for speed of 2mm/s and negative acceleration in all directions")
     {
-        const distance_t s0(10, 11, 12, 13);
-        distance_t v0(3.0, 4.0, 0.0, 0.0);
+        const distance_t s0{10, 11, 12};
+        distance_t v0{3.0, 4.0, 0.0};
         const double a = -1;
         const double t = 5;
         INFO(v0);
@@ -171,9 +174,9 @@ TEST_CASE("Movement physics simple formulas get_next_node", "[movement][physics]
 {
     SECTION("get_next_node for speed of 2mm/s and acceleration in one direction")
     {
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
-            const distance_t s0(10, 11, 12, 13);
-            distance_t v0(0, 0, 0, 0);
+        for (size_t i = 0; i < COORDINATES_COUNT; i++) {
+            const distance_t s0{10, 11, 12};
+            distance_t v0{0, 0, 0};
             v0[i] = 10.0;
             const double a = -5;
             const double t = 2;
@@ -191,8 +194,8 @@ TEST_CASE("Movement physics simple formulas get_next_node", "[movement][physics]
 
     SECTION("get_next_node for speed of 2mm/s and negative acceleration in all directions")
     {
-        const distance_t s0(10, 11, 12, 13);
-        distance_t v0(3.0, 4.0, 0.0, 0.0);
+        const distance_t s0{10, 11, 12};
+        distance_t v0{3.0, 4.0, 0.0};
         const double a = -1;
         const double t = 5;
         INFO(v0);
@@ -204,8 +207,8 @@ TEST_CASE("Movement physics simple formulas get_next_node", "[movement][physics]
     }
     SECTION("get_next_node for speed of 2mm/s and negative acceleration in all directions")
     {
-        const distance_t s0(10, 11, 12, 13);
-        distance_t v0(3.0, 4.0, 0.0, 0.0);
+        const distance_t s0{10, 11, 12};
+        distance_t v0{3.0, 4.0, 0.0};
         const double a = -1;
         const double t = 2;
         INFO(v0);
@@ -217,8 +220,8 @@ TEST_CASE("Movement physics simple formulas get_next_node", "[movement][physics]
     }
     SECTION("get_next_node for speed of 2mm/s and negative acceleration that results in negative speed")
     {
-        const distance_t s0(10, 11, 12, 13);
-        distance_t v0(3.0, 4.0, 0.0, 0.0);
+        const distance_t s0{10, 11, 12};
+        distance_t v0{3.0, 4.0, 0.0};
         const double a = -1;
         const double t = 10;
         INFO(v0);
@@ -235,7 +238,7 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
 {
     SECTION("acceleration_between with no acceleration")
     {
-        distance_t p0 = {3.0, 4.0, 0.0, 0.0}, p1 = {6.0, 8.0, 0.0, 0.0};
+        distance_t p0 = {3.0, 4.0, 0.0}, p1 = {6.0, 8.0, 0.0};
         path_node_t node_a = {.p = p0, 1};
         double t = 5;
         double a = 0.0;
@@ -253,7 +256,7 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
 
     SECTION("acceleration_between with acceleration")
     {
-        distance_t p0 = {3.0, 4.0, 0.0, 0.0}, p1 = {8.25, 11, 0, 0};
+        distance_t p0 = {3.0, 4.0, 0.0}, p1 = {8.25, 11, 0};
         path_node_t node_a = {.p = p0, 1};
         double t = 2.5;
         double a = 2.0;
@@ -275,7 +278,7 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
 
     SECTION("acceleration_between with acceleration on one axis")
     {
-        distance_t p0 = {0.0, 0.0, 0.0, 0.0}, p1 = {50, 0, 0, 0};
+        distance_t p0 = {0.0, 0.0, 0.0}, p1 = {50, 0, 0};
         path_node_t node_a = {.p = p0, 0};
         double t = 10;
         double a = 1.0;
@@ -296,7 +299,7 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
 
     SECTION("acceleration_between with acceleration on one axis from not zero pos")
     {
-        distance_t p0 = {2.0, 0.0, 0.0, 0.0}, p1 = {52, 0, 0, 0};
+        distance_t p0 = {2.0, 0.0, 0.0}, p1 = {52, 0, 0};
         path_node_t node_a = {.p = p0, 0};
         double t = 10;
         double a = 1.0;
@@ -321,7 +324,7 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
         double a = 2.0;
         double t = 3;
         double s = 12;
-        distance_t p0 = {0.0, 0.0, 0.0, 0.0}, p1 = {s, 0, 0, 0};
+        distance_t p0 = {0.0, 0.0, 0.0}, p1 = {s, 0, 0};
         path_node_t node_a = {.p = p0, u};
         INFO(p1);
         p1 = p0 + (p1 - p0) * s / (p1 - p0).length();
@@ -361,7 +364,7 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
 
     SECTION("acceleration_between with acceleration on one axis 2")
     {
-        distance_t p0 = {0.0, 0.0, 0.0, 0.0}, p1 = {22.5, 0, 0, 0};
+        distance_t p0 = {0.0, 0.0, 0.0}, p1 = {22.5, 0, 0};
         path_node_t node_a = {.p = p0, 0};
         double t = 3;
         double a = 5.0;
@@ -382,7 +385,7 @@ TEST_CASE("Movement physics simple formulas acceleration_between", "[movement][p
     // TODO: Negative accelerations!
     SECTION("acceleration_between with acceleration on one axis 2 - breaks")
     {
-        distance_t p0 = {0.0, 0.0, 0.0, 0.0}, p1 = {22.5, 0, 0, 0};
+        distance_t p0 = {0.0, 0.0, 0.0}, p1 = {22.5, 0, 0};
         path_node_t node_a = {.p = p0, 20};
         double t = 3;
         double a = -5.0;
@@ -399,28 +402,28 @@ TEST_CASE("Get final velocity for limits", "[movement][physics][calculate_transi
     
     SECTION("no acceleration should return the first node 1")
     {
-        const path_node_t a = {.p = {1,2,3,4}, .v = 10.0};
-        const path_node_t b = {.p = {5,2,3,4}, .v = 10.0};
+        const path_node_t a = {.p = {1,2,3}, .v = 10.0};
+        const path_node_t b = {.p = {5,2,3}, .v = 10.0};
         double acceleration = 0.0;
         path_node_t ret = calculate_transition_point(a,b,acceleration);
         REQUIRE(ret == a);
     }
     SECTION("no acceleration should return the first node 2")
     {
-        const path_node_t a = {.p = {1,2,3,4}, .v = 10.0};
-        const path_node_t b = {.p = {5,2,3,4}, .v = 15.0};
+        const path_node_t a = {.p = {1,2,3}, .v = 10.0};
+        const path_node_t b = {.p = {5,2,3}, .v = 15.0};
         double acceleration = 0.0;
         path_node_t ret = calculate_transition_point(a,b,acceleration);
         REQUIRE(ret == a);
     }
     SECTION("acceleration slow enough should return second node with final velocity")
     {
-        const path_node_t a = {.p = {1,2,3,4}, .v = 10.0};
-        const path_node_t b = {.p = {5,2,3,4}, .v = 50.0};
+        const path_node_t a = {.p = {1,2,3}, .v = 10.0};
+        const path_node_t b = {.p = {5,2,3}, .v = 50.0};
         double acceleration = 1.0;
         path_node_t ret = calculate_transition_point(a,b,acceleration);
         
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++)
+        for (size_t i = 0; i < COORDINATES_COUNT; i++)
             REQUIRE(ret.p[i] == Approx(b.p[i]));
         REQUIRE(ret.v < b.v);
         REQUIRE(ret.v > a.v);
@@ -430,12 +433,12 @@ TEST_CASE("Get final velocity for limits", "[movement][physics][calculate_transi
     }
     SECTION("acceleration slow enough should return second node with final velocity and negative acceleration")
     {
-        const path_node_t a = {.p = {1,2,3,4}, .v = 10.0};
-        const path_node_t b = {.p = {5,2,3,4}, .v = 2.0};
+        const path_node_t a = {.p = {1,2,3}, .v = 10.0};
+        const path_node_t b = {.p = {5,2,3}, .v = 2.0};
         double acceleration = -1.0;
         path_node_t ret = calculate_transition_point(a,b,acceleration);
         
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++)
+        for (size_t i = 0; i < COORDINATES_COUNT; i++)
             REQUIRE(ret.p[i] == Approx(b.p[i]));
         //REQUIRE(ret.v < b.v);
         //REQUIRE(ret.v > a.v);
@@ -445,12 +448,12 @@ TEST_CASE("Get final velocity for limits", "[movement][physics][calculate_transi
     }
     SECTION("fast acceleration")
     {
-        const path_node_t a = {.p = {1,2,3,4}, .v = 10.0};
-        const path_node_t b = {.p = {5,3,4,5}, .v = 15.0};
+        const path_node_t a = {.p = {1,2,3}, .v = 10.0};
+        const path_node_t b = {.p = {5,3,4}, .v = 15.0};
         double acceleration = 100.0;
         path_node_t ret = calculate_transition_point(a,b,acceleration);
         
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+        for (size_t i = 0; i < COORDINATES_COUNT; i++) {
             REQUIRE(ret.p[i] < b.p[i]);
             REQUIRE(ret.p[i] > a.p[i]);
         }
@@ -461,12 +464,12 @@ TEST_CASE("Get final velocity for limits", "[movement][physics][calculate_transi
     }
     SECTION("fast negative acceleration")
     {
-        const path_node_t a = {.p = {1,2,3,4}, .v = 15.0};
-        const path_node_t b = {.p = {5,3,4,5}, .v = 10.0};
+        const path_node_t a = {.p = {1,2,3}, .v = 15.0};
+        const path_node_t b = {.p = {5,3,4}, .v = 10.0};
         double acceleration = -100.0;
         path_node_t ret = calculate_transition_point(a,b,acceleration);
         
-        for (int i = 0; i < RASPIGCD_HARDWARE_DOF; i++) {
+        for (size_t i = 0; i < COORDINATES_COUNT; i++) {
             REQUIRE(ret.p[i] < b.p[i]);
             REQUIRE(ret.p[i] > a.p[i]);
         }
@@ -477,15 +480,15 @@ TEST_CASE("Get final velocity for limits", "[movement][physics][calculate_transi
     }
     SECTION("exception when both points are the same and there is difference in velocity")
     {
-        const path_node_t a = {.p = {1,2,3,4}, .v = 15.0};
-        const path_node_t b = {.p = {1,2,3,4}, .v = 10.0};
+        const path_node_t a = {.p = {1,2,3}, .v = 15.0};
+        const path_node_t b = {.p = {1,2,3}, .v = 10.0};
         double acceleration = -100.0;
         REQUIRE_THROWS(calculate_transition_point(a,b,acceleration));
     }
    SECTION("exception when both points are the same and there is difference in velocity")
    {
-       const path_node_t a = {.p = {1,2,3,4}, .v = 15.0};
-       const path_node_t b = {.p = {1,2,3,4}, .v = 10.0};
+       const path_node_t a = {.p = {1,2,3}, .v = 15.0};
+       const path_node_t b = {.p = {1,2,3}, .v = 10.0};
        double acceleration = -100.0;
        REQUIRE_THROWS(calculate_transition_point(a,b,acceleration));
    }

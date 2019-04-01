@@ -47,11 +47,11 @@ class inmem : public hardware::low_steppers
 {
     std::function<void(const steps_t&)> _on_step;
 public:
-    int counters[RASPIGCD_HARDWARE_DOF];
+    std::array<int,4> counters;
     std::vector<bool> enabled;
     steps_t current_steps;
 
-    void do_step(const single_step_command* b);
+    void do_step(const std::array<single_step_command,4> &b);
     
     void enable_steppers(const std::vector<bool> en);
     

@@ -41,8 +41,22 @@ namespace gcd {
 distance_t block_to_distance_t(const block_t& block)
 {
     auto blk = block;
-    return {blk['X'], blk['Y'], blk['Z'], blk['A']};
+    return {(double)blk['X'], (double)blk['Y'], (double)blk['Z']};
 }
+
+
+distance_with_velocity_t block_to_distance_with_v_t(const block_t& block)
+{
+    auto blk = block;
+    distance_with_velocity_t ret = {};
+    if (block.at('X')) ret[0] = block.at('X');
+    if (block.at('Y')) ret[1] = block.at('Y');
+    if (block.at('Z')) ret[2] = block.at('Z');
+    if (block.at('F')) ret.back() = block.at('F');
+    return ret;
+    
+}
+
 /// UNTESTED
 block_t distance_to_block(const distance_t& dist)
 {
@@ -50,9 +64,20 @@ block_t distance_to_block(const distance_t& dist)
         {'X', dist[0]},
         {'Y', dist[1]},
         {'Z', dist[2]},
-        {'A', dist[3]},
     };
 }
+
+/// UNTESTED
+block_t distance_with_velocity_to_block(const distance_t& dist)
+{
+    return {
+        {'X', dist[0]},
+        {'Y', dist[1]},
+        {'Z', dist[2]},
+        {'F', dist.back()},
+    };
+}
+
 
 /// UNTESTED
 distance_t blocks_to_vector_move(const block_t& block_a, const block_t& block_b)
@@ -67,7 +92,6 @@ block_t last_state_after_program_execution(const program_t& program_, const bloc
     result['X'];
     result['Y'];
     result['Z'];
-    result['A'];
     for (auto e : program_) {
         if (result.count('M')) result.erase('M');
         if (e.count('G')) {
@@ -632,23 +656,9 @@ std::map<char, double> command_to_map_of_arguments(const std::string& command__)
     return ret;
 }
 
-
-double point_segment_distance_3d(const distance_t& A, const distance_t& B, const distance_t& C)
+program_t optimize_path_douglas_peucker_g(const program_t& program_, const double epsilon, const block_t& p0_)
 {
-    double l = (C - B).length();
-    if (l <= 0)
-        return (A - B).length();
-    auto d = (C - B) / l;
-    auto v = A - B;
-    double t = v.dot_product(d);
-    auto P = B + (d * t);
-
-    return (P - A).length();
-}
-
-program_t optimize_path_douglas_peucker(const program_t& program_, const double epsilon, const block_t& p0_)
-{
-    std::vector<distance_t> path;
+    std::vector<distance_with_velocity_t> path;
     path.reserve(program_.size());
     auto is_block_a_new_position = [](const block_t& e) {
         if (e.count('M') == 0) {
@@ -661,12 +671,11 @@ program_t optimize_path_douglas_peucker(const program_t& program_, const double 
         return false;
     };
     block_t machine_state = merge_blocks({{'X', 0}, {'Y', 0}, {'Z', 0}, {'F', 0.1}}, p0_);
-    path.push_back(block_to_distance_t(machine_state));
+    path.push_back(block_to_distance_with_v_t(machine_state));
     for (const auto& e : program_) {
         if (is_block_a_new_position(e)) {
             machine_state = merge_blocks(machine_state, e);
-            auto p = block_to_distance_t(machine_state);
-            p[3] = machine_state.at('F');
+            auto p = block_to_distance_with_v_t(machine_state);
             path.push_back(p);
         }
     }
@@ -701,7 +710,11 @@ program_t optimize_path_douglas_peucker(const program_t& program_, const double 
         }
     };
     optimizePathDP(epsilon, 0, path.size() - 1);
-
+    //std::cout << "PATH:" << std::endl;
+    //for (unsigned i = 0; i < path.size(); i++) {
+    //    auto e = path[i];
+    //    std::cout << e << " " << (toDelete[i]?"DELETE":"keep") << std::endl;
+    //}
     for (unsigned int from = 0; from < toDelete.size(); from++) {
         int fto = from;
         while (toDelete[fto]) {
@@ -710,7 +723,12 @@ program_t optimize_path_douglas_peucker(const program_t& program_, const double 
         std::swap(toDelete[fto],toDelete[from]);
         from = fto;
     }
-
+    //std::cout << "TDEL:" << std::endl;
+    //for (unsigned i = 0; i < path.size(); i++) {
+    //    auto e = path[i];
+    //    std::cout << e << " " << (toDelete[i]?"DELETE":"keep") << std::endl;
+    //}
+    
     program_t ret;
     ret.reserve(program_.size());
     unsigned int idx_in_program = 0;
@@ -737,6 +755,20 @@ program_t optimize_path_douglas_peucker(const program_t& program_, const double 
     }
     qpsh();
     ret.shrink_to_fit();
+    return ret;
+}
+
+program_t optimize_path_douglas_peucker(const program_t& program_, const double epsilon, const block_t& p0_)
+{
+    program_t ret;
+    block_t state = p0_;
+    for (auto e: group_gcode_commands(program_)) {
+       // std::cout << "e: " << e.size() << std::endl;
+        auto pp = optimize_path_douglas_peucker_g( e, epsilon, p0_);
+       // std::cout << "pp: " << pp.size() << std::endl;
+        state = last_state_after_program_execution(e, state);
+        ret.insert(ret.end(),pp.begin(),pp.end());
+    }
     return ret;
 }
 

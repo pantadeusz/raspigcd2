@@ -138,11 +138,11 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns", "[gcd][gcode_interp
         auto ret = apply_limits_for_turns(z_axis_move_program, machine_limits);
         REQUIRE(ret[0].at('F') == Approx (machine_limits.max_no_accel_velocity_mm_s[2]));
     }
-    SECTION("two steps along A axis")
-    {
-        auto ret = apply_limits_for_turns(a_axis_move_program, machine_limits);
-        REQUIRE(ret[0].at('F') == Approx (machine_limits.max_no_accel_velocity_mm_s[3]));
-    }
+    //SECTION("two steps along A axis")
+    //{
+    //    auto ret = apply_limits_for_turns(a_axis_move_program, machine_limits);
+    //    REQUIRE(ret[0].at('F') == Approx (machine_limits.max_no_accel_velocity_mm_s[3]));
+    //}
 }
 
 
@@ -189,11 +189,11 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program", 
         G1X10F100
         G1Y-10F100
         G1Z-10F100
-        G1A10F100
+        G1Y5F100
         G1X0F100
         G1Y0F1
         G1Z0F100
-        G1A0F100
+        ;G1A0F100
         )");
     SECTION("turn of 0 deg (go back) along X axis. The speed should be 0.25 of the no accel velocity")
     {
@@ -280,16 +280,16 @@ TEST_CASE("gcode_interpreter_test - apply_limits_for_turns for longer program", 
         auto ret = apply_limits_for_turns(turn_90_4x_program, machine_limits);
         partitioned_program_t pp = {ret};
         INFO(back_to_gcode(pp));
-        REQUIRE(ret.size() == 9);
+        REQUIRE(ret.size() == 8);
         REQUIRE(ret[0].at('F') ==  Approx(2.0));
         REQUIRE(ret[1].at('F') ==  Approx(2.0));
         REQUIRE(ret[2].at('F') ==  Approx(3.0));
-        REQUIRE(ret[3].at('F') ==  Approx(4.0));
+        REQUIRE(ret[3].at('F') ==  Approx(3.0));
         REQUIRE(ret[4].at('F') ==  Approx(2.0));
         REQUIRE(ret[5].at('F') ==  Approx(2.0));
         REQUIRE(ret[6].at('F') ==  Approx(1.0));
         REQUIRE(ret[7].at('F') ==  Approx(4.0));
-        REQUIRE(ret[8].at('F') ==  Approx(5.0));
+        //REQUIRE(ret[8].at('F') ==  Approx(5.0));
     }
 }
 
@@ -443,7 +443,7 @@ TEST_CASE("gcode_interpreter_test - block_to_distance_t", "[gcd][gcode_interpret
         {'X', 10},
         {'Y', 21},
         {'Z', 22},
-        {'A', 23},
+        //{'A', 23},
         {'F', 100}};
     SECTION("empty block should result in vector of zero")
     {
@@ -451,7 +451,7 @@ TEST_CASE("gcode_interpreter_test - block_to_distance_t", "[gcd][gcode_interpret
         REQUIRE(ret[0] == Approx(0));
         REQUIRE(ret[1] == Approx(0));
         REQUIRE(ret[2] == Approx(0));
-        REQUIRE(ret[3] == Approx(0));
+    //    REQUIRE(ret[3] == Approx(0));
     }
     SECTION("block should be converted correctly")
     {
@@ -459,21 +459,25 @@ TEST_CASE("gcode_interpreter_test - block_to_distance_t", "[gcd][gcode_interpret
         REQUIRE(ret[0] == Approx(block['X']));
         REQUIRE(ret[1] == Approx(block['Y']));
         REQUIRE(ret[2] == Approx(block['Z']));
-        REQUIRE(ret[3] == Approx(block['A']));
+//        REQUIRE(ret[3] == Approx(block['A']));
     }
 }
 
 TEST_CASE("gcode_interpreter_test - blocks_to_vector_move", "[gcd][gcode_interpreter][blocks_to_vector_move]")
 {
-    block_t block_a = {{'G', 1}, {'X', 10}, {'Y', 21}, {'Z', 22}, {'A', 23}, {'F', 100}};
-    block_t block_b = {{'G', 1}, {'X', 110}, {'Y', 121}, {'Z', 122}, {'A', 123}, {'F', 100}};
+    block_t block_a = {{'G', 1}, {'X', 10}, {'Y', 21}, {'Z', 22},
+     //{'A', 23}, 
+     {'F', 100}};
+    block_t block_b = {{'G', 1}, {'X', 110}, {'Y', 121}, {'Z', 122},
+     //{'A', 123}, 
+     {'F', 100}};
     SECTION("empty block should result in vector of zero")
     {
         auto ret = blocks_to_vector_move({}, {});
         REQUIRE(ret[0] == Approx(0));
         REQUIRE(ret[1] == Approx(0));
         REQUIRE(ret[2] == Approx(0));
-        REQUIRE(ret[3] == Approx(0));
+        //REQUIRE(ret[3] == Approx(0));
     }
     SECTION("block should be converted correctly")
     {
@@ -481,6 +485,6 @@ TEST_CASE("gcode_interpreter_test - blocks_to_vector_move", "[gcd][gcode_interpr
         REQUIRE(ret[0] == Approx(100));
         REQUIRE(ret[1] == Approx(100));
         REQUIRE(ret[2] == Approx(100));
-        REQUIRE(ret[3] == Approx(100));
+//        REQUIRE(ret[3] == Approx(100));
     }
 }

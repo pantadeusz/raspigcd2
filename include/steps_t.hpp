@@ -114,7 +114,7 @@ inline std::ostream& operator<<(std::ostream& os, steps_t const& value)
 }
 #endif
 
-using steps_t = generic_position_t<int>;
+using steps_t = generic_position_t<int,4>;
 
 } // namespace raspigcd
 #endif

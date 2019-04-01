@@ -39,20 +39,18 @@ public:
 
 steps_t corexy_layout_t::cartesian_to_steps(const distance_t& distances_)
 {
-    return steps_t(
-        (distances_[0] * scales_[0] + distances_[1] * scales_[1]) * steps_per_milimeter_[0],
-        (distances_[0] * scales_[0] - distances_[1] * scales_[1]) * steps_per_milimeter_[1],
-        distances_[2] * steps_per_milimeter_[2] * scales_[2],
-        distances_[3] * steps_per_milimeter_[3] * scales_[3]);
+    return {
+        (int)(distances_[0] * scales_[0] + distances_[1] * scales_[1]) * steps_per_milimeter_[0],
+        (int)(distances_[0] * scales_[0] - distances_[1] * scales_[1]) * steps_per_milimeter_[1],
+        (int)(distances_[2] * steps_per_milimeter_[2] * scales_[2])};
 }
 
 distance_t corexy_layout_t::steps_to_cartesian(const steps_t& steps_)
 {
-    return distance_t(
+    return {
         0.5 * (double)(steps_[0] / steps_per_milimeter_[0] + steps_[1] / steps_per_milimeter_[1]) / scales_[0],
         0.5 * (double)(steps_[0] / steps_per_milimeter_[0] - steps_[1] / steps_per_milimeter_[1]) / scales_[1],
-        steps_[2] / (steps_per_milimeter_[2] * scales_[2]),
-        steps_[3] / (steps_per_milimeter_[3] * scales_[3]));
+        steps_[2] / (steps_per_milimeter_[2] * scales_[2])};
 }
 
 void corexy_layout_t::set_configuration(const configuration::actuators_organization& cfg)
@@ -77,20 +75,16 @@ public:
 
 steps_t cartesian_layout_t::cartesian_to_steps(const distance_t& distances_)
 {
-    return steps_t(
-        distances_[0] * steps_per_milimeter_[0] * scales_[0],
-        distances_[1] * steps_per_milimeter_[1] * scales_[1],
-        distances_[2] * steps_per_milimeter_[2] * scales_[2],
-        distances_[3] * steps_per_milimeter_[3] * scales_[3]);
+    steps_t ret;
+    for (std::size_t i = 0; i < distances_.size(); i++) ret[i] = distances_[i] * steps_per_milimeter_[i] * scales_[i];
+    return ret;
 }
 
 distance_t cartesian_layout_t::steps_to_cartesian(const steps_t& steps_)
 {
-    return distance_t(
-        steps_[0] / (steps_per_milimeter_[0] * scales_[0]),
-        steps_[1] / (steps_per_milimeter_[1] * scales_[1]),
-        steps_[2] / (steps_per_milimeter_[2] * scales_[2]),
-        steps_[3] / (steps_per_milimeter_[3] * scales_[3]));
+    distance_t ret;
+    for (std::size_t i = 0; i < steps_.size(); i++) ret[i] = steps_[i] / (steps_per_milimeter_[i] * scales_[i]);
+    return ret;
 }
 
 

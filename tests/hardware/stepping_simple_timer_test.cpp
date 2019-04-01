@@ -57,7 +57,8 @@ TEST_CASE("Hardware stepping_simple_timer", "[hardware_stepping][stepping_simple
         int n = 0;
         ((driver::inmem*)lsfake.get())->current_steps = {0, 0, 0, 0};
         ((driver::inmem*)lsfake.get())->set_step_callback([&](const auto&) { n++; });
-        worker.exec({{.b = {{0, 0}, {0, 0}, {0, 0}, {0, 0}}, .count = 1}});
+        single_step_command sc = {0,0};
+        worker.exec({{.b = {sc, sc, sc, sc}, .count = 1}});
         REQUIRE(n == 1);
     }
     SECTION("Run one step in each positive  direction")

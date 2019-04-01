@@ -33,42 +33,41 @@
 namespace raspigcd {
 
 template<>
-double generic_position_t<double>::sumv() const
+double generic_position_t<double,5>::sumv() const
 {
     return std::accumulate(this->begin(), this->end(), 0.0);
 }
 
 template<>
-double generic_position_t<int>::sumv() const
+double generic_position_t<int,5>::sumv() const
 {
     return std::accumulate(this->begin(), this->end(), 0);
 }
 
-distance_t bezier_rec(const std::vector<distance_t> &points, const double t, const int r, const int i) { 
-    // Casteljau algorithm
-    if(r == 0) return points[i];
-    return (bezier_rec(points, t, r - 1, i) * (1 - t))  + (bezier_rec(points, t, r - 1, i + 1)*t);
-};
-distance_t bezier_b(const std::vector<distance_t> &points, double t) { 
-    return bezier_rec(points, t, points.size()-1, 0);
+template<>
+double generic_position_t<double,4>::sumv() const
+{
+    return std::accumulate(this->begin(), this->end(), 0.0);
 }
 
-
-distance_t bezier_rec_a(const std::vector<distance_t> &points, const double t, const int r, const int i) { 
-    // Casteljau algorithm
-    if(r == 0) return points[i];
-    return (bezier_rec_a(points, t, r - 1, i) * (1 - t))  + (bezier_rec_a(points, t, r - 1, i + 1)*t);
-};
-
-distance_t bezier(const std::vector<distance_t> &points, const double t) {
-    if (points.size() == 1) return points[0];
-    if (points.size() < 20) return bezier_rec_a(points, t, points.size()-1, 0);
-    auto r = points.size()-1;
-    auto i = 0;
-    auto left = std::async([&](){return (bezier_rec_a(points, t, r - 1, i) * (1 - t));});
-    auto right = std::async([&](){return (bezier_rec_a(points, t, r - 1, i + 1)*t);});
-    return left.get() + right.get();
+template<>
+double generic_position_t<int,4>::sumv() const
+{
+    return std::accumulate(this->begin(), this->end(), 0);
 }
+
+template<>
+double generic_position_t<double,3>::sumv() const
+{
+    return std::accumulate(this->begin(), this->end(), 0.0);
+}
+
+template<>
+double generic_position_t<int,3>::sumv() const
+{
+    return std::accumulate(this->begin(), this->end(), 0);
+}
+
 
 
 

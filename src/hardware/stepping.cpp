@@ -45,7 +45,7 @@ std::list<steps_t> hardware_commands_to_steps(const std::vector<multistep_comman
     steps_t _steps = {0, 0, 0, 0};
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
-            for (int j = 0; j < 4; j++)
+            for (std::size_t j = 0; j < _steps.size(); j++)
                 _steps[j] = _steps[j] + (int)((signed char)s.b[j].step * ((signed char)s.b[j].dir * 2 - 1));
             ret.push_back(_steps);
         }
@@ -60,7 +60,7 @@ steps_t hardware_commands_to_last_position_after_given_steps(const std::vector<m
     for (const auto& s : commands_to_do) {
         for (int i = 0; i < s.count; i++) {
             if ((last_step_ >= 0) && (itt >= last_step_)) return _steps;
-            for (int j = 0; j < 4; j++) {
+            for (std::size_t j = 0; j < _steps.size(); j++) {
                 _steps[j] = _steps[j] + (int)((signed char)s.b[j].step * ((signed char)s.b[j].dir * 2 - 1));
             }
             itt++;

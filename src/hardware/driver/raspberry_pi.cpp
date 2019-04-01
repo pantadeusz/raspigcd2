@@ -214,7 +214,7 @@ raspberry_pi_3::~raspberry_pi_3()
 }
 
 
-void raspberry_pi_3::do_step(const single_step_command* b)
+void raspberry_pi_3::do_step(const std::array<single_step_command,4> &b)
 {
     unsigned int step_clear = (1 << steppers[0].step) | (1 << steppers[1].step) |
                               (1 << steppers[2].step) | (1 << steppers[3].step);

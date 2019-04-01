@@ -39,20 +39,21 @@ using namespace raspigcd::movement;
 
 TEST_CASE("Movement constant speed in steps generator", "[movement][steps_generator]")
 {
+    hardware::single_step_command zero_move{.step = 0, .dir = 0};
     SECTION("collapse_repeated_steps")
     {
         auto result = collapse_repeated_steps({});
         REQUIRE(result.size() == 0);
 
         result = collapse_repeated_steps({{
-                                                                .b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}},
-                                                                .count = 1}});
+            .b = {zero_move, zero_move, zero_move, zero_move},
+            .count = 1}});
         REQUIRE(result.size() == 1);
 
         result = collapse_repeated_steps(
             {
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1}
+            {.b = {zero_move, zero_move, zero_move, zero_move}, .count = 1},
+            {.b = {zero_move, zero_move, zero_move, zero_move}, .count = 1}
             }
             );
         REQUIRE(result.size() == 1);
@@ -60,8 +61,8 @@ TEST_CASE("Movement constant speed in steps generator", "[movement][steps_genera
 
         result = collapse_repeated_steps(
             {
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}
+            {.b = {zero_move, zero_move, zero_move, zero_move}, .count = 1},
+            {.b = {zero_move, zero_move, zero_move, zero_move}, .count = 0}
             }
             );
         REQUIRE(result.size() == 1);
@@ -69,16 +70,16 @@ TEST_CASE("Movement constant speed in steps generator", "[movement][steps_genera
 
         result = collapse_repeated_steps(
             {
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0},
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 0}
+            {.b = {zero_move, zero_move, zero_move, zero_move}, .count = 0},
+            {.b = {zero_move, zero_move, zero_move, zero_move}, .count = 0}
             }
             );
         REQUIRE(result.size() == 0);
 
         result = collapse_repeated_steps(
             {
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}
+            {.b = {zero_move, zero_move, zero_move, zero_move}, .count = 1},
+            {.b = {zero_move, zero_move, zero_move, zero_move}, .count = 2}
             }
             );
         REQUIRE(result.size() == 1);
@@ -86,9 +87,9 @@ TEST_CASE("Movement constant speed in steps generator", "[movement][steps_genera
 
         result = collapse_repeated_steps(
             {
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 1},
-            {.b = {{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2},
-            {.b = {{.step = 1, .dir = 0}, {.step = 1, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, .count = 2}
+            {.b = {zero_move, zero_move, zero_move, zero_move}, .count = 1},
+            {.b = {zero_move, zero_move, zero_move, zero_move}, .count = 2},
+            {.b = {hardware::single_step_command{1,0}, hardware::single_step_command{1, 0}, zero_move, zero_move}, .count = 2}
             }
             );
         REQUIRE(result.size() == 2);

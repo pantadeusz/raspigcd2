@@ -29,13 +29,13 @@
 namespace raspigcd {
 namespace configuration {
 
-double limits::proportional_max_accelerations_mm_s2(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const {
+double limits::proportional_max_accelerations_mm_s2(const distance_t& norm_vect) const {
     return calculate_linear_coefficient_from_limits(max_accelerations_mm_s2, norm_vect);
 }
-double limits::proportional_max_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const {
+double limits::proportional_max_velocity_mm_s(const distance_t& norm_vect) const {
     return calculate_linear_coefficient_from_limits(max_velocity_mm_s, norm_vect);
 }
-double limits::proportional_max_no_accel_velocity_mm_s(const std::array<double,RASPIGCD_HARDWARE_DOF>& norm_vect) const {
+double limits::proportional_max_no_accel_velocity_mm_s(const distance_t& norm_vect) const {
     return calculate_linear_coefficient_from_limits(max_no_accel_velocity_mm_s, norm_vect);
 }
 
@@ -54,18 +54,23 @@ global& global::load_defaults()
 
     motion_layout = COREXY; //"corexy";
     lowleveltimer = BUSY_WAIT;
-    scale = {1.0, 1.0, 1.0, 1.0};
-    max_accelerations_mm_s2 = {200.0, 200.0, 200.0, 200.0};
-    max_velocity_mm_s = {220.0, 220.0, 110.0, 220.0};  ///<maximal velocity on axis in mm/s
-    max_no_accel_velocity_mm_s = {2.0, 2.0, 2.0, 2.0}; ///<maximal velocity on axis in mm/s
+    scale = {1.0, 1.0, 1.0};
+    max_accelerations_mm_s2 = {200.0, 200.0, 200.0};
+    max_velocity_mm_s = {220.0, 220.0, 110.0};  ///<maximal velocity on axis in mm/s
+    max_no_accel_velocity_mm_s = {2.0, 2.0, 2.0}; ///<maximal velocity on axis in mm/s
 
     steppers = {
         stepper(27, 10, 22, 100.0),
         stepper(4, 10, 17, 100.0),
-        stepper(9, 10, 11, 100.0),
-        stepper(0, 10, 5, 100.0)};
+        stepper(9, 10, 11, 100.0)
+        //,
+        //stepper(0, 10, 5, 100.0)
+        };
     buttons = {
-        {.pin = 21, .pullup = true}, {.pin = 20, .pullup = true}, {.pin = 16, .pullup = true}, {.pin = 12, .pullup = true}};
+        {.pin = 21, .pullup = true}, 
+        {.pin = 20, .pullup = true}, 
+        {.pin = 16, .pullup = true}, 
+        {.pin = 12, .pullup = true}};
     spindles = {
         {.pin = 18,
             .cycle_time_seconds = 0.1,
@@ -218,10 +223,15 @@ void from_json(const nlohmann::json& j, global& p)
     p.motion_layout = (s == "cartesian") ? CARTESIAN : p.motion_layout;
     }
 
-    p.scale = j.value("scale", p.scale);
-    p.max_accelerations_mm_s2 = j.value("max_accelerations_mm_s2", p.max_accelerations_mm_s2);
-    p.max_velocity_mm_s = j.value("max_velocity_mm_s", p.max_velocity_mm_s);
-    p.max_no_accel_velocity_mm_s = j.value("max_no_accel_velocity_mm_s", p.max_no_accel_velocity_mm_s);
+    //(std::array<double,4>)
+//    std::cout << "have: " << p.scale << " -> " << j["scale"] << " -> ";
+    std::vector<double> tmp = j.value("scale", std::vector<double>(p.scale.begin(),p.scale.end()));
+    p.scale = tmp;//(std::array<double,4>)p.scale);
+//    for (auto e : tmp) std::cout << e << ",";
+//    std::cout << " -> " << p.scale << std::endl;
+    tmp = j.value("max_accelerations_mm_s2", std::vector<double>(p.max_accelerations_mm_s2.begin(),p.max_accelerations_mm_s2.end())); p.max_accelerations_mm_s2 = tmp;
+    tmp = j.value("max_velocity_mm_s", std::vector<double>(p.max_velocity_mm_s.begin(),p.max_velocity_mm_s.end())); p.max_velocity_mm_s = tmp;
+    tmp = j.value("max_no_accel_velocity_mm_s", std::vector<double>(p.max_no_accel_velocity_mm_s.begin(),p.max_no_accel_velocity_mm_s.end())); p.max_no_accel_velocity_mm_s = tmp;
 
     p.spindles = j.value("spindles", p.spindles);
     p.steppers = j.value("steppers", p.steppers);

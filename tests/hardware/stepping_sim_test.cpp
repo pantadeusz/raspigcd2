@@ -53,7 +53,13 @@ TEST_CASE("Hardware stepping_sim", "[hardware_stepping][stepping_sim]")
     {
         int n = 0;
         worker.set_callback([&](const auto&) { n++; });
-        worker.exec({{{{.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}, {.step = 0, .dir = 0}}, 1}});
+        single_step_command c = {.step = 0, .dir = 0};
+        worker.exec({{{
+            c, 
+            c, 
+            c, 
+            c            
+            }, 1}});
         REQUIRE(n == 1);
     }
     SECTION("Run one step in each positive  direction")

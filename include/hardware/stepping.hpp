@@ -40,7 +40,7 @@ namespace hardware {
 class execution_terminated : public std::exception {
 public:
     const steps_t delta_steps;
-    execution_terminated (const steps_t ds ={0,0,0,0}):delta_steps(ds){}
+    execution_terminated (const steps_t ds = steps_t()):delta_steps(ds){}
 
     const char* what() const noexcept
     {

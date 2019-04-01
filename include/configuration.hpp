@@ -22,6 +22,8 @@
 #ifndef __RASPIGCD_CONFIGURATION_T_HPP__
 #define __RASPIGCD_CONFIGURATION_T_HPP__
 
+#include <distance_t.hpp>
+
 #include <array>
 #include <hardware_dof_conf.hpp>
 #include <string>
@@ -98,36 +100,36 @@ public:
 class limits
 {
 public:
-    std::array<double, RASPIGCD_HARDWARE_DOF> max_accelerations_mm_s2;    ///<maximal acceleration on given axis (x, y, z, a) in mm/s2
-    std::array<double, RASPIGCD_HARDWARE_DOF> max_velocity_mm_s;          ///<maximal velocity on axis in mm/s
-    std::array<double, RASPIGCD_HARDWARE_DOF> max_no_accel_velocity_mm_s; ///<maximal velocity on axis in mm/s
+    distance_t max_accelerations_mm_s2;    ///<maximal acceleration on given axis (x, y, z, a) in mm/s2
+    distance_t max_velocity_mm_s;          ///<maximal velocity on axis in mm/s
+    distance_t max_no_accel_velocity_mm_s; ///<maximal velocity on axis in mm/s
 
     /**
     * calculates maximal linear acceleration with respect to the cureant direction and limits
      */
-    virtual double proportional_max_accelerations_mm_s2(const std::array<double, RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    virtual double proportional_max_accelerations_mm_s2(const distance_t& norm_vect) const;
     /**
     * calculates maximal linear velocity with respect to the cureant direction and limits
      */
-    virtual double proportional_max_velocity_mm_s(const std::array<double, RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    virtual double proportional_max_velocity_mm_s(const distance_t& norm_vect) const;
     /**
     * calculates maximal linear velocity that can be reached instantenousli with respect to the cureant direction and limits
      */
-    virtual double proportional_max_no_accel_velocity_mm_s(const std::array<double, RASPIGCD_HARDWARE_DOF>& norm_vect) const;
+    virtual double proportional_max_no_accel_velocity_mm_s(const distance_t& norm_vect) const;
 
     /**
     * constructs limits configuration element
      */
     limits(
-        std::array<double, RASPIGCD_HARDWARE_DOF> _max_accelerations_mm_s2,
-        std::array<double, RASPIGCD_HARDWARE_DOF> _max_velocity_mm_s,
-        std::array<double, RASPIGCD_HARDWARE_DOF> _max_no_accel_velocity_mm_s) : max_accelerations_mm_s2(_max_accelerations_mm_s2),
+        distance_t _max_accelerations_mm_s2,
+        distance_t _max_velocity_mm_s,
+        distance_t _max_no_accel_velocity_mm_s) : max_accelerations_mm_s2(_max_accelerations_mm_s2),
                                                                                  max_velocity_mm_s(_max_velocity_mm_s),
                                                                                  max_no_accel_velocity_mm_s(_max_no_accel_velocity_mm_s) {}
     limits() {
-        max_accelerations_mm_s2 = {0,0,0,0};
-        max_velocity_mm_s = {0,0,0,0};
-        max_no_accel_velocity_mm_s = {0,0,0,0};
+        max_accelerations_mm_s2 = {0,0,0};
+        max_velocity_mm_s = {0,0,0};
+        max_no_accel_velocity_mm_s = {0,0,0};
     }
 };
 
@@ -155,7 +157,7 @@ enum low_timers_e {
 class actuators_organization
 {
 public:
-    std::array<double, RASPIGCD_HARDWARE_DOF> scale; ///< scale along each axis (can be negative)
+    distance_t scale; ///< scale along each axis (can be negative)
     motion_layouts motion_layout;                    ///< name of layout selected: 'corexy' 'cartesian'
     std::vector<stepper> steppers; ///< steppers configuration
     int tick_duration_us;         ///< microseconds tick time

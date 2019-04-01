@@ -80,6 +80,14 @@ TEST_CASE( "Configuration handling", "[configuration]" ) {
 
     }
 
+    SECTION( "distance_t check" ) {
+        distance_t a = {1,2,3,4};
+        distance_t b;
+        b = a;
+        REQUIRE(a == b);
+    }
+
+
     SECTION( "json conversions" ) {
         raspigcd::configuration::global cfg1;
         cfg1.tick_duration_us = 0;

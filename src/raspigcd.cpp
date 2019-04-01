@@ -89,7 +89,7 @@ public:
         steps_t reduced_b;
 
         std::lock_guard<std::mutex> guard(list_mutex);
-        for (int i = 0; i < 4; i++) {
+        for (std::size_t i = 0; i < current_position.size(); i++) {
             reduced_a[i] = current_position[i];       ///(int)(cfg->steppers[i].steps_per_mm);
             reduced_b[i] = movements_track.back()[i]; ///(int)(cfg->steppers[i].steps_per_mm);
         }
@@ -130,7 +130,7 @@ public:
         view_y = height / 2;
 
         ml = motor_layout::get_instance(*cfg);
-        movements_track.push_back({0, 0, 0, 0});
+        movements_track.push_back(distance_t());
         loop_thread = std::thread([this, width, height, buttons_drv]() {
             std::cout << "loop thread..." << std::endl;
 

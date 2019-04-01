@@ -32,42 +32,47 @@
 #include <hardware_dof_conf.hpp>
 
 namespace raspigcd {
-
-template<class T>
+//RASPIGCD_HARDWARE_DOF
+template<class T, std::size_t N>
 class generic_position_t;
 
-template<class T>
-inline generic_position_t<T> operator*(const generic_position_t<T>& a, const generic_position_t<T>& b);
+template<class T, std::size_t N>
+inline generic_position_t<T,N> operator*(
+                    const generic_position_t<T,N>& a,
+                    const generic_position_t<T,N>& b);
 
 /**
- * The class that represents distances between points in euclidean space.
- * 
  * You can also call it coordinates if you want.
  * */
 
-template<class T>
-class generic_position_t : public std::array<T, RASPIGCD_HARDWARE_DOF>
+template<class T, std::size_t N>
+class generic_position_t : public std::array<T, N>
 {
 public:
-    T& a() { return this->operator[](0); };
-    T& b() { return this->operator[](1); };
-    T& c() { return this->operator[](2); };
-    T& d() { return this->operator[](3); };
-    generic_position_t() : std::array<T, RASPIGCD_HARDWARE_DOF>(){};
-    generic_position_t(const double &a_, const double &b_, const double &c_, const double &d_) 
-    : std::array<T, RASPIGCD_HARDWARE_DOF>()
-    {
-        a() = a_;
-        b() = b_;
-        c() = c_;
-        d() = d_;
+    generic_position_t() : std::array<T, N>(){
+        for (auto &e:*this) e=0;
     };
+    generic_position_t(std::initializer_list<T> v) : std::array<T, N>()
+    {
+        std::size_t i = 0;
+        for (auto &e:v) {
+            if (i >= N) throw std::invalid_argument("you can't put greater number of elements than can be fit in the generic_position_t");
+            else this->operator[](i) = e;
+            i++;
+        }
+    };
+    generic_position_t(const std::vector<T> &v) : std::array<T, N>()
+    {
+        for (std::size_t i = 0; i < std:: min(v.size(),this->size()); i++) {
+            this->operator[](i) = v[i];
+        }
+    };
+
     inline double length2() const
     {
-        return this->operator[](0) * this->operator[](0) +
-               this->operator[](1) * this->operator[](1) +
-               this->operator[](2) * this->operator[](2) +
-               this->operator[](3) * this->operator[](3);
+        T ret = 0.0;
+        for (auto &e:*this) ret += e*e;
+        return ret;
     }
     inline double length() const
     {
@@ -90,87 +95,74 @@ public:
       auto ap = p - a;
       auto ab = b - a;
       return a + ab * ((ap).dot_product(ab) / (ab).dot_product(ab));
-      /*
-          double l = (v-w).length();
-              if (l <= 0) return *this;
-          auto nr = (v - w) / l;
-          auto nv = *this - w;
-          double t = nv.dot_product(nr);
-              return w + (nr * t);
-      */
-      /*
-
-
-        const float l2 = (v - w).length2();
-        if (l2 == 0.0) return *this;
-        const double t = std::max(0.0, std::min(1.0, (*this - v).dot_product(w - v)
-        / l2)); return v + ((w - v)*t); */
     }
-
 };
 
-template<class T>
-inline generic_position_t<T> operator+(const generic_position_t<T>& a, const generic_position_t<T>& b)
+template<class T,std::size_t N>
+inline generic_position_t<T,N> operator+(
+    const generic_position_t<T,N>& a,
+    const generic_position_t<T,N>& b)
 {
-    return generic_position_t<T>(
-        a[0] + b[0],
-        a[1] + b[1],
-        a[2] + b[2],
-        a[3] + b[3]);
+    generic_position_t<T,N> ret = a;
+    for (std::size_t i = 0; i < N; i++) ret[i] += b[i];
+    return ret;
 }
 
-template<class T>
-inline generic_position_t<T> operator-(const generic_position_t<T>& a, const generic_position_t<T>& b)
+template<class T,std::size_t N>
+inline generic_position_t<T,N> operator-(
+    const generic_position_t<T,N>& a,
+    const generic_position_t<T,N>& b)
 {
-    return generic_position_t<T>(
-        a[0] - b[0],
-        a[1] - b[1],
-        a[2] - b[2],
-        a[3] - b[3]);
+    generic_position_t<T,N> ret = a;
+    for (std::size_t i = 0; i < N; i++) ret[i] -= b[i];
+    return ret;
 }
 
-template<class T>
-inline generic_position_t<T> operator*(const generic_position_t<T>& a, const generic_position_t<T>& b)
+template<class T,std::size_t N>
+inline generic_position_t<T,N> operator*(
+    const generic_position_t<T,N>& a,
+    const generic_position_t<T,N>& b)
 {
-    return generic_position_t<T>(
-        a[0] * b[0],
-        a[1] * b[1],
-        a[2] * b[2],
-        a[3] * b[3]);
+    generic_position_t<T,N> ret = a;
+    for (std::size_t i = 0; i < N; i++) ret[i] *= b[i];
+    return ret;
 }
 
-template<class T>
-inline generic_position_t<T> operator/(const generic_position_t<T>& a, const generic_position_t<T>& b)
+template<class T,std::size_t N>
+inline generic_position_t<T,N> operator/(
+    const generic_position_t<T,N>& a, 
+    const generic_position_t<T,N>& b)
 {
-    return generic_position_t<T>(
-        a[0] / b[0],
-        a[1] / b[1],
-        a[2] / b[2],
-        a[3] / b[3]);
+    generic_position_t<T,N> ret = a;
+    for (std::size_t i = 0; i < N; i++) ret[i] /= b[i];
+    return ret;
+
 }
 
-template<class T>
-inline generic_position_t<T> operator*(const generic_position_t<T>& a, const double& b)
+template<class T,std::size_t N>
+inline generic_position_t<T,N> operator*(
+    const generic_position_t<T,N>& a, const double& b)
 {
-    return generic_position_t<T>(
-        a[0] * b,
-        a[1] * b,
-        a[2] * b,
-        a[3] * b);
+    generic_position_t<T,N> ret = a;
+    for (std::size_t i = 0; i < N; i++) ret[i] *= b;
+    return ret;
 }
 
-template<class T>
-inline generic_position_t<T> operator/(const generic_position_t<T>& a, const double& b)
+
+
+template<class T,std::size_t N>
+inline generic_position_t<T,N> operator/(const generic_position_t<T,N>& a, const double& b)
 {
-    return generic_position_t<T>(
-        a[0] / b,
-        a[1] / b,
-        a[2] / b,
-        a[3] / b);
+    generic_position_t<T,N> ret = a;
+    for (std::size_t i = 0; i < N; i++) ret[i] /= b;
+    return ret;
+
 }
 
-template<class T>
-inline double generic_position_t<T>::angle(const generic_position_t<T>& a, const generic_position_t<T>& b) const
+template<class T,std::size_t N>
+inline double generic_position_t<T,N>::angle(
+    const generic_position_t<T,N>& a,
+    const generic_position_t<T,N>& b) const
 {
     auto u = a - (*this);
     auto v = b - (*this);
@@ -179,19 +171,23 @@ inline double generic_position_t<T>::angle(const generic_position_t<T>& a, const
     return acos(dotprod / (std::sqrt(u.length2()) * std::sqrt(v.length2())));
 }
 
-template<class T>
-inline bool operator==(const generic_position_t<T>& a, const generic_position_t<T>& b)
+template<class T,std::size_t N>
+inline bool operator==(const generic_position_t<T,N>& a, const generic_position_t<T,N>& b)
 {
-    return (a[0] == b[0]) &&
-           (a[1] == b[1]) &&
-           (a[2] == b[2]) &&
-           (a[3] == b[3]);
+    bool ret = true;
+    for (std::size_t i = 0; i < a.size(); i++) ret = ret && (a[i] == b[i]);
+    return ret;
 }
 
-template<class T>
-inline std::ostream& operator<<(std::ostream& os, generic_position_t<T> const& value)
+template<class T,std::size_t N>
+inline std::ostream& operator<<(std::ostream& os, generic_position_t<T,N> const& value)
 {
-    os << "[" << value[0] << ", " << value[1] << ", " << value[2] << ", " << value[3] << "]";
+    os << "[";
+    int i = 0;
+    for (auto &e :value) {
+        os << (i?(""):(",")) << e;
+    }
+    os << "]";
     return os;
 }
 
@@ -219,11 +215,62 @@ auto calculate_linear_coefficient_from_limits = [](const auto& limits_for_axes, 
 };
 
 
-using distance_t = generic_position_t<double>;
+
+
+template<class T,std::size_t N>
+inline generic_position_t<T,N> bezier_rec(const std::vector<generic_position_t<T,N>> &points, const double t, const int r, const int i) { 
+    // Casteljau algorithm
+    if(r == 0) return points[i];
+    return (bezier_rec(points, t, r - 1, i) * (1 - t))  + (bezier_rec(points, t, r - 1, i + 1)*t);
+};
+
+template<class T,std::size_t N>
+inline generic_position_t<T,N> bezier_rec_a(const std::vector<generic_position_t<T,N>> &points, const double t, const int r, const int i) { 
+    // Casteljau algorithm
+    if(r == 0) return points[i];
+    return (bezier_rec_a(points, t, r - 1, i) * (1 - t))  + (bezier_rec_a(points, t, r - 1, i + 1)*t);
+};
+
+template<class T,std::size_t N>
+inline generic_position_t<T,N> bezier(const std::vector<generic_position_t<T,N>> &points, const double t) {
+    if (points.size() == 1) return points[0];
+    return bezier_rec_a(points, t, points.size()-1, 0);
+    
+}
+
+
+using distance_t = generic_position_t<double,4>;
+using distance_with_velocity_t = generic_position_t<double,5>;
+
+inline distance_t to_distance_t(const distance_with_velocity_t &v) {
+    distance_t ret;
+    for (size_t i = 0; i < ret.size(); i++) ret[i] = v[i];
+    return ret;
+};
+inline distance_with_velocity_t to_distance_with_v_t (const distance_t &v) {
+    distance_with_velocity_t ret;
+    for (size_t i = 0; i < v.size(); i++) ret[i] = v[i];
+    return ret;
+};
 
 
 
-distance_t bezier(const std::vector<distance_t> &p, const double t);
+template<class T,std::size_t N>
+inline double point_segment_distance_3d(const generic_position_t<T,N>& A, const generic_position_t<T,N>& B, const generic_position_t<T,N>& C)
+{
+    double l = (C - B).length();
+    if (l <= 0)
+        return (A - B).length();
+    auto d = (C - B) / l;
+    auto v = A - B;
+    double t = v.dot_product(d);
+    auto P = B + (d * t);
+
+    return (P - A).length();
+}
+
+
+//distance_t bezier(const std::vector<distance_t> &p, const double t);
 
 
 /**
