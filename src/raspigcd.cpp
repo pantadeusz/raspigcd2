@@ -223,7 +223,7 @@ public:
                 } else {
                     SDL_SetRenderDrawColor(renderer.get(), 64,64,64, 255);
                 }
-                for (int i = 0; i < std::abs(s[2]); i++) {
+                for (double i = 0; i < std::abs(s[2]); i+=0.1) {
                     SDL_RenderDrawPoint(renderer.get(),
                         s[0]*1000/scale_view + view_x + i * s[2] * z_p_x / scale_view,
                         -s[1]*1000/scale_view + view_y + i * -s[2]* z_p_y / scale_view);
