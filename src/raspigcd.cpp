@@ -39,6 +39,7 @@ This is simple program that uses the library. It will execute given GCode.
 #include <configuration_json.hpp>
 
 #include <fstream>
+#include <random>
 #include <future>
 #include <mutex>
 #include <streambuf>
@@ -104,14 +105,21 @@ public:
 
     void draw_path(std::shared_ptr<SDL_Renderer> renderer, int width, int /*height*/, const std::list<distance_t>& t)
     {
+
+    static std::random_device dev;
+    static std::mt19937 rng(dev());
+    static std::uniform_int_distribution<std::mt19937::result_type> draw_upper(0,100); // distribution in range [1, 6]
+
+
         std::map<int, int> z_buffer;
 
         for (auto& e : t) {
             double x = e[0];
             double y = e[1];
             double z = e[2];
-            if (e[2] <= 0) {
-                if ((z_buffer.count(y * width + x) == 0) || (z_buffer[y * width + x] >= z)) {
+            if ((e[2] <= 0) || (draw_upper(rng) == 0)) {
+//                if ((z_buffer.count(y * width + x) == 0) || (z_buffer[y * width + x] >= z)) {
+                if (true) { //(z_buffer.count(y * width + x) == 0) || (z_buffer[y * width + x] >= z)) {
                     SDL_SetRenderDrawColor(renderer.get(), 255 - (e[2] * 255 / 5), 255, 255, 255);
                     SDL_RenderDrawPoint(renderer.get(), (x*1000/scale_view + view_x) + z * z_p_x / scale_view, (-y*1000/scale_view + view_y) - z * z_p_y / scale_view);
                     z_buffer[y * width + x] = z;
@@ -462,8 +470,8 @@ int main(int argc, char** argv)
             if (enable_video){
                 video = std::make_shared<video_sdl>(&cfg, &stepping, (driver::low_buttons_fake*) buttons_drv.get());
             }
-            auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
-            //auto program_to_steps = converters::program_to_steps_factory("bezier_spline");  
+            //auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
+            auto program_to_steps = converters::program_to_steps_factory("bezier_spline");  
 
             i++;
             std::ifstream gcd_file(args.at(i));
@@ -568,7 +576,7 @@ int main(int argc, char** argv)
                         switch ((int)(ppart[0]['G'])) {
                         case 0:
                         case 1:
-                        case 4:
+                        //  case 4:
                             if (video.get() != nullptr) {
                                 video->set_g_state((int)(ppart[0]['G']));
                             }

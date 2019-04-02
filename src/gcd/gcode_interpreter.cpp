@@ -565,11 +565,13 @@ partitioned_program_t group_gcode_commands(const program_t& program_states, cons
         } else {
             if (e.count('G')) {
                 if (generated_program.back().back().count('G')) {
-                    if (((generated_program.back().front().at('G') == 0) && (e.at('G') == 0)) ||
-                        ((generated_program.back().front().at('G') == 1) && (e.at('G') == 1)) ||
-                        ((generated_program.back().front().at('G') == 2) && (e.at('G') == 2)) ||
-                        ((generated_program.back().front().at('G') == 3) && (e.at('G') == 3)) ||
-                        ((generated_program.back().front().at('G') == 4) && (e.at('G') == 4))) {
+                    //if (((generated_program.back().front().at('G') == 0) && (e.at('G') == 0)) ||
+                    //    ((generated_program.back().front().at('G') == 1) && (e.at('G') == 1)) ||
+                    //    ((generated_program.back().front().at('G') == 2) && (e.at('G') == 2)) ||
+                    //    ((generated_program.back().front().at('G') == 3) && (e.at('G') == 3)) ||
+                    //    ((generated_program.back().front().at('G') == 4) && (e.at('G') == 4))) {
+                    //    generated_program.back().push_back(e);
+                    if ((generated_program.back().front().at('G') == e.at('G'))) {
                         generated_program.back().push_back(e);
                     } else {
                         generated_program.push_back({e});

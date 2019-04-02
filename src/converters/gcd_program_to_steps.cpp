@@ -168,6 +168,9 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
     const gcd::block_t& initial_state_,
     std::function<void(const gcd::block_t&)> finish_callback_f_)
 {
+    double arc_length = 0.5;
+
+
     using namespace raspigcd::hardware;
     using namespace raspigcd::gcd;
     using namespace raspigcd::movement::simple_steps;
@@ -207,7 +210,7 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
 
     }
     finish_callback_f_(state);
-    distances = optimize_path_dp(distances, 0.5);
+    distances = optimize_path_dp(distances, 2.0*arc_length);
 
 
     state = initial_state_;
@@ -227,6 +230,7 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
         //throw std::invalid_argument("too many steps - fix your settings");
     }
     std::list<multistep_command> fragment; // fraagment of the commands list generated in this stage
+    for (auto &pp : distances) pp.back() = std::max(pp.back(),0.01); // make v more reasonable
     beizer_spline<5>(distances, [&](const distance_with_velocity_t& position) {
         if (!(position == pp0)) {
         //std::cout << "POS " << position[0] << " " << position[1] << " " << position[2] << " " << position[3] << std::endl;
@@ -240,8 +244,13 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
 
 
         chase_steps(steps_todo, pos_from_steps, pos_to_steps);
+        //smart_append(result,steps_todo);
         //auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
         result.insert(result.end(), steps_todo.begin(), steps_todo.end());
+        if (result.size() > 1024*1024*64) {
+            std::cerr << "bezier_spline_program_to_steps: problem in generating steps - the size is too big: " << result.size() << "; p: " << position << std::endl;
+            throw std::bad_alloc();
+        }
 
         //std::cout << "P Pos         " << position[0] << " " << position[1] << " " << position[2] << " " << position[3] << std::endl;
         //std::cout << "GO-FROM steps " << pos_from_steps[0] << " " << pos_from_steps[1] << " " << pos_from_steps[2] << " " << pos_from_steps[3] << std::endl;
@@ -251,7 +260,7 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
         pos_from_steps = pos_to_steps;
         }
     },
-        dt, 0.5);
+        dt, arc_length);
     //   return collapse_repeated_steps(fragment);
 
     return collapse_repeated_steps(result);

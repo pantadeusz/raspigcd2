@@ -117,6 +117,10 @@ void beizer_spline(std::vector<generic_position_t<double,N>> &path,
     if (dt_p < 0.0001) dt_p = 0.0001;
     for (; t <= 1.0;) {
       bezier_points.push_back(pt = bezier(p, t));
+      if (bezier_points.size() > 1024*1024*128) {
+        std::cerr << "beizer_spline: bezier_points too big: " << bezier_points.size() << " dt_p=" << dt_p << "; t=" << t << std::endl;
+        throw std::bad_alloc();
+      }
       //double range = std::max(1.0 - t, 0.1) / 2.0;
       //double tp = t + range;
       t += dt_p; //*pt.back()
@@ -130,6 +134,10 @@ void beizer_spline(std::vector<generic_position_t<double,N>> &path,
     bezier_points.clear();
     auto pos = bcurve.front();
     for (unsigned i = 0; i < bcurve.size();) {
+      if (bcurve[i].back() < 0.01) {
+        std::cerr << "beizer_spline: velocity too small " << bcurve[i] << std::endl;
+        bcurve[i].back() = 0.01;
+      }
       double target_dist = bcurve[i].back() * dt;
       generic_position_t<double,N> ndistv = bcurve[i] - pos;
       ndistv.back() = 0;
