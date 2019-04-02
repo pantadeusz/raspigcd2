@@ -18,7 +18,6 @@
 */
 
 
-
 #include <converters/gcd_program_to_steps.hpp>
 #include <movement/physics.hpp>
 #include <movement/simple_steps.hpp>
@@ -28,31 +27,31 @@
 namespace raspigcd {
 namespace converters {
 
-inline    void smart_append(std::list<raspigcd::hardware::multistep_command> &fragment, const raspigcd::hardware::multistep_commands_t &steps_todo) {
-        for (auto e : steps_todo) {
-            if (e.count > 0) {
-                if ((fragment.size() == 0) || 
-                    !(multistep_command_same_command( e, fragment.back())
-                    )) {
+inline void smart_append(std::list<raspigcd::hardware::multistep_command>& fragment, const raspigcd::hardware::multistep_commands_t& steps_todo)
+{
+    for (auto e : steps_todo) {
+        if (e.count > 0) {
+            if ((fragment.size() == 0) ||
+                !(multistep_command_same_command(e, fragment.back()))) {
+                fragment.push_back(e);
+            } else {
+                if (fragment.back().count > 0x0fffffff) {
                     fragment.push_back(e);
                 } else {
-                    if (fragment.back().count > 0x0fffffff) {
-                        fragment.push_back(e);
-                    } else {
-                        fragment.back().count+=e.count;
-                    }
+                    fragment.back().count += e.count;
                 }
             }
         }
-    };
+    }
+};
 
 
 raspigcd::hardware::multistep_commands_t __generate_g1_steps(
-    const raspigcd::gcd::block_t &state,
-    const raspigcd::gcd::block_t &next_state,
+    const raspigcd::gcd::block_t& state,
+    const raspigcd::gcd::block_t& next_state,
     double dt,
-    hardware::motor_layout& ml_
-    ) {
+    hardware::motor_layout& ml_)
+{
     using namespace raspigcd::hardware;
     using namespace raspigcd::gcd;
     using namespace raspigcd::movement::simple_steps;
@@ -61,8 +60,8 @@ raspigcd::hardware::multistep_commands_t __generate_g1_steps(
     auto pos_to = gcd::block_to_distance_t(next_state);
 
     double l = (pos_to - pos_from).length(); // distance to travel
-    double v0 = state.at('F');                  // velocity
-    double v1 = next_state.at('F');             // velocity
+    double v0 = state.at('F');               // velocity
+    double v1 = next_state.at('F');          // velocity
     std::list<multistep_command> fragment;   // fraagment of the commands list generated in this stage
     steps_t final_steps;                     // steps after the move
 
@@ -79,7 +78,7 @@ raspigcd::hardware::multistep_commands_t __generate_g1_steps(
                 auto np = pos_from + direction * s;
                 auto pos_to_steps = ml_.cartesian_to_steps(np); //gcd::block_to_distance_t(next_state);
                 chase_steps(steps_todo, pos_from_steps, pos_to_steps);
-                smart_append(fragment,steps_todo);
+                smart_append(fragment, steps_todo);
                 steps_todo.clear();
                 pos = np;
                 pos_from_steps = pos_to_steps;
@@ -97,8 +96,8 @@ raspigcd::hardware::multistep_commands_t __generate_g1_steps(
             auto p_steps = ml_.cartesian_to_steps(pos_from);
             for (int i = 1; l() < s; ++i, t = dt * i) {
                 auto pos = ml_.cartesian_to_steps(pos_from + direction * l());
-                chase_steps(steps_todo,p_steps, pos);
-                smart_append(fragment,steps_todo);
+                chase_steps(steps_todo, p_steps, pos);
+                smart_append(fragment, steps_todo);
                 steps_todo.clear();
                 p_steps = pos;
             }
@@ -108,7 +107,7 @@ raspigcd::hardware::multistep_commands_t __generate_g1_steps(
         if (!(final_steps == pos_to_steps)) { // fix missing steps
             chase_steps(steps_todo, final_steps, pos_to_steps);
             //fragment.insert(fragment.end(), steps_todo.begin(), steps_todo.end());
-            smart_append(fragment,steps_todo);
+            smart_append(fragment, steps_todo);
             steps_todo.clear();
         }
         auto collapsed = collapse_repeated_steps(fragment);
@@ -122,7 +121,7 @@ hardware::multistep_commands_t program_to_steps(
     const configuration::actuators_organization& conf_,
     hardware::motor_layout& ml_,
     const gcd::block_t& initial_state_,
-    std::function<void(const gcd::block_t &)> finish_callback_f_)
+    std::function<void(const gcd::block_t&)> finish_callback_f_)
 {
     using namespace raspigcd::hardware;
     using namespace raspigcd::gcd;
@@ -145,14 +144,14 @@ hardware::multistep_commands_t program_to_steps(
             if (block.count('X')) { // seconds
                 t = block.at('X');
             } else if (block.count('P')) {
-                t = block.at('P')/ 1000.0;
+                t = block.at('P') / 1000.0;
             }
             hardware::multistep_command executor_command = {};
-            executor_command.count = t/dt;
+            executor_command.count = t / dt;
             result.push_back(executor_command);
             next_state = state;
         } else if ((next_state.at('G') == 1) || (next_state.at('G') == 0)) {
-            auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
+            auto collapsed = __generate_g1_steps(state, next_state, dt, ml_);
             result.insert(result.end(), collapsed.begin(), collapsed.end());
         }
         state = next_state;
@@ -162,64 +161,105 @@ hardware::multistep_commands_t program_to_steps(
 }
 
 
-
-
-hardware::multistep_commands_t bezier_spline_program_to_steps (
+hardware::multistep_commands_t bezier_spline_program_to_steps(
     const gcd::program_t& prog_,
     const configuration::actuators_organization& conf_,
     hardware::motor_layout& ml_,
     const gcd::block_t& initial_state_,
-    std::function<void(const gcd::block_t &)> finish_callback_f_)
+    std::function<void(const gcd::block_t&)> finish_callback_f_)
 {
-
-/*
-void beizer_spline(std::vector<distance_t> &path,
-                   std::function<void(const distance_t &position)> on_point,
-                   double dt, double arc_l = 1.0);
-*/
-    throw std::invalid_argument("not implemented yet");
     using namespace raspigcd::hardware;
     using namespace raspigcd::gcd;
     using namespace raspigcd::movement::simple_steps;
     using namespace movement::physics;
-    auto state = initial_state_;
+    gcd::block_t state;
+    for (auto p : initial_state_) {
+        state[p.first] = p.second;
+    }
+    for (auto p : state) {
+        std::cout << "state[" << p.first << "] = " << p.second << std::endl;
+    }
+    for (const auto p : initial_state_) {
+        std::cout << "initial_state_[" << p.first << "] = " << p.second << std::endl;
+    }
+
     std::list<multistep_command> result;
-    //double dt = 0.000001 * (double)conf_.tick_duration_us;//
     double dt = ((double)conf_.tick_duration_us) / 1000000.0;
-    //std::cout << "dt = " << dt << std::endl;
+    std::vector<distance_with_velocity_t> distances;
+
+    distances.push_back(block_to_distance_with_v_t(state));
     for (const auto& block : prog_) {
         finish_callback_f_(state);
         auto next_state = gcd::merge_blocks(state, block);
 
         if (next_state.at('G') == 92) {
             // change position, but not generate steps
+            throw std::invalid_argument("G92 is not supported in spline mode");
         } else if (next_state.at('G') == 4) {
-            //std::cout << "G4: " << std::endl;
-            double t = 0;
-            if (block.count('X')) { // seconds
-                t = block.at('X');
-            } else if (block.count('P')) {
-                t = block.at('P')/ 1000.0;
-            }
-            hardware::multistep_command executor_command = {};
-            executor_command.count = t/dt;
-            result.push_back(executor_command);
-            next_state = state;
+            throw std::invalid_argument("G4 is not supported in spline mode");
         } else if ((next_state.at('G') == 1) || (next_state.at('G') == 0)) {
-            auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
-            result.insert(result.end(), collapsed.begin(), collapsed.end());
+            distances.push_back(block_to_distance_with_v_t(state));
         }
         state = next_state;
+        for (auto p : initial_state_) {
+            std::cout << "++ initial_state_[" << p.first << "] = " << p.second << std::endl;
+        }
+
     }
     finish_callback_f_(state);
+    distances = optimize_path_dp(distances, 0.5);
+
+
+    state = initial_state_;
+    distance_with_velocity_t pp0 = distances.front();
+    steps_t pos_from_steps = ml_.cartesian_to_steps( {pp0[0],pp0[1],pp0[2],pp0[3]});
+    {
+        distance_t dest_pos = block_to_distance_t(state);
+        for (auto p : state) {
+            std::cout << "state[" << p.first << "] = " << p.second << std::endl;
+        }
+        for (auto p : initial_state_) {
+            std::cout << "initial_state_[" << p.first << "] = " << p.second << std::endl;
+        }
+        std::cout << "dest_pos       " << dest_pos[0] << " " << dest_pos[1] << " " << dest_pos[2] << " " << dest_pos[3] << std::endl;
+        std::cout << "dest_pos       " << dest_pos[0] << " " << dest_pos[1] << " " << dest_pos[2] << " " << dest_pos[3] << std::endl;
+        std::cout << "GO-FROM steps " << pos_from_steps[0] << " " << pos_from_steps[1] << " " << pos_from_steps[2] << " " << pos_from_steps[3] << std::endl;
+        //throw std::invalid_argument("too many steps - fix your settings");
+    }
+    std::list<multistep_command> fragment; // fraagment of the commands list generated in this stage
+    beizer_spline<5>(distances, [&](const distance_with_velocity_t& position) {
+        if (!(position == pp0)) {
+        //std::cout << "POS " << position[0] << " " << position[1] << " " << position[2] << " " << position[3] << std::endl;
+        distance_t dest_pos = {position[0], position[1], position[2], position[3]};
+        multistep_commands_t steps_todo;
+
+        auto pos_to_steps = ml_.cartesian_to_steps(dest_pos);
+        //chase_steps(steps_todo,current_steps, stps);
+        //smart_append(result,steps_todo);
+        //current_steps = stps;
+
+
+        chase_steps(steps_todo, pos_from_steps, pos_to_steps);
+        //auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
+        result.insert(result.end(), steps_todo.begin(), steps_todo.end());
+
+        //std::cout << "P Pos         " << position[0] << " " << position[1] << " " << position[2] << " " << position[3] << std::endl;
+        //std::cout << "GO-FROM steps " << pos_from_steps[0] << " " << pos_from_steps[1] << " " << pos_from_steps[2] << " " << pos_from_steps[3] << std::endl;
+        //std::cout << "GO-TO   steps " << pos_to_steps[0] << " " << pos_to_steps[1] << " " << pos_to_steps[2] << " " << pos_to_steps[3] << std::endl;
+        //throw std::invalid_argument("too many steps - fix your settings");
+
+        pos_from_steps = pos_to_steps;
+        }
+    },
+        dt, 0.5);
+    //   return collapse_repeated_steps(fragment);
+
     return collapse_repeated_steps(result);
 }
 
 
-
-
-
-program_to_steps_f_t program_to_steps_factory( const std::string f_name ) {
+program_to_steps_f_t program_to_steps_factory(const std::string f_name)
+{
     if (f_name == "program_to_steps") {
         return program_to_steps;
     }
@@ -228,9 +268,6 @@ program_to_steps_f_t program_to_steps_factory( const std::string f_name ) {
     }
     throw std::invalid_argument("bad function name");
 }
-
-
-
 
 
 } // namespace converters

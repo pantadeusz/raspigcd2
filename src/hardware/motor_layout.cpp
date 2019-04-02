@@ -40,8 +40,8 @@ public:
 steps_t corexy_layout_t::cartesian_to_steps(const distance_t& distances_)
 {
     return {
-        (int)(distances_[0] * scales_[0] + distances_[1] * scales_[1]) * steps_per_milimeter_[0],
-        (int)(distances_[0] * scales_[0] - distances_[1] * scales_[1]) * steps_per_milimeter_[1],
+        (int)((distances_[0] * scales_[0] + distances_[1] * scales_[1]) * steps_per_milimeter_[0]),
+        (int)((distances_[0] * scales_[0] - distances_[1] * scales_[1]) * steps_per_milimeter_[1]),
         (int)(distances_[2] * steps_per_milimeter_[2] * scales_[2])};
 }
 

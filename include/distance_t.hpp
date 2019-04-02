@@ -81,7 +81,7 @@ public:
     
     double angle(const generic_position_t & a, const generic_position_t & b) const;
 
-    double sumv() const;
+    T sumv() const;
 
     inline double dot_product(const generic_position_t &b) const {
         const generic_position_t a = *this;
@@ -278,9 +278,13 @@ inline double point_segment_distance_3d(const generic_position_t<T,N>& A, const 
  * @brief calculates bezier spline based on standard path. It tries to 
  * 
  */
-void beizer_spline(std::vector<distance_t> &path,
-                   std::function<void(const distance_t &position)> on_point,
+template<std::size_t N>
+void beizer_spline(std::vector<generic_position_t<double,N>> &path,
+                   std::function<void(const generic_position_t<double,N> &position)> on_point,
                    double dt, double arc_l = 1.0);
+
+
+std::vector <distance_with_velocity_t> optimize_path_dp(std::vector <distance_with_velocity_t> &path, double epsilon);
 
 
 } // namespace raspigcd

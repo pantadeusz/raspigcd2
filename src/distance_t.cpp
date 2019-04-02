@@ -32,52 +32,17 @@
 
 namespace raspigcd {
 
-template<>
-double generic_position_t<double,5>::sumv() const
+template<class T, std::size_t N>
+T generic_position_t<T,N>::sumv() const
 {
     return std::accumulate(this->begin(), this->end(), 0.0);
 }
 
-template<>
-double generic_position_t<int,5>::sumv() const
-{
-    return std::accumulate(this->begin(), this->end(), 0);
-}
-
-template<>
-double generic_position_t<double,4>::sumv() const
-{
-    return std::accumulate(this->begin(), this->end(), 0.0);
-}
-
-template<>
-double generic_position_t<int,4>::sumv() const
-{
-    return std::accumulate(this->begin(), this->end(), 0);
-}
-
-template<>
-double generic_position_t<double,3>::sumv() const
-{
-    return std::accumulate(this->begin(), this->end(), 0.0);
-}
-
-template<>
-double generic_position_t<int,3>::sumv() const
-{
-    return std::accumulate(this->begin(), this->end(), 0);
-}
-
-
-
-
-/**
- *
- * */
-void beizer_spline(std::vector<distance_t> &path,
-                   std::function<void(const distance_t &position)> on_point,
+template<std::size_t N>
+void beizer_spline(std::vector<generic_position_t<double,N>> &path,
+                   std::function<void(const generic_position_t<double,N> &position)> on_point,
                    double dt, double arc_l) {
-  std::vector<std::vector<distance_t>> triss;
+  std::vector<std::vector<generic_position_t<double,N>>> triss;
   if (path.size() < 3) {
     triss.push_back(path);
   } else {
@@ -126,12 +91,18 @@ void beizer_spline(std::vector<distance_t> &path,
   }
 
   double t = 0;
-  std::list<distance_t> bezier_points;
+  std::list<generic_position_t<double,N>> bezier_points;
   for (unsigned i = 0; i < triss.size(); i++) {
-    std::vector<distance_t> &p = triss[i];
+    std::vector<generic_position_t<double,N>> &p = triss[i];
 
     if (p.size() > 4)
       p.resize(4);
+
+    generic_position_t<double,N> pt;
+    double l = 0.000001;
+    for (unsigned i = 1; i < p.size(); i++) {
+      l += (p[i - 1] - p[i]).length();
+    }
 
     std::cerr << "drawing spline of " << p.size() << ": ";
     for (auto e : p) {
@@ -142,28 +113,25 @@ void beizer_spline(std::vector<distance_t> &path,
       std::cerr << "] ";
     }
     std::cerr << std::endl;
-    distance_t pt;
-    double l = 0.000001;
-    for (unsigned i = 1; i < p.size(); i++) {
-      l += (p[i - 1] - p[i]).length();
-    }
+    double dt_p = dt / l;
+    if (dt_p < 0.0001) dt_p = 0.0001;
     for (; t <= 1.0;) {
       bezier_points.push_back(pt = bezier(p, t));
       //double range = std::max(1.0 - t, 0.1) / 2.0;
       //double tp = t + range;
-      t += 0.1 * dt / l; //*pt.back()
+      t += dt_p; //*pt.back()
     }
     t = t - 1.0;
     std::cerr << "t1 " << t << std::endl;
   }
   if (bezier_points.size() > 0) {
     double curr_dist = 0.0;
-    std::vector<distance_t> bcurve(bezier_points.begin(), bezier_points.end());
+    std::vector<generic_position_t<double,N>> bcurve(bezier_points.begin(), bezier_points.end());
     bezier_points.clear();
     auto pos = bcurve.front();
     for (unsigned i = 0; i < bcurve.size();) {
       double target_dist = bcurve[i].back() * dt;
-      distance_t ndistv = bcurve[i] - pos;
+      generic_position_t<double,N> ndistv = bcurve[i] - pos;
       ndistv.back() = 0;
       double ndist = ndistv.length();
       if ((curr_dist + ndist) >= target_dist) {
@@ -180,5 +148,77 @@ void beizer_spline(std::vector<distance_t> &path,
     //        on_point(pos);
   }
 }
+
+std::vector <distance_with_velocity_t> optimize_path_dp(std::vector <distance_with_velocity_t> &path, double epsilon) {
+    std::vector<char> toDelete(path.size());
+    for (auto& e : toDelete)
+        e = false;
+    //DouglasPeucker algorithm
+    std::function<void(double, int, int)> optimizePathDP = [&](double epsilon, int start, int end) {
+        double dmax = 0;
+        int index = 0;
+        for (int i = start + 1; i < end; i++) {
+            if (!toDelete[i]) {
+                auto d = point_segment_distance_3d(path[i], path[start], path[end]);
+                if (d > dmax) {
+                    index = i;
+                    dmax = d;
+                }
+            }
+        }
+        if (dmax > epsilon) {
+            optimizePathDP(epsilon, start, index);
+            optimizePathDP(epsilon, index, end);
+        } else {
+            if (start == end)
+                return;
+            else {
+                for (int i = start + 1; i < end; i++) {
+                    toDelete[i] = true;
+                }
+            }
+        }
+    };
+    optimizePathDP(epsilon, 0, path.size() - 1);
+    std::vector <distance_with_velocity_t> ret;
+    ret.reserve(path.size());
+    for (int i = 0; i < path.size();i++) {
+        if (!toDelete[i]) ret.push_back(path[i]);
+    }
+    ret.shrink_to_fit();
+    return ret;
+}
+
+/// instantiate templates
+
+template int generic_position_t<int,5>::sumv() const;
+template int generic_position_t<int,4>::sumv() const;
+template int generic_position_t<int,3>::sumv() const;
+template int generic_position_t<int,2>::sumv() const;
+
+template double generic_position_t<double,5>::sumv() const;
+template double generic_position_t<double,4>::sumv() const;
+template double generic_position_t<double,3>::sumv() const;
+template double generic_position_t<double,2>::sumv() const;
+
+
+
+template void beizer_spline<2>(std::vector<generic_position_t<double,2>> &path,
+                   std::function<void(const generic_position_t<double,2> &position)> on_point,
+                   double dt, double arc_l);
+
+
+template void beizer_spline<3>(std::vector<generic_position_t<double,3>> &path,
+                   std::function<void(const generic_position_t<double,3> &position)> on_point,
+                   double dt, double arc_l);
+
+template void beizer_spline<4>(std::vector<generic_position_t<double,4>> &path,
+                   std::function<void(const generic_position_t<double,4> &position)> on_point,
+                   double dt, double arc_l);
+
+template void beizer_spline<5>(std::vector<generic_position_t<double,5>> &path,
+                   std::function<void(const generic_position_t<double,5> &position)> on_point,
+                   double dt, double arc_l);
+
 
 } // namespace raspigcd

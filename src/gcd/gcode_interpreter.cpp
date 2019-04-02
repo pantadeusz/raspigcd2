@@ -47,12 +47,13 @@ distance_t block_to_distance_t(const block_t& block)
 
 distance_with_velocity_t block_to_distance_with_v_t(const block_t& block)
 {
-    auto blk = block;
     distance_with_velocity_t ret = {};
-    if (block.at('X')) ret[0] = block.at('X');
-    if (block.at('Y')) ret[1] = block.at('Y');
-    if (block.at('Z')) ret[2] = block.at('Z');
-    if (block.at('F')) ret.back() = block.at('F');
+    if (block.count('X')) ret[0] = block.at('X');
+    if (block.count('Y')) ret[1] = block.at('Y');
+    if (block.count('Z')) ret[2] = block.at('Z');
+    ret[3] = 0;
+    if (block.count('F')) ret.back() = block.at('F');
+    else {ret.back() = 0.1;std::cerr << "WARNING: Feedrate is 0 in distance_with_velocity_t block_to_distance_with_v_t" << std::endl;}
     return ret;
     
 }
@@ -655,6 +656,9 @@ std::map<char, double> command_to_map_of_arguments(const std::string& command__)
     }
     return ret;
 }
+
+
+
 
 program_t optimize_path_douglas_peucker_g(const program_t& program_, const double epsilon, const block_t& p0_)
 {

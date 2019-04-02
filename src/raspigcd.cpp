@@ -72,13 +72,17 @@ public:
     std::mutex list_mutex;
     configuration::global* cfg;
     std::shared_ptr<motor_layout> ml;
-
+    raspigcd::hardware::stepping_simple_timer *step_gen;
 
     int z_p_x; // 1000x
     int z_p_y; // 1000x
     int view_x;
     int view_y;
+    int scale_view;
 
+
+    bool dragging_view = false;
+    bool scaling_view = false;
 
     std::atomic<int> g_state;
 
@@ -90,8 +94,8 @@ public:
 
         std::lock_guard<std::mutex> guard(list_mutex);
         for (std::size_t i = 0; i < current_position.size(); i++) {
-            reduced_a[i] = current_position[i];       ///(int)(cfg->steppers[i].steps_per_mm);
-            reduced_b[i] = movements_track.back()[i]; ///(int)(cfg->steppers[i].steps_per_mm);
+            reduced_a[i] = current_position[i]      *10.0;       ///(int)(cfg->steppers[i].steps_per_mm);
+            reduced_b[i] = movements_track.back()[i]*10.0; ///(int)(cfg->steppers[i].steps_per_mm);
         }
         if (!(reduced_a == reduced_b)) {
             movements_track.push_back(current_position);
@@ -103,13 +107,13 @@ public:
         std::map<int, int> z_buffer;
 
         for (auto& e : t) {
-            int x = e[0];
-            int y = e[1];
-            int z = e[2];
+            double x = e[0];
+            double y = e[1];
+            double z = e[2];
             if (e[2] <= 0) {
                 if ((z_buffer.count(y * width + x) == 0) || (z_buffer[y * width + x] >= z)) {
                     SDL_SetRenderDrawColor(renderer.get(), 255 - (e[2] * 255 / 5), 255, 255, 255);
-                    SDL_RenderDrawPoint(renderer.get(), (x + view_x) + z * z_p_x / 1000, (-y + view_y) - z * z_p_y / 1000);
+                    SDL_RenderDrawPoint(renderer.get(), (x*1000/scale_view + view_x) + z * z_p_x / scale_view, (-y*1000/scale_view + view_y) - z * z_p_y / scale_view);
                     z_buffer[y * width + x] = z;
                 }
             }
@@ -119,8 +123,10 @@ public:
         g_state = g;
     };
 
-    video_sdl(configuration::global* cfg_, driver::low_buttons_fake* buttons_drv, int width = 640, int height = 480)
+    video_sdl(configuration::global* cfg_, raspigcd::hardware::stepping_simple_timer *step_gen_,driver::low_buttons_fake* buttons_drv, int width = 640, int height = 480)
     {
+        scale_view = 1000 ;
+        step_gen = step_gen_;
         active = true;
         cfg = cfg_;
 
@@ -155,6 +161,7 @@ public:
                     case SDL_QUIT:
                         active = false;
                         std::cout << "window closed" << std::endl;
+                        step_gen->terminate();
                         break;
                     case SDL_KEYDOWN:
                         k = event.key.keysym.sym - SDLK_0;
@@ -169,6 +176,25 @@ public:
                         } else if (event.key.keysym.sym == SDLK_DOWN) {
                             view_y--;
                         }
+                        break;
+                    case SDL_MOUSEBUTTONDOWN:
+                        if (event.button.button == SDL_BUTTON_LEFT) dragging_view = true;
+                        if (event.button.button == SDL_BUTTON_MIDDLE) scaling_view = true;
+                        break;
+                    case SDL_MOUSEBUTTONUP:
+                        if (event.button.button == SDL_BUTTON_LEFT)  dragging_view = false;
+                        if (event.button.button == SDL_BUTTON_MIDDLE) scaling_view = false;
+                        break;
+                    case SDL_MOUSEMOTION:
+                        if (dragging_view) {
+                            view_x += event.motion.xrel;
+                            view_y += event.motion.yrel;
+                        }
+                        if (scaling_view) {
+                            scale_view += event.motion.yrel;
+                            std::cout << "scale: " << scale_view << std::endl;
+                        }
+                        
                         break;
                     case SDL_KEYUP:
                         k = event.key.keysym.sym - SDLK_0;
@@ -199,8 +225,8 @@ public:
                 }
                 for (int i = 0; i < std::abs(s[2]); i++) {
                     SDL_RenderDrawPoint(renderer.get(),
-                        s[0] + view_x + i * (s[2] / std::abs(s[2])) * z_p_x / 1000,
-                        -s[1] + view_y + i * (-s[2] / std::abs(s[2])) * z_p_y / 1000);
+                        s[0]*1000/scale_view + view_x + i * s[2] * z_p_x / scale_view,
+                        -s[1]*1000/scale_view + view_y + i * -s[2]* z_p_y / scale_view);
                 }
                 //std::cout << "step.. " << s[0] << ", " << s[1] << ", " << s[2] << std::endl;
 
@@ -224,7 +250,7 @@ public:
     {
     }
 
-    video_sdl(configuration::global* cfg_, driver::low_buttons_fake* buttons_drv, int width = 640, int height = 480)
+    video_sdl(configuration::global* cfg_, raspigcd::hardware::stepping *step_gen_, driver::low_buttons_fake* buttons_drv, int width = 640, int height = 480)
     {
         active = true;
     }
@@ -375,6 +401,7 @@ int main(int argc, char** argv)
         } else if (args.at(i) == "-f") {
             using namespace raspigcd;
             using namespace raspigcd::hardware;
+            bool enable_video = false;
 
             std::shared_ptr<low_steppers> steppers_drv;
             std::shared_ptr<low_spindles_pwm> spindles_drv;
@@ -404,13 +431,15 @@ int main(int argc, char** argv)
                 };
                 auto buttons_fake_fake = std::make_shared<driver::low_buttons_fake>(10);
                 buttons_drv = buttons_fake_fake;
-                video = std::make_shared<video_sdl>(&cfg, buttons_fake_fake.get());
+
+
                 fk->set_step_callback([&position_for_fake, &video](const steps_t& st) {
                     if (!(position_for_fake == st)) {
                         if (video.get() != nullptr) video->set_steps(st);
                     }
                     position_for_fake = st;
                 });
+                enable_video = true;
             }
             //std::shared_ptr<driver::raspberry_pi_3> steppers_drv = std::make_shared<driver::raspberry_pi_3>(cfg);
             std::shared_ptr<motor_layout> motor_layout_ = motor_layout::get_instance(cfg);
@@ -430,7 +459,11 @@ int main(int argc, char** argv)
             }
             stepping_simple_timer stepping(cfg, steppers_drv, timer_drv);
 
+            if (enable_video){
+                video = std::make_shared<video_sdl>(&cfg, &stepping, (driver::low_buttons_fake*) buttons_drv.get());
+            }
             auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
+            //auto program_to_steps = converters::program_to_steps_factory("bezier_spline");  
 
             i++;
             std::ifstream gcd_file(args.at(i));
@@ -556,7 +589,10 @@ int main(int argc, char** argv)
                             double dt = std::chrono::duration<double, std::milli>(time1 - time0).count();
                             std::cout << "calculations took " << dt << " milliseconds; have " << m_commands.size() << " steps to execute" << std::endl;
                             try {
-                                stepping.exec(m_commands, [motor_layout_, &spindles_status, timer_drv, spindles_drv, &break_execution_result, machine_state_prev, last_spindle_on_delay](auto steps_from_origin, auto tick_n) -> int {
+                                stepping.exec(m_commands, [&video, motor_layout_, &spindles_status, timer_drv, spindles_drv, &break_execution_result, machine_state_prev, last_spindle_on_delay](auto steps_from_origin, auto tick_n) -> int {
+                                    if(!(video->active)) {
+                                        return 0; // finish
+                                    }
                                     std::cout << "break at " << tick_n << " tick" << std::endl;
                                     steps_from_origin = steps_from_origin + motor_layout_->cartesian_to_steps(block_to_distance_t(machine_state_prev));
                                     std::cout << "Position: " << motor_layout_->steps_to_cartesian(steps_from_origin) << std::endl;
