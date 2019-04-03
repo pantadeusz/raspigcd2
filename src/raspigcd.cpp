@@ -39,12 +39,12 @@ This is simple program that uses the library. It will execute given GCode.
 #include <configuration_json.hpp>
 
 #include <fstream>
-#include <random>
 #include <future>
 #include <mutex>
+#include <random>
+#include <sstream>
 #include <streambuf>
 #include <string>
-#include <sstream>
 
 #include <video.hpp>
 
@@ -76,7 +76,7 @@ public:
     std::mutex list_mutex;
     configuration::global* cfg;
     std::shared_ptr<motor_layout> ml;
-    raspigcd::hardware::stepping_simple_timer *step_gen;
+    raspigcd::hardware::stepping_simple_timer* step_gen;
 
     int z_p_x; // 1000x
     int z_p_y; // 1000x
@@ -98,8 +98,8 @@ public:
 
         std::lock_guard<std::mutex> guard(list_mutex);
         for (std::size_t i = 0; i < current_position.size(); i++) {
-            reduced_a[i] = current_position[i]      *10.0;       ///(int)(cfg->steppers[i].steps_per_mm);
-            reduced_b[i] = movements_track.back()[i]*10.0; ///(int)(cfg->steppers[i].steps_per_mm);
+            reduced_a[i] = current_position[i] * 10.0;       ///(int)(cfg->steppers[i].steps_per_mm);
+            reduced_b[i] = movements_track.back()[i] * 10.0; ///(int)(cfg->steppers[i].steps_per_mm);
         }
         if (!(reduced_a == reduced_b)) {
             movements_track.push_back(current_position);
@@ -108,10 +108,9 @@ public:
 
     void draw_path(std::shared_ptr<SDL_Renderer> renderer, int width, int /*height*/, const std::list<distance_t>& t)
     {
-
-    static std::random_device dev;
-    static std::mt19937 rng(dev());
-    static std::uniform_int_distribution<std::mt19937::result_type> draw_upper(0,100); // distribution in range [1, 6]
+        static std::random_device dev;
+        static std::mt19937 rng(dev());
+        static std::uniform_int_distribution<std::mt19937::result_type> draw_upper(0, 100); // distribution in range [1, 6]
 
 
         std::map<int, int> z_buffer;
@@ -121,22 +120,23 @@ public:
             double y = e[1];
             double z = e[2];
             if ((e[2] <= 0) || (draw_upper(rng) == 0)) {
-//                if ((z_buffer.count(y * width + x) == 0) || (z_buffer[y * width + x] >= z)) {
+                //                if ((z_buffer.count(y * width + x) == 0) || (z_buffer[y * width + x] >= z)) {
                 if (true) { //(z_buffer.count(y * width + x) == 0) || (z_buffer[y * width + x] >= z)) {
                     SDL_SetRenderDrawColor(renderer.get(), 255 - (e[2] * 255 / 5), 255, 255, 255);
-                    SDL_RenderDrawPoint(renderer.get(), (x*1000/scale_view + view_x) + z * z_p_x / scale_view, (-y*1000/scale_view + view_y) - z * z_p_y / scale_view);
+                    SDL_RenderDrawPoint(renderer.get(), (x * 1000 / scale_view + view_x) + z * z_p_x / scale_view, (-y * 1000 / scale_view + view_y) - z * z_p_y / scale_view);
                     z_buffer[y * width + x] = z;
                 }
             }
         }
     }
-    void set_g_state(int g){
+    void set_g_state(int g)
+    {
         g_state = g;
     };
 
-    video_sdl(configuration::global* cfg_, raspigcd::hardware::stepping_simple_timer *step_gen_,driver::low_buttons_fake* buttons_drv, int width = 640, int height = 480)
+    video_sdl(configuration::global* cfg_, raspigcd::hardware::stepping_simple_timer* step_gen_, driver::low_buttons_fake* buttons_drv, int width = 640, int height = 480)
     {
-        scale_view = 1000 ;
+        scale_view = 1000;
         step_gen = step_gen_;
         active = true;
         cfg = cfg_;
@@ -193,7 +193,7 @@ public:
                         if (event.button.button == SDL_BUTTON_MIDDLE) scaling_view = true;
                         break;
                     case SDL_MOUSEBUTTONUP:
-                        if (event.button.button == SDL_BUTTON_LEFT)  dragging_view = false;
+                        if (event.button.button == SDL_BUTTON_LEFT) dragging_view = false;
                         if (event.button.button == SDL_BUTTON_MIDDLE) scaling_view = false;
                         break;
                     case SDL_MOUSEMOTION:
@@ -204,7 +204,7 @@ public:
                         if (scaling_view) {
                             scale_view += event.motion.yrel;
                         }
-                        
+
                         break;
                     case SDL_KEYUP:
                         k = event.key.keysym.sym - SDLK_0;
@@ -231,19 +231,21 @@ public:
                 } else if (g_state == 1) {
                     SDL_SetRenderDrawColor(renderer.get(), 0, 255, 255, 255);
                 } else {
-                    SDL_SetRenderDrawColor(renderer.get(), 64,64,64, 255);
+                    SDL_SetRenderDrawColor(renderer.get(), 64, 64, 64, 255);
                 }
-                for (double i = 0; i < 1.0; i+=0.05) {
+                for (double i = 0; i < 1.0; i += 0.05) {
                     SDL_RenderDrawPoint(renderer.get(),
-                        s[0]*1000/scale_view + view_x + i * s[2] * z_p_x / scale_view,
-                        -s[1]*1000/scale_view + view_y + i * -s[2]* z_p_y / scale_view);
+                        s[0] * 1000 / scale_view + view_x + i * s[2] * z_p_x / scale_view,
+                        -s[1] * 1000 / scale_view + view_y + i * -s[2] * z_p_y / scale_view);
                 }
                 //std::cout << "step.. " << s[0] << ", " << s[1] << ", " << s[2] << std::endl;
 
                 {
                     SDL_SetRenderDrawColor(renderer.get(), 16, 128, 32, 255);
                     std::stringstream o;
-                    o << "" << s[0] << "\n" << s[1] << "\n" << s[2] << "\n view: " << view_x << "," << view_y << " s: " << scale_view;
+                    o << "" << s[0] << "\n"
+                      << s[1] << "\n"
+                      << s[2] << "\n view: " << view_x << "," << view_y << " s: " << scale_view;
                     sdl_draw_text(renderer.get(), 5, 5, o.str());
                 }
                 SDL_RenderPresent(renderer.get());
@@ -266,7 +268,7 @@ public:
     {
     }
 
-    video_sdl(configuration::global* cfg_, raspigcd::hardware::stepping *step_gen_, driver::low_buttons_fake* buttons_drv, int width = 640, int height = 480)
+    video_sdl(configuration::global* cfg_, raspigcd::hardware::stepping* step_gen_, driver::low_buttons_fake* buttons_drv, int width = 640, int height = 480)
     {
         active = true;
     }
@@ -337,7 +339,7 @@ void help_text(const std::vector<std::string>& args)
 
 partitioned_program_t preprocess_program_parts(partitioned_program_t program_parts, const configuration::global& cfg)
 {
-    block_t machine_state = {{'F', *std::min_element(cfg.max_no_accel_velocity_mm_s.begin(),cfg.max_no_accel_velocity_mm_s.end())}};
+    block_t machine_state = {{'F', *std::min_element(cfg.max_no_accel_velocity_mm_s.begin(), cfg.max_no_accel_velocity_mm_s.end())}};
     program_t prepared_program;
 
     for (auto& ppart : program_parts) {
@@ -475,11 +477,11 @@ int main(int argc, char** argv)
             }
             stepping_simple_timer stepping(cfg, steppers_drv, timer_drv);
 
-            if (enable_video){
-                video = std::make_shared<video_sdl>(&cfg, &stepping, (driver::low_buttons_fake*) buttons_drv.get());
+            if (enable_video) {
+                video = std::make_shared<video_sdl>(&cfg, &stepping, (driver::low_buttons_fake*)buttons_drv.get());
             }
-            //auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
-            auto program_to_steps = converters::program_to_steps_factory("bezier_spline");  
+            auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
+            //auto program_to_steps = converters::program_to_steps_factory("bezier_spline"); // TODO
 
             i++;
             std::ifstream gcd_file(args.at(i));
@@ -509,23 +511,24 @@ int main(int argc, char** argv)
                 std::fstream f(save_to_files_list.front() + ".stage0", std::fstream::out);
                 f << back_to_gcode(group_gcode_commands(program)) << std::endl;
             }
-            program = optimize_path_douglas_peucker(program, cfg.douglas_peucker_marigin);
-            if (save_to_files_list.size() > 0) {
-                std::cout << "SAVING optimize_path_douglas_peucker FILE TO: " << (save_to_files_list.front() + ".stage1") << std::endl;
-                std::fstream f(save_to_files_list.front() + ".stage1", std::fstream::out);
-                f << back_to_gcode(group_gcode_commands(program)) << std::endl;
+            if (!raw_gcode) {
+                program = optimize_path_douglas_peucker(program, cfg.douglas_peucker_marigin);
+                if (save_to_files_list.size() > 0) {
+                    std::cout << "SAVING optimize_path_douglas_peucker FILE TO: " << (save_to_files_list.front() + ".stage1") << std::endl;
+                    std::fstream f(save_to_files_list.front() + ".stage1", std::fstream::out);
+                    f << back_to_gcode(group_gcode_commands(program)) << std::endl;
+                }
             }
-
             auto program_parts = group_gcode_commands(program);
             block_t machine_state = {{'F', 0.5}};
-            program_parts = insert_additional_nodes_inbetween(program_parts, machine_state, cfg);
-            if (save_to_files_list.size() > 0) {
-                std::cout << "SAVING insert_additional_nodes_inbetween FILE TO: " << (save_to_files_list.front() + ".stage2") << std::endl;
-                std::fstream f(save_to_files_list.front() + ".stage2", std::fstream::out);
-                f << back_to_gcode(program_parts) << std::endl;
-            }
 
             if (!raw_gcode) {
+                program_parts = insert_additional_nodes_inbetween(program_parts, machine_state, cfg);
+                if (save_to_files_list.size() > 0) {
+                    std::cout << "SAVING insert_additional_nodes_inbetween FILE TO: " << (save_to_files_list.front() + ".stage2") << std::endl;
+                    std::fstream f(save_to_files_list.front() + ".stage2", std::fstream::out);
+                    f << back_to_gcode(program_parts) << std::endl;
+                }
                 program_parts = preprocess_program_parts(program_parts, cfg);
             } // if prepare paths
             std::atomic<int> break_execution_result = -1;
@@ -584,7 +587,7 @@ int main(int argc, char** argv)
                         switch ((int)(ppart[0]['G'])) {
                         case 0:
                         case 1:
-                        //  case 4:
+                            //  case 4:
                             if (video.get() != nullptr) {
                                 video->set_g_state((int)(ppart[0]['G']));
                             }
@@ -612,7 +615,7 @@ int main(int argc, char** argv)
                             std::cout << "calculations took " << dt << " milliseconds; have " << m_commands.size() << " steps to execute" << std::endl;
                             try {
                                 stepping.exec(m_commands, [&video, motor_layout_, &spindles_status, timer_drv, spindles_drv, &break_execution_result, machine_state_prev, last_spindle_on_delay](auto steps_from_origin, auto tick_n) -> int {
-                                    if(!(video->active)) {
+                                    if (!(video->active)) {
                                         return 0; // finish
                                     }
                                     std::cout << "break at " << tick_n << " tick" << std::endl;
