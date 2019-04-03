@@ -280,9 +280,9 @@ inline double point_segment_distance_3d(const generic_position_t<T,N>& A, const 
  * 
  */
 template<std::size_t N>
-void beizer_spline(std::vector<generic_position_t<double,N>> &path,
+void beizer_spline(const std::vector<generic_position_t<double,N>> &path,
                    std::function<void(const generic_position_t<double,N> &position)> on_point,
-                   double dt, double arc_l = 1.0, bool velocity_included = true);
+                   const double dt, const double arc_l = 1.0, const bool velocity_included = true);
 
 
 std::vector <distance_with_velocity_t> optimize_path_dp(std::vector <distance_with_velocity_t> &path, double epsilon);

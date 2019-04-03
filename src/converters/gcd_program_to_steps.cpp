@@ -193,9 +193,10 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
         } else if ((next_state.at('G') == 1) || (next_state.at('G') == 0)) {
             distances.push_back(block_to_distance_with_v_t(state));
         }
+        state=next_state;
     }
     finish_callback_f_(state);
-    distances = optimize_path_dp(distances, 2.0 * arc_length);
+    distances = optimize_path_dp(distances, std::max(arc_length*2.0,0.1));
     std::cout << "distances count is " << distances.size() << std::endl;
 
     state = initial_state_;
@@ -229,9 +230,9 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
 
 
             chase_steps(steps_todo, pos_from_steps, pos_to_steps);
-            //smart_append(result,steps_todo);
+            smart_append(result,steps_todo);
             //auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
-            result.insert(result.end(), steps_todo.begin(), steps_todo.end());
+            //result.insert(result.end(), steps_todo.begin(), steps_todo.end());
             if (result.size() > 1024 * 1024 * 64) {
                 std::cerr << "bezier_spline_program_to_steps: problem in generating steps - the size is too big: " << result.size() << "; p: " << position << std::endl;
                 throw std::invalid_argument("bezier_spline_program_to_steps: problem in generating steps - the size is too big");

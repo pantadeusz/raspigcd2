@@ -153,7 +153,7 @@ public:
 
             window = std::shared_ptr<SDL_Window>(SDL_CreateWindow("GCD Execution Simulator By Tadeusz Puzniakowski",
                                                      SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                                     width, height, SDL_WINDOW_SHOWN),
+                                                     width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE),
                 [](SDL_Window* ptr) {
                     SDL_DestroyWindow(ptr);
                 });
@@ -233,7 +233,7 @@ public:
                 } else {
                     SDL_SetRenderDrawColor(renderer.get(), 64,64,64, 255);
                 }
-                for (double i = 0; i < std::abs(s[2]); i+=0.1) {
+                for (double i = 0; i < 1.0; i+=0.05) {
                     SDL_RenderDrawPoint(renderer.get(),
                         s[0]*1000/scale_view + view_x + i * s[2] * z_p_x / scale_view,
                         -s[1]*1000/scale_view + view_y + i * -s[2]* z_p_y / scale_view);
@@ -241,8 +241,9 @@ public:
                 //std::cout << "step.. " << s[0] << ", " << s[1] << ", " << s[2] << std::endl;
 
                 {
+                    SDL_SetRenderDrawColor(renderer.get(), 16, 128, 32, 255);
                     std::stringstream o;
-                    o << "" << s[0] << "\n" << s[1] << "\n" << s[2] << "";
+                    o << "" << s[0] << "\n" << s[1] << "\n" << s[2] << "\n view: " << view_x << "," << view_y << " s: " << scale_view;
                     sdl_draw_text(renderer.get(), 5, 5, o.str());
                 }
                 SDL_RenderPresent(renderer.get());
@@ -477,8 +478,8 @@ int main(int argc, char** argv)
             if (enable_video){
                 video = std::make_shared<video_sdl>(&cfg, &stepping, (driver::low_buttons_fake*) buttons_drv.get());
             }
-            auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
-            //auto program_to_steps = converters::program_to_steps_factory("bezier_spline");  
+            //auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
+            auto program_to_steps = converters::program_to_steps_factory("bezier_spline");  
 
             i++;
             std::ifstream gcd_file(args.at(i));

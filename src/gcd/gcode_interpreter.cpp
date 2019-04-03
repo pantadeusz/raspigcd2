@@ -734,10 +734,10 @@ program_t optimize_path_douglas_peucker_g(const program_t& program_, const doubl
         }
     };
     optimizePathDP(epsilon, 0, path.size() - 1);
-    std::cout << "PATH:" << std::endl;
+    //std::cout << "PATH:" << std::endl;
     for (unsigned i = 0; i < path.size(); i++) {
-        auto e = path[i];
-        std::cout << e << " " << (toDelete[i]?"DELETE":"keep") << std::endl;
+        //auto e = path[i];
+        //std::cout << e << " " << (toDelete[i]?"DELETE":"keep") << std::endl;
         if (i>0) {
             if (path[i].back() != path[i-1].back())toDelete[i] = false;
         }
