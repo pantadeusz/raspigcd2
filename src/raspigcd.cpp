@@ -591,6 +591,7 @@ int main(int argc, char** argv)
                             auto machine_state_prev = machine_state;
 
                             auto time0 = std::chrono::high_resolution_clock::now();
+                            block_t st = last_state_after_program_execution(ppart, machine_state);
                             auto m_commands = program_to_steps(ppart, cfg, *(motor_layout_.get()),
                                 machine_state, [&machine_state](const block_t result) {
                                     machine_state = result;
@@ -600,6 +601,11 @@ int main(int argc, char** argv)
                                     // }
                                     // std::cout << std::endl;
                                 });
+                            if (!(block_to_distance_with_v_t(st) == block_to_distance_with_v_t(machine_state))) {
+                                std::cout << "states differs: " << block_to_distance_with_v_t(st) << "!=" << block_to_distance_with_v_t(machine_state) << std::endl;
+                                throw std::invalid_argument("states differ");
+                            }
+
                             auto time1 = std::chrono::high_resolution_clock::now();
 
                             double dt = std::chrono::duration<double, std::milli>(time1 - time0).count();
