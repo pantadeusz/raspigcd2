@@ -31,8 +31,7 @@ find_package(Catch2)
 find_package(Git)
 find_package(Threads)
 find_package(Doxygen 
-             REQUIRED dot
-             OPTIONAL_COMPONENTS mscgen dia)
+             OPTIONAL_COMPONENTS mscgen dia dot)
 
 find_package(SDL2)
 if(SDL2_FOUND)
