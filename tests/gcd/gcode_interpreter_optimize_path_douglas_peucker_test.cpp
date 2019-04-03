@@ -74,6 +74,8 @@ TEST_CASE("gcode_interpreter_test - optimize_path_douglas_peucker", "[gcd][gcode
             {{'G',0},{'X',17},{'F',20}}
         };
         auto result =  optimize_path_douglas_peucker(input,0.0125);
+        INFO(back_to_gcode({input}));
+        INFO(back_to_gcode({result}));
         REQUIRE(result == expected);
     }
 

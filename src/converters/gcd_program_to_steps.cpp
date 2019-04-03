@@ -120,8 +120,8 @@ hardware::multistep_commands_t program_to_steps(
     const gcd::program_t& prog_,
     const configuration::actuators_organization& conf_,
     hardware::motor_layout& ml_,
-    const gcd::block_t& initial_state_,
-    std::function<void(const gcd::block_t&)> finish_callback_f_)
+    const gcd::block_t initial_state_, // = {{'F',0}},
+    std::function<void(const gcd::block_t)> finish_callback_f_)
 {
     using namespace raspigcd::hardware;
     using namespace raspigcd::gcd;
@@ -165,8 +165,8 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
     const gcd::program_t& prog_,
     const configuration::actuators_organization& conf_,
     hardware::motor_layout& ml_,
-    const gcd::block_t& initial_state_,
-    std::function<void(const gcd::block_t&)> finish_callback_f_)
+    const gcd::block_t initial_state_, // = {{'F',0}},
+    std::function<void(const gcd::block_t)> finish_callback_f_)
 {
     double arc_length = 0.5;
 
@@ -175,17 +175,7 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
     using namespace raspigcd::gcd;
     using namespace raspigcd::movement::simple_steps;
     using namespace movement::physics;
-    gcd::block_t state;
-    for (auto p : initial_state_) {
-        state[p.first] = p.second;
-    }
-    for (auto p : state) {
-        std::cout << "state[" << p.first << "] = " << p.second << std::endl;
-    }
-    for (const auto p : initial_state_) {
-        std::cout << "initial_state_[" << p.first << "] = " << p.second << std::endl;
-    }
-
+    gcd::block_t state = initial_state_;
     std::list<multistep_command> result;
     double dt = ((double)conf_.tick_duration_us) / 1000000.0;
     std::vector<distance_with_velocity_t> distances;
@@ -203,19 +193,14 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
         } else if ((next_state.at('G') == 1) || (next_state.at('G') == 0)) {
             distances.push_back(block_to_distance_with_v_t(state));
         }
-        state = next_state;
-        for (auto p : initial_state_) {
-            std::cout << "++ initial_state_[" << p.first << "] = " << p.second << std::endl;
-        }
-
     }
     finish_callback_f_(state);
-    distances = optimize_path_dp(distances, 2.0*arc_length);
-
+    distances = optimize_path_dp(distances, 2.0 * arc_length);
+    std::cout << "distances count is " << distances.size() << std::endl;
 
     state = initial_state_;
     distance_with_velocity_t pp0 = distances.front();
-    steps_t pos_from_steps = ml_.cartesian_to_steps( {pp0[0],pp0[1],pp0[2],pp0[3]});
+    steps_t pos_from_steps = ml_.cartesian_to_steps({pp0[0], pp0[1], pp0[2], pp0[3]});
     {
         distance_t dest_pos = block_to_distance_t(state);
         for (auto p : state) {
@@ -230,34 +215,34 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
         //throw std::invalid_argument("too many steps - fix your settings");
     }
     std::list<multistep_command> fragment; // fraagment of the commands list generated in this stage
-    for (auto &pp : distances) pp.back() = std::max(pp.back(),0.01); // make v more reasonable
+    for (auto& pp : distances)
+        pp.back() = std::max(pp.back(), 0.01); // make v more reasonable
     beizer_spline<5>(distances, [&](const distance_with_velocity_t& position) {
         if (!(position == pp0)) {
-        //std::cout << "POS " << position[0] << " " << position[1] << " " << position[2] << " " << position[3] << std::endl;
-        distance_t dest_pos = {position[0], position[1], position[2], position[3]};
-        multistep_commands_t steps_todo;
+            distance_t dest_pos = {position[0], position[1], position[2], position[3]};
+            multistep_commands_t steps_todo;
 
-        auto pos_to_steps = ml_.cartesian_to_steps(dest_pos);
-        //chase_steps(steps_todo,current_steps, stps);
-        //smart_append(result,steps_todo);
-        //current_steps = stps;
+            auto pos_to_steps = ml_.cartesian_to_steps(dest_pos);
+            //chase_steps(steps_todo,current_steps, stps);
+            //smart_append(result,steps_todo);
+            //current_steps = stps;
 
 
-        chase_steps(steps_todo, pos_from_steps, pos_to_steps);
-        //smart_append(result,steps_todo);
-        //auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
-        result.insert(result.end(), steps_todo.begin(), steps_todo.end());
-        if (result.size() > 1024*1024*64) {
-            std::cerr << "bezier_spline_program_to_steps: problem in generating steps - the size is too big: " << result.size() << "; p: " << position << std::endl;
-            throw std::bad_alloc();
-        }
+            chase_steps(steps_todo, pos_from_steps, pos_to_steps);
+            //smart_append(result,steps_todo);
+            //auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
+            result.insert(result.end(), steps_todo.begin(), steps_todo.end());
+            if (result.size() > 1024 * 1024 * 64) {
+                std::cerr << "bezier_spline_program_to_steps: problem in generating steps - the size is too big: " << result.size() << "; p: " << position << std::endl;
+                throw std::invalid_argument("bezier_spline_program_to_steps: problem in generating steps - the size is too big");
+            }
 
-        //std::cout << "P Pos         " << position[0] << " " << position[1] << " " << position[2] << " " << position[3] << std::endl;
-        //std::cout << "GO-FROM steps " << pos_from_steps[0] << " " << pos_from_steps[1] << " " << pos_from_steps[2] << " " << pos_from_steps[3] << std::endl;
-        //std::cout << "GO-TO   steps " << pos_to_steps[0] << " " << pos_to_steps[1] << " " << pos_to_steps[2] << " " << pos_to_steps[3] << std::endl;
-        //throw std::invalid_argument("too many steps - fix your settings");
+            //std::cout << "P Pos         " << position[0] << " " << position[1] << " " << position[2] << " " << position[3] << std::endl;
+            //std::cout << "GO-FROM steps " << pos_from_steps[0] << " " << pos_from_steps[1] << " " << pos_from_steps[2] << " " << pos_from_steps[3] << std::endl;
+            //std::cout << "GO-TO   steps " << pos_to_steps[0] << " " << pos_to_steps[1] << " " << pos_to_steps[2] << " " << pos_to_steps[3] << std::endl;
+            //throw std::invalid_argument("too many steps - fix your settings");
 
-        pos_from_steps = pos_to_steps;
+            pos_from_steps = pos_to_steps;
         }
     },
         dt, arc_length);

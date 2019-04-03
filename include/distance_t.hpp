@@ -185,7 +185,8 @@ inline std::ostream& operator<<(std::ostream& os, generic_position_t<T,N> const&
     os << "[";
     int i = 0;
     for (auto &e :value) {
-        os << (i?(""):(",")) << e;
+        os << ((i==0)?(""):(",")) << e;
+        i++;
     }
     os << "]";
     return os;
@@ -281,7 +282,7 @@ inline double point_segment_distance_3d(const generic_position_t<T,N>& A, const 
 template<std::size_t N>
 void beizer_spline(std::vector<generic_position_t<double,N>> &path,
                    std::function<void(const generic_position_t<double,N> &position)> on_point,
-                   double dt, double arc_l = 1.0);
+                   double dt, double arc_l = 1.0, bool velocity_included = true);
 
 
 std::vector <distance_with_velocity_t> optimize_path_dp(std::vector <distance_with_velocity_t> &path, double epsilon);

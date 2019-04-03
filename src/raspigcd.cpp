@@ -44,6 +44,9 @@ This is simple program that uses the library. It will execute given GCode.
 #include <mutex>
 #include <streambuf>
 #include <string>
+#include <sstream>
+
+#include <video.hpp>
 
 using namespace raspigcd;
 using namespace raspigcd::hardware;
@@ -200,7 +203,6 @@ public:
                         }
                         if (scaling_view) {
                             scale_view += event.motion.yrel;
-                            std::cout << "scale: " << scale_view << std::endl;
                         }
                         
                         break;
@@ -238,6 +240,11 @@ public:
                 }
                 //std::cout << "step.. " << s[0] << ", " << s[1] << ", " << s[2] << std::endl;
 
+                {
+                    std::stringstream o;
+                    o << "" << s[0] << "\n" << s[1] << "\n" << s[2] << "";
+                    sdl_draw_text(renderer.get(), 5, 5, o.str());
+                }
                 SDL_RenderPresent(renderer.get());
                 SDL_Delay(33);
             }
@@ -329,7 +336,7 @@ void help_text(const std::vector<std::string>& args)
 
 partitioned_program_t preprocess_program_parts(partitioned_program_t program_parts, const configuration::global& cfg)
 {
-    block_t machine_state = {{'F', 0.5}};
+    block_t machine_state = {{'F', *std::min_element(cfg.max_no_accel_velocity_mm_s.begin(),cfg.max_no_accel_velocity_mm_s.end())}};
     program_t prepared_program;
 
     for (auto& ppart : program_parts) {
@@ -470,8 +477,8 @@ int main(int argc, char** argv)
             if (enable_video){
                 video = std::make_shared<video_sdl>(&cfg, &stepping, (driver::low_buttons_fake*) buttons_drv.get());
             }
-            //auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
-            auto program_to_steps = converters::program_to_steps_factory("bezier_spline");  
+            auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
+            //auto program_to_steps = converters::program_to_steps_factory("bezier_spline");  
 
             i++;
             std::ifstream gcd_file(args.at(i));
@@ -584,7 +591,7 @@ int main(int argc, char** argv)
 
                             auto time0 = std::chrono::high_resolution_clock::now();
                             auto m_commands = program_to_steps(ppart, cfg, *(motor_layout_.get()),
-                                machine_state, [&machine_state](const block_t& result) {
+                                machine_state, [&machine_state](const block_t result) {
                                     machine_state = result;
                                     // std::cout << "____ program_to_steps:";
                                     // for (auto& s : machine_state) {

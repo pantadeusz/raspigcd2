@@ -1,7 +1,7 @@
 ; params = {"attributes":{"file":{"dpi":150,"name":"elem_a.png"},"pathgen":{"areas":0,"zdetails":0},"stages":{"bridges":1,"detailreduction":0,"doublepass":-1,"dp":1.1,"noisereduction":0,"simpleopt":1},"tool":{"depth":3,"diameter":2.5,"dwellOnSharpEdges":0,"dwellXYs":0,"dwellXYt":0,"dwellZs":0,"dwellZt":0,"feedrateXY":10,"feedrateZ":1,"fly":3,"is_laser":false,"maxZstep":5}},"id":"","type":6}
 ; M577
 M17
-M3P3
+M3X3
 G92
 G0Z3
 G0X228.092Y-197.612

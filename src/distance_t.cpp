@@ -41,9 +41,9 @@ T generic_position_t<T,N>::sumv() const
 template<std::size_t N>
 void beizer_spline(std::vector<generic_position_t<double,N>> &path,
                    std::function<void(const generic_position_t<double,N> &position)> on_point,
-                   double dt, double arc_l) {
+                   double dt, double arc_l, bool velocity_included) {
   std::vector<std::vector<generic_position_t<double,N>>> triss;
-  if (path.size() < 3) {
+  if (path.size() <= 3) {
     triss.push_back(path);
   } else {
     auto additional_p = [&arc_l](auto &a0, auto &b, auto &c0) {
@@ -60,8 +60,11 @@ void beizer_spline(std::vector<generic_position_t<double,N>> &path,
       auto e = c + projv;
       auto vvv = d - e;
       auto vvvl = vvv.length();
-      d = b + vvv * arc_l / vvvl;
-      e = b - vvv * arc_l / vvvl;
+      d = b + vvv * std::min(std::abs(arc_l),std::abs(ba0l)) / vvvl;
+      e = b - vvv * std::min(std::abs(arc_l),std::abs(bc0l)) / vvvl;
+      // 
+      // d.back() = (a.back()+b.back())*0.5;
+      // d.back() = (a.back()+b.back())*0.5;
       return std::make_pair(d, e);
     };
 
@@ -70,7 +73,8 @@ void beizer_spline(std::vector<generic_position_t<double,N>> &path,
       auto b = path[1];
       auto c = path[2];
       auto [d, e] = additional_p(a, b, c);
-      triss.push_back({a, (a + b) / 2.0, d, b, e});
+      if (velocity_included) d.back()=b.back();
+      triss.push_back({a, d, b, e});
     }
     for (unsigned i = 1; i < path.size() - 2; i++) {
       auto a = path[i];
@@ -119,7 +123,7 @@ void beizer_spline(std::vector<generic_position_t<double,N>> &path,
       bezier_points.push_back(pt = bezier(p, t));
       if (bezier_points.size() > 1024*1024*128) {
         std::cerr << "beizer_spline: bezier_points too big: " << bezier_points.size() << " dt_p=" << dt_p << "; t=" << t << std::endl;
-        throw std::bad_alloc();
+        throw std::invalid_argument("bezier_spline: too big bezier_points");
       }
       //double range = std::max(1.0 - t, 0.1) / 2.0;
       //double tp = t + range;
@@ -134,8 +138,8 @@ void beizer_spline(std::vector<generic_position_t<double,N>> &path,
     bezier_points.clear();
     auto pos = bcurve.front();
     for (unsigned i = 0; i < bcurve.size();) {
-      if (bcurve[i].back() < 0.01) {
-        std::cerr << "beizer_spline: velocity too small " << bcurve[i] << std::endl;
+      if (bcurve[i].back() < 0.025) {
+        //std::cerr << "beizer_spline: velocity too small " << bcurve[i] << std::endl;
         bcurve[i].back() = 0.01;
       }
       double target_dist = bcurve[i].back() * dt;
@@ -213,20 +217,20 @@ template double generic_position_t<double,2>::sumv() const;
 
 template void beizer_spline<2>(std::vector<generic_position_t<double,2>> &path,
                    std::function<void(const generic_position_t<double,2> &position)> on_point,
-                   double dt, double arc_l);
+                   double dt, double arc_l, bool velocity_included);
 
 
 template void beizer_spline<3>(std::vector<generic_position_t<double,3>> &path,
                    std::function<void(const generic_position_t<double,3> &position)> on_point,
-                   double dt, double arc_l);
+                   double dt, double arc_l, bool velocity_included);
 
 template void beizer_spline<4>(std::vector<generic_position_t<double,4>> &path,
                    std::function<void(const generic_position_t<double,4> &position)> on_point,
-                   double dt, double arc_l);
+                   double dt, double arc_l, bool velocity_included);
 
 template void beizer_spline<5>(std::vector<generic_position_t<double,5>> &path,
                    std::function<void(const generic_position_t<double,5> &position)> on_point,
-                   double dt, double arc_l);
+                   double dt, double arc_l, bool velocity_included);
 
 
 } // namespace raspigcd

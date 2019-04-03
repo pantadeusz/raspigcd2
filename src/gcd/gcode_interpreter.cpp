@@ -52,10 +52,13 @@ distance_with_velocity_t block_to_distance_with_v_t(const block_t& block)
     if (block.count('Y')) ret[1] = block.at('Y');
     if (block.count('Z')) ret[2] = block.at('Z');
     ret[3] = 0;
-    if (block.count('F')) ret.back() = block.at('F');
-    else {ret.back() = 0.1;std::cerr << "WARNING: Feedrate is 0 in distance_with_velocity_t block_to_distance_with_v_t" << std::endl;}
+    if (block.count('F'))
+        ret.back() = block.at('F');
+    else {
+        ret.back() = 0.1;
+        std::cerr << "WARNING: Feedrate is 0 in distance_with_velocity_t block_to_distance_with_v_t" << std::endl;
+    }
     return ret;
-    
 }
 
 /// UNTESTED
@@ -274,8 +277,9 @@ program_t apply_limits_for_turns(const program_t& program_states,
             double angle = B.angle(A, C);
             if (angle <= (M_PI / 2.0)) {
                 auto y = linear_interpolation(angle, 0, 0.25, M_PI / 2.0, 1);
-                if (ret_states[i]['F'] == 0.0)
-                    throw std::invalid_argument("feedrate cannot be 0");
+                if (ret_states[i]['F'] == 0.0) {
+                    throw std::invalid_argument("feedrate cannot be 0:\n" + back_to_gcode({ret_states}));
+                }
                 double result_f = std::min(y * std::min(
                                                    machine_limits.proportional_max_no_accel_velocity_mm_s((B - A) / (B - A).length()),
                                                    machine_limits.proportional_max_no_accel_velocity_mm_s((C - B) / (C - B).length())),
@@ -300,7 +304,9 @@ program_t apply_limits_for_turns(const program_t& program_states,
                     std::min(machine_limits.proportional_max_velocity_mm_s((B - A) / B_A),
                         machine_limits.proportional_max_velocity_mm_s((C - B) / C_B)));
                 if (std::isnan(y)) y = ret_states[i]['F'];
-                if (ret_states[i]['F'] == 0.0) throw std::invalid_argument("feedrate cannot be 0");
+                if (ret_states[i]['F'] == 0.0) {
+                    throw std::invalid_argument("feedrate cannot be 0:\n" + back_to_gcode({ret_states}));
+                }
                 double result_f =
                     std::min(y,
                         ret_states[i]['F']);
@@ -330,6 +336,88 @@ program_t apply_limits_for_turns(const program_t& program_states,
     return ret_states;
 }
 
+
+auto do_the_acceleration_limiting = [](auto program, const configuration::limits& machine_limits) {
+    using namespace raspigcd::movement::physics;
+
+    auto current_state = merge_blocks({
+                                          {'X', 0.0},
+                                          {'Y', 0.0},
+                                          {'Z', 0.0},
+                                          {'A', 0.0},
+                                          {'F', 0.1},
+                                      },
+        program.front());
+    program_t result = program;
+    //result.push_back(current_state);
+    int walk_direction = 1;
+    for (unsigned int i = 1; (i < program.size()) && (i > 0); i += walk_direction) {
+        auto next_state = program[i];
+        //current_state
+        auto A = block_to_distance_t(current_state);
+        auto B = block_to_distance_t(next_state);
+        auto ABvec = B - A;
+        double s = ABvec.length();
+        if (s == 0) {
+            //result.push_back(next_state);
+        } else {
+            if (current_state['F'] == next_state['F']) {
+                //result.push_back(next_state);
+            } else {
+                double max_a = machine_limits.proportional_max_accelerations_mm_s2(ABvec / s);
+                //double max_v = machine_limits.proportional_max_velocity_mm_s(ABvec / s);
+                double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s) / 2.0;
+                min_v = std::min(min_v, next_state['F']);
+
+                path_node_t pnA = {.p = A, .v = current_state['F']};
+                path_node_t pnB = {.p = B, .v = next_state['F']};
+                double a_AB = acceleration_between(pnA, pnB);
+
+                bool inverted_order = false;
+                if (a_AB < 0) {
+                    inverted_order = true;
+                    std::swap(pnA, pnB);
+                }
+
+                if (a_AB <= std::abs(max_a)) {
+                    //result.push_back(next_state);
+                } else {
+                    double range = std::abs(acceleration_between(pnA, pnB)) / 2.0;
+                    auto r = std::abs(max_a);
+                    for (int i = 0; i < 16; i++) {
+                        auto l = std::abs(acceleration_between(pnA, pnB));
+                        if (l > r) {
+                            pnB.v = pnB.v - range;
+                            if (pnB.v < 0.0001) pnB.v = 0.0001;
+                        } else if (l < r) {
+                            pnB.v = pnB.v + range;
+                        } else
+                            break;
+                        if (pnB.v < min_v) {
+                            pnB.v = min_v;
+                        }
+                        if (pnB.v > next_state['F']) {
+                            pnB.v = next_state['F'];
+                        }
+                        range = range / 2;
+                    }
+                    if (inverted_order) {
+                        std::swap(pnA, pnB);
+                        walk_direction *= -1;
+                    }
+                    next_state['F'] = pnB.v;
+                    //result.push_back(next_state);
+                    result[i] = next_state;
+                }
+            }
+        }
+        if ((i == 1) && (walk_direction == -1)) walk_direction = 1;
+        current_state = next_state;
+    }
+    return result;
+};
+
+
 program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
     const configuration::limits& machine_limits,
     block_t current_state0)
@@ -352,6 +440,7 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
             auto ABvec = B - A;
             double s = ABvec.length();
             if (s == 0) {
+                if (next_state.count('F')) result.back()['F'] = next_state['F'];
                 //result.push_back(next_state);
             } else {
                 result.push_back(next_state);
@@ -363,88 +452,12 @@ program_t g1_move_to_g1_with_machine_limits(const program_t& program_states,
     }
     result.shrink_to_fit();
     auto result_with_limits = apply_limits_for_turns(result, machine_limits);
-    auto do_the_acceleration_limiting = [&machine_limits](auto program) {
-        auto current_state = merge_blocks({
-                                              {'X', 0.0},
-                                              {'Y', 0.0},
-                                              {'Z', 0.0},
-                                              {'A', 0.0},
-                                              {'F', 0.1},
-                                          },
-            program.front());
-        program_t result = program;
-        //result.push_back(current_state);
-        int walk_direction = 1;
-        for (unsigned int i = 1; (i < program.size()) && (i > 0); i += walk_direction) {
-            auto next_state = program[i];
-            //current_state
-            auto A = block_to_distance_t(current_state);
-            auto B = block_to_distance_t(next_state);
-            auto ABvec = B - A;
-            double s = ABvec.length();
-            if (s == 0) {
-                //result.push_back(next_state);
-            } else {
-                if (current_state['F'] == next_state['F']) {
-                    //result.push_back(next_state);
-                } else {
-                    double max_a = machine_limits.proportional_max_accelerations_mm_s2(ABvec / s);
-                    //double max_v = machine_limits.proportional_max_velocity_mm_s(ABvec / s);
-                    double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s) / 2.0;
-                    min_v = std::min(min_v, next_state['F']);
-
-                    path_node_t pnA = {.p = A, .v = current_state['F']};
-                    path_node_t pnB = {.p = B, .v = next_state['F']};
-                    double a_AB = acceleration_between(pnA, pnB);
-
-                    bool inverted_order = false;
-                    if (a_AB < 0) {
-                        inverted_order = true;
-                        std::swap(pnA, pnB);
-                    }
-
-                    if (a_AB <= std::abs(max_a)) {
-                        //result.push_back(next_state);
-                    } else {
-                        double range = std::abs(acceleration_between(pnA, pnB)) / 2.0;
-                        auto r = std::abs(max_a);
-                        for (int i = 0; i < 16; i++) {
-                            auto l = std::abs(acceleration_between(pnA, pnB));
-                            if (l > r) {
-                                pnB.v = pnB.v - range;
-                                if (pnB.v < 0.0001) pnB.v = 0.0001;
-                            } else if (l < r) {
-                                pnB.v = pnB.v + range;
-                            } else
-                                break;
-                            if (pnB.v < min_v) {
-                                pnB.v = min_v;
-                            }
-                            if (pnB.v > next_state['F']) {
-                                pnB.v = next_state['F'];
-                            }
-                            range = range / 2;
-                        }
-                        if (inverted_order) {
-                            std::swap(pnA, pnB);
-                            walk_direction *= -1;
-                        }
-                        next_state['F'] = pnB.v;
-                        //result.push_back(next_state);
-                        result[i] = next_state;
-                    }
-                }
-            }
-            if ((i == 1) && (walk_direction == -1)) walk_direction = 1;
-            current_state = next_state;
-        }
-        return result;
-    };
+    if (result_with_limits.size() != result.size()) throw std::invalid_argument("result_with_limits shoud have equal size to result");
 
     std::reverse(result_with_limits.begin(), result_with_limits.end());
-    result_with_limits = do_the_acceleration_limiting(result_with_limits);
+    result_with_limits = do_the_acceleration_limiting(result_with_limits, machine_limits);
     std::reverse(result_with_limits.begin(), result_with_limits.end());
-    result_with_limits = do_the_acceleration_limiting(result_with_limits);
+    result_with_limits = do_the_acceleration_limiting(result_with_limits, machine_limits);
     result_with_limits.erase(result_with_limits.begin());
     return result_with_limits;
 }
@@ -455,6 +468,10 @@ program_t g0_move_to_g1_sequence(const program_t& program_states,
 {
     using namespace raspigcd::movement::physics;
     if (program_states.size() == 0) throw std::invalid_argument("there must be at least one G0 code in the program!");
+    //double minimal_feedrate_from_gcode = 10000000.0;
+    //for (const auto &e: program_states) {
+    //    if (e.count('F')) minimal_feedrate_from_gcode = std::min(minimal_feedrate_from_gcode,e.at('F'));
+    //}
     program_t result;
     for (const auto& ps_input : program_states) {
         auto next_state = merge_blocks(current_state, ps_input);
@@ -513,6 +530,15 @@ program_t g0_move_to_g1_sequence(const program_t& program_states,
             throw std::invalid_argument("g0 should be the only type of the commands in the program for g0_move_to_g1_sequence");
         current_state = next_state;
     }
+    // for (const auto &e: result) {
+    //     //if (e.count('F')) minimal_feedrate_from_gcode = std::min(minimal_feedrate_from_gcode,e.at('F'));
+    //     if (e.count('F')) {
+    //         if (e.at('F') < 0.001) {
+    //             std::cerr << block_to_distance_with_v_t(e) << std::endl;
+    //             throw std::invalid_argument("");
+    //         }
+    //     }
+    // }
     return result;
 }
 
@@ -565,12 +591,6 @@ partitioned_program_t group_gcode_commands(const program_t& program_states, cons
         } else {
             if (e.count('G')) {
                 if (generated_program.back().back().count('G')) {
-                    //if (((generated_program.back().front().at('G') == 0) && (e.at('G') == 0)) ||
-                    //    ((generated_program.back().front().at('G') == 1) && (e.at('G') == 1)) ||
-                    //    ((generated_program.back().front().at('G') == 2) && (e.at('G') == 2)) ||
-                    //    ((generated_program.back().front().at('G') == 3) && (e.at('G') == 3)) ||
-                    //    ((generated_program.back().front().at('G') == 4) && (e.at('G') == 4))) {
-                    //    generated_program.back().push_back(e);
                     if ((generated_program.back().front().at('G') == e.at('G'))) {
                         generated_program.back().push_back(e);
                     } else {
@@ -660,8 +680,6 @@ std::map<char, double> command_to_map_of_arguments(const std::string& command__)
 }
 
 
-
-
 program_t optimize_path_douglas_peucker_g(const program_t& program_, const double epsilon, const block_t& p0_)
 {
     std::vector<distance_with_velocity_t> path;
@@ -716,17 +734,23 @@ program_t optimize_path_douglas_peucker_g(const program_t& program_, const doubl
         }
     };
     optimizePathDP(epsilon, 0, path.size() - 1);
-    //std::cout << "PATH:" << std::endl;
-    //for (unsigned i = 0; i < path.size(); i++) {
-    //    auto e = path[i];
-    //    std::cout << e << " " << (toDelete[i]?"DELETE":"keep") << std::endl;
-    //}
+    std::cout << "PATH:" << std::endl;
+    for (unsigned i = 0; i < path.size(); i++) {
+        auto e = path[i];
+        std::cout << e << " " << (toDelete[i]?"DELETE":"keep") << std::endl;
+        if (i>0) {
+            if (path[i].back() != path[i-1].back())toDelete[i] = false;
+        }
+        if (i < path.size()-1) {
+           if (path[i].back() != path[i+1].back())toDelete[i] = false;
+        }
+    }
     for (unsigned int from = 0; from < toDelete.size(); from++) {
         int fto = from;
         while (toDelete[fto]) {
             fto++;
-        } 
-        std::swap(toDelete[fto],toDelete[from]);
+        }
+        std::swap(toDelete[fto], toDelete[from]);
         from = fto;
     }
     //std::cout << "TDEL:" << std::endl;
@@ -734,7 +758,7 @@ program_t optimize_path_douglas_peucker_g(const program_t& program_, const doubl
     //    auto e = path[i];
     //    std::cout << e << " " << (toDelete[i]?"DELETE":"keep") << std::endl;
     //}
-    
+
     program_t ret;
     ret.reserve(program_.size());
     unsigned int idx_in_program = 0;
@@ -746,8 +770,8 @@ program_t optimize_path_douglas_peucker_g(const program_t& program_, const doubl
         }
     };
     for (unsigned int i = 1; i < path.size(); i++) {
-//        std::cout << "++ i " << i << "  idx_in_program " << idx_in_program << " ;;; toDelete: " << 
-//        (toDelete[i]?"delete":"keep") << std::endl;
+        //        std::cout << "++ i " << i << "  idx_in_program " << idx_in_program << " ;;; toDelete: " <<
+        //        (toDelete[i]?"delete":"keep") << std::endl;
         qpsh();
         if (!toDelete[i]) {
             //std::cout << "     push " << idx_in_program << std::endl;
@@ -761,6 +785,7 @@ program_t optimize_path_douglas_peucker_g(const program_t& program_, const doubl
     }
     qpsh();
     ret.shrink_to_fit();
+    //for (auto &p:ret) if (p.count('F')) p['F'] /= 100.0;
     return ret;
 }
 
@@ -768,12 +793,12 @@ program_t optimize_path_douglas_peucker(const program_t& program_, const double 
 {
     program_t ret;
     block_t state = p0_;
-    for (auto e: group_gcode_commands(program_)) {
-       // std::cout << "e: " << e.size() << std::endl;
-        auto pp = optimize_path_douglas_peucker_g( e, epsilon, p0_);
-       // std::cout << "pp: " << pp.size() << std::endl;
+    for (auto e : group_gcode_commands(program_)) {
+        // std::cout << "e: " << e.size() << std::endl;
+        auto pp = optimize_path_douglas_peucker_g(e, epsilon, p0_);
+        // std::cout << "pp: " << pp.size() << std::endl;
         state = last_state_after_program_execution(e, state);
-        ret.insert(ret.end(),pp.begin(),pp.end());
+        ret.insert(ret.end(), pp.begin(), pp.end());
     }
     return ret;
 }
