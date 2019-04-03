@@ -175,6 +175,9 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
     using namespace raspigcd::gcd;
     using namespace raspigcd::movement::simple_steps;
     using namespace movement::physics;
+
+    std::cout << back_to_gcode({prog_}) << std::endl;
+
     gcd::block_t state = initial_state_;
     std::list<multistep_command> result;
     double dt = ((double)conf_.tick_duration_us) / 1000000.0;
@@ -196,7 +199,14 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
         state=next_state;
     }
     finish_callback_f_(state);
-    distances = optimize_path_dp(distances, std::max(arc_length*2.0,0.1));
+    distances = optimize_path_dp(distances, std::max(arc_length*2.0,0.01));
+    //if (distances.size() == 2) {
+    //    distances = {
+    //        distances[0], (distances[0] + distances[1])*0.5 ,distances[1]
+    //    };
+    //}
+    //distances[0].back() = 0.05;
+    //distances.back().back() = 0.05;
     std::cout << "distances count is " << distances.size() << std::endl;
 
     state = initial_state_;
@@ -224,11 +234,6 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
             multistep_commands_t steps_todo;
 
             auto pos_to_steps = ml_.cartesian_to_steps(dest_pos);
-            //chase_steps(steps_todo,current_steps, stps);
-            //smart_append(result,steps_todo);
-            //current_steps = stps;
-
-
             chase_steps(steps_todo, pos_from_steps, pos_to_steps);
             smart_append(result,steps_todo);
             //auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );

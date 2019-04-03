@@ -118,7 +118,7 @@ double acceleration_between(const path_node_t &a, const path_node_t &b) {
         }
     }
     #ifndef NDEBUG
-    std::cout << "WARNING: not precise result: double acceleration_between(const path_node_t &a, const path_node_t &b) : s: " << s <<" dv " << dv << "    tt " << tt << std::endl;
+    // std::cout << "WARNING: not precise result: double acceleration_between(const path_node_t &a, const path_node_t &b) : s: " << s <<" dv " << dv << "    tt " << tt << std::endl;
     #endif
     return (a_max + a_min)/2.0;
 }
