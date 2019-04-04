@@ -399,77 +399,6 @@ auto do_the_acceleration_limiting = [](auto program, const configuration::limits
             }
         }
     }
-    /*    
-    for (unsigned int i = 1; (i < program.size()) && (i >= 0); prev_i = i, i += walk_direction) {
-        auto &next_state = result[i];
-        auto &current_state = result[prev_i];
-        //current_state
-        auto A = block_to_distance_t(current_state);
-        auto B = block_to_distance_t(next_state);
-        auto ABvec = B - A;
-        double s = ABvec.length();
-        if (s == 0) {
-            //result.push_back(next_state);
-        } else {
-            if (current_state['F'] == next_state['F']) {
-                //result.push_back(next_state);
-            } else {
-                double max_a = machine_limits.proportional_max_accelerations_mm_s2(ABvec / s);
-                //double max_v = machine_limits.proportional_max_velocity_mm_s(ABvec / s);
-                double min_v = machine_limits.proportional_max_no_accel_velocity_mm_s(ABvec / s) / 2.0;
-                min_v = std::min(min_v, next_state['F']);
-
-                path_node_t pnA = {.p = A, .v = current_state['F']};
-                path_node_t pnB = {.p = B, .v = next_state['F']};
-                double a_AB = acceleration_between(pnA, pnB);
-
-                bool inverted_order = false;
-                if (a_AB < 0) {
-                    inverted_order = true;
-                    std::swap(pnA, pnB);
-                }
-
-                if (std::abs(a_AB) <= std::abs(max_a)) {
-                    //result.push_back(next_state);
-                } else {
-                    / *double range = std::abs(acceleration_between(pnA, pnB)) / 2.0;
-                    auto r = std::abs(max_a);
-                    for (int i = 0; i < 16; i++) {
-                        auto l = std::abs(acceleration_between(pnA, pnB));
-                        if (l > r) {
-                            pnB.v = pnB.v - range;
-                            if (pnB.v < 0.0001) pnB.v = 0.0001;
-                        } else if (l < r) {
-                            pnB.v = pnB.v + range;
-                        } else
-                            break;
-                        if (pnB.v < min_v) {
-                            pnB.v = min_v;
-                        }
-                        if (pnB.v > next_state['F']) {
-                            pnB.v = next_state['F'];
-                        }
-                        range = range / 2;
-                    }
-                    if (inverted_order) {
-                        std::swap(pnA, pnB);
-                        walk_direction *= -1;
-                    }
-                    next_state['F'] = pnB.v;
-                    //result.push_back(next_state);
-                    result[i] = next_state;
-                    * /
-                   if (pnA.v > pnB.v) {
-                       next_state['F'] = next_state['F'] * 0.8;
-                       walk_direction *= -1;
-                   } else if (pnA.v < pnB.v) {
-                       current_state['F'] = current_state['F'] * 0.8;
-                   }
-                }
-            }
-        }
-        if ((i == 0) && (walk_direction == -1)) walk_direction = 1;
-    } */
     return result;
 };
 
@@ -741,7 +670,7 @@ program_t optimize_path_douglas_peucker_g(const program_t& program_, const doubl
     std::vector<distance_with_velocity_t> path;
     path.reserve(program_.size());
     auto is_block_a_new_position = [](const block_t& e) {
-        if (e.count('M') == 0) {
+        if ((e.count('M') == 0) && (e.count('G') != 0)) {
             switch ((int)(e.at('G'))) {
             case 0:
             case 1:
@@ -796,19 +725,25 @@ program_t optimize_path_douglas_peucker_g(const program_t& program_, const doubl
         //std::cout << e << " " << (toDelete[i]?"DELETE":"keep") << std::endl;
         if (i > 0) {
             if (path[i].back() != path[i - 1].back()) toDelete[i] = false;
+            if (i > 1) {
+            if (!is_block_a_new_position(program_[i-2])) toDelete[i] = false;
+            }
         }
         if (i < path.size() - 1) {
             if (path[i].back() != path[i + 1].back()) toDelete[i] = false;
+            if (i < path.size() - 2) {
+                if (!is_block_a_new_position(program_[i])) toDelete[i] = false;
+            }
         }
     }
-    for (unsigned int from = 0; from < toDelete.size(); from++) {
-        int fto = from;
-        while (toDelete[fto]) {
-            fto++;
-        }
-        std::swap(toDelete[fto], toDelete[from]);
-        from = fto;
-    }
+    //for (unsigned int from = 0; from < toDelete.size(); from++) {
+    //    int fto = from;
+    //    while (toDelete[fto]) {
+    //        fto++;
+    //    }
+    //    std::swap(toDelete[fto], toDelete[from]);
+    //    from = fto;
+    //}
     //std::cout << "TDEL:" << std::endl;
     //for (unsigned i = 0; i < path.size(); i++) {
     //    auto e = path[i];
