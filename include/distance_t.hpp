@@ -285,6 +285,9 @@ void beizer_spline(const std::vector<generic_position_t<double,N>> &path,
                    const double dt, const double arc_l = 1.0, const bool velocity_included = true);
 
 
+template<class T>
+void optimize_generic_path_dp(double epsilon, int start, int end, const std::vector<T> &path, std::vector<char> &to_delete);
+
 std::vector <distance_with_velocity_t> optimize_path_dp(std::vector <distance_with_velocity_t> &path, double epsilon);
 
 

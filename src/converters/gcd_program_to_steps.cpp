@@ -176,7 +176,7 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
     using namespace raspigcd::movement::simple_steps;
     using namespace movement::physics;
 
-    std::cout << back_to_gcode({prog_}) << std::endl;
+    // std::cout << back_to_gcode({prog_}) << std::endl;
 
     gcd::block_t state = initial_state_;
     std::list<multistep_command> result;
@@ -194,40 +194,41 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
         } else if (next_state.at('G') == 4) {
             throw std::invalid_argument("G4 is not supported in spline mode");
         } else if ((next_state.at('G') == 1) || (next_state.at('G') == 0)) {
-            distances.push_back(block_to_distance_with_v_t(state));
+            distances.push_back(block_to_distance_with_v_t(next_state));
         }
-        state=next_state;
+        state = next_state;
     }
     finish_callback_f_(state);
-    distances = optimize_path_dp(distances, std::max(arc_length*2.0,0.01));
-    //if (distances.size() == 2) {
-    //    distances = {
-    //        distances[0], (distances[0] + distances[1])*0.5 ,distances[1]
-    //    };
-    //}
-    //distances[0].back() = 0.05;
-    //distances.back().back() = 0.05;
-    std::cout << "distances count is " << distances.size() << std::endl;
+    distances = optimize_path_dp(distances, std::max(arc_length * 0.5, 0.01));
+    // remove nodes that are touching each other (by using its average coordinate)
+    distances = [&distances, &arc_length]() {
+        std::vector<distance_with_velocity_t> ret;
+        distance_with_velocity_t* prev = nullptr;
+        for (auto& e : distances) {
+            if (prev != nullptr) {
+                distance_t a = {(*prev)[0], (*prev)[1], (*prev)[2]};
+                distance_t b = {e[0], e[1], e[2]};
+                if ((b - a).length() >= arc_length * e[3]) {
+                    ret.push_back(e);
+                } else {
+                    ret.back() = e;
+                }
+            } else {
+                ret.push_back(e);
+            }
+            prev = &e;
+        }
+        return ret;
+    }();
 
     state = initial_state_;
     distance_with_velocity_t pp0 = distances.front();
     steps_t pos_from_steps = ml_.cartesian_to_steps({pp0[0], pp0[1], pp0[2], pp0[3]});
-    {
-        distance_t dest_pos = block_to_distance_t(state);
-        for (auto p : state) {
-            std::cout << "state[" << p.first << "] = " << p.second << std::endl;
-        }
-        for (auto p : initial_state_) {
-            std::cout << "initial_state_[" << p.first << "] = " << p.second << std::endl;
-        }
-        std::cout << "dest_pos       " << dest_pos[0] << " " << dest_pos[1] << " " << dest_pos[2] << " " << dest_pos[3] << std::endl;
-        std::cout << "dest_pos       " << dest_pos[0] << " " << dest_pos[1] << " " << dest_pos[2] << " " << dest_pos[3] << std::endl;
-        std::cout << "GO-FROM steps " << pos_from_steps[0] << " " << pos_from_steps[1] << " " << pos_from_steps[2] << " " << pos_from_steps[3] << std::endl;
-        //throw std::invalid_argument("too many steps - fix your settings");
-    }
     std::list<multistep_command> fragment; // fraagment of the commands list generated in this stage
-    for (auto& pp : distances)
+    for (auto& pp : distances) {
         pp.back() = std::max(pp.back(), 0.01); // make v more reasonable
+    }
+
     beizer_spline<5>(distances, [&](const distance_with_velocity_t& position) {
         if (!(position == pp0)) {
             distance_t dest_pos = {position[0], position[1], position[2], position[3]};
@@ -235,25 +236,16 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
 
             auto pos_to_steps = ml_.cartesian_to_steps(dest_pos);
             chase_steps(steps_todo, pos_from_steps, pos_to_steps);
-            smart_append(result,steps_todo);
-            //auto collapsed = __generate_g1_steps( state, next_state, dt, ml_ );
+            smart_append(result, steps_todo);
             //result.insert(result.end(), steps_todo.begin(), steps_todo.end());
             if (result.size() > 1024 * 1024 * 64) {
                 std::cerr << "bezier_spline_program_to_steps: problem in generating steps - the size is too big: " << result.size() << "; p: " << position << std::endl;
                 throw std::invalid_argument("bezier_spline_program_to_steps: problem in generating steps - the size is too big");
             }
-
-            //std::cout << "P Pos         " << position[0] << " " << position[1] << " " << position[2] << " " << position[3] << std::endl;
-            //std::cout << "GO-FROM steps " << pos_from_steps[0] << " " << pos_from_steps[1] << " " << pos_from_steps[2] << " " << pos_from_steps[3] << std::endl;
-            //std::cout << "GO-TO   steps " << pos_to_steps[0] << " " << pos_to_steps[1] << " " << pos_to_steps[2] << " " << pos_to_steps[3] << std::endl;
-            //throw std::invalid_argument("too many steps - fix your settings");
-
             pos_from_steps = pos_to_steps;
         }
     },
         dt, arc_length);
-    //   return collapse_repeated_steps(fragment);
-
     return collapse_repeated_steps(result);
 }
 

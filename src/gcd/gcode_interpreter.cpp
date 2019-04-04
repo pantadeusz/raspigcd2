@@ -313,7 +313,7 @@ program_t apply_limits_for_turns(const program_t& program_states,
                 if (ret_states[i]['F'] == 0.0) {
                     throw std::invalid_argument("feedrate cannot be 0:\n" + back_to_gcode({ret_states}));
                 }
-                std::cout << A << B << C << " || angle: " << angle << "y:" << y << " r_states['F']:" << (ret_states[i]['F']) << std::endl;
+                // std::cout << A << B << C << " || angle: " << angle << "y:" << y << " r_states['F']:" << (ret_states[i]['F']) << std::endl;
                 double result_f =
                     std::min(y,
                         ret_states[i]['F']);
@@ -692,33 +692,7 @@ program_t optimize_path_douglas_peucker_g(const program_t& program_, const doubl
     std::vector<char> toDelete(path.size());
     for (auto& e : toDelete)
         e = false;
-    //DouglasPeucker algorithm
-    std::function<void(double, int, int)> optimizePathDP = [&](double epsilon, int start, int end) {
-        double dmax = 0;
-        int index = 0;
-        for (int i = start + 1; i < end; i++) {
-            if (!toDelete[i]) {
-                auto d = point_segment_distance_3d(path[i], path[start], path[end]);
-                if (d > dmax) {
-                    index = i;
-                    dmax = d;
-                }
-            }
-        }
-        if (dmax > epsilon) {
-            optimizePathDP(epsilon, start, index);
-            optimizePathDP(epsilon, index, end);
-        } else {
-            if (start == end)
-                return;
-            else {
-                for (int i = start + 1; i < end; i++) {
-                    toDelete[i] = true;
-                }
-            }
-        }
-    };
-    optimizePathDP(epsilon, 0, path.size() - 1);
+    optimize_generic_path_dp(epsilon, 0, path.size() - 1, path, toDelete);
     //std::cout << "PATH:" << std::endl;
     for (unsigned i = 0; i < path.size(); i++) {
         //auto e = path[i];
