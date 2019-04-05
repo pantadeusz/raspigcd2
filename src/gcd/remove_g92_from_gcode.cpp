@@ -33,6 +33,10 @@ program_t remove_g92_from_gcode(const program_t& input_program_)
     distance_t current_shift;
     block_t current_state;
     for (auto e : input_program_) {
+        for (auto &[k,v]:e) {
+            v = ((int)(v * 1024.0));
+            v = v/1024.0;
+        }
         if (e.count('G') && ((int)e.at('G') == (int)92)) {
             auto new_pos = block_to_distance_t(merge_blocks(current_state, e));
             auto old_pos = block_to_distance_t(current_state);
