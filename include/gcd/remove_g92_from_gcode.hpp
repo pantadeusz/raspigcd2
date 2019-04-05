@@ -18,20 +18,20 @@
 */
 
 
-
-#include <gcd/remove_g4_from_gcode.hpp>
-#include <movement/physics.hpp>
-#include <movement/simple_steps.hpp>
+#ifndef __CONVERTERS_REMOVE_G4_FROM_GCODE_HPP___
+#define __CONVERTERS_REMOVE_G4_FROM_GCODE_HPP___
 
 #include <functional>
+#include <gcd/gcode_interpreter.hpp>
+#include <hardware/stepping_commands.hpp>
+#include <hardware_dof_conf.hpp>
 
 namespace raspigcd {
 namespace gcd {
 
-program_t remove_g4_from_gcode(const program_t &input_program_){
-    return input_program_;
-}
+program_t remove_g92_from_gcode(const program_t &input_program_);
 
-// sgcd::program_t 
-} // namespace converters
+}
 } // namespace raspigcd
+
+#endif
