@@ -85,14 +85,14 @@ TEST_CASE("converters - remove_g92_from_gcode - gcodes with G92", "[gcd][convert
 
         REQUIRE(remove_g92_from_gcode(program).size() == 2);
     }
-    SECTION("Test case 1 - we should go back to 0 for the gcode that goes G0X10 G92X10 G0X-10") {
+    SECTION("Test case 2 - we should go back to 0 for the gcode that goes G0X10 G92X10 G0X-10") {
         program_t program = gcode_to_maps_of_arguments("G0X10\nG92X10\nG0X0");
 
         auto result = remove_g92_from_gcode(program);
         REQUIRE(result.at(0).at('X') == Approx(10.0));
         REQUIRE(result.at(1).at('X') == Approx(0.0));
     }
-    SECTION("Test case 1 - we should go back to 0 for the gcode that goes G0X10 G92Y10 G0X0Y10") {
+    SECTION("Test case 3 - we should go back to 0 for the gcode that goes G0X10 G92Y10 G0X0Y10") {
         program_t program = gcode_to_maps_of_arguments("G0X10\nG92Y10\nG0X0Y10");
 
         auto result = remove_g92_from_gcode(program);
@@ -100,5 +100,4 @@ TEST_CASE("converters - remove_g92_from_gcode - gcodes with G92", "[gcd][convert
         REQUIRE(result.at(1).at('X') == Approx(0.0));
         REQUIRE(result.at(1).at('Y') == Approx(0.0));
     }
-
 }
