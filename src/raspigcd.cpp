@@ -480,8 +480,8 @@ int main(int argc, char** argv)
             if (enable_video) {
                 video = std::make_shared<video_sdl>(&cfg, &stepping, (driver::low_buttons_fake*)buttons_drv.get());
             }
-            auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
-            //auto program_to_steps = converters::program_to_steps_factory("bezier_spline"); // TODO
+            //auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
+            auto program_to_steps = converters::program_to_steps_factory("bezier_spline"); // TODO
 
             i++;
             std::ifstream gcd_file(args.at(i));

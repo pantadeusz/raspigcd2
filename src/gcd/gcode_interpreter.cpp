@@ -689,10 +689,7 @@ program_t optimize_path_douglas_peucker_g(const program_t& program_, const doubl
         }
     }
 
-    std::vector<char> toDelete(path.size());
-    for (auto& e : toDelete)
-        e = false;
-    optimize_generic_path_dp(epsilon, 0, path.size() - 1, path, toDelete);
+    std::vector<char> toDelete = optimize_generic_path_dp(epsilon, path);
     //std::cout << "PATH:" << std::endl;
     for (unsigned i = 0; i < path.size(); i++) {
         //auto e = path[i];
@@ -710,20 +707,7 @@ program_t optimize_path_douglas_peucker_g(const program_t& program_, const doubl
             }
         }
     }
-    //for (unsigned int from = 0; from < toDelete.size(); from++) {
-    //    int fto = from;
-    //    while (toDelete[fto]) {
-    //        fto++;
-    //    }
-    //    std::swap(toDelete[fto], toDelete[from]);
-    //    from = fto;
-    //}
-    //std::cout << "TDEL:" << std::endl;
-    //for (unsigned i = 0; i < path.size(); i++) {
-    //    auto e = path[i];
-    //    std::cout << e << " " << (toDelete[i]?"DELETE":"keep") << std::endl;
-    //}
-
+    
     program_t ret;
     ret.reserve(program_.size());
     unsigned int idx_in_program = 0;

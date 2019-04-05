@@ -212,8 +212,9 @@ void beizer_spline(const std::vector<generic_position_t<double, N>>& path,
 
 
 template <class T>
-void optimize_generic_path_dp(double epsilon, int start, int end, const std::vector<T>& path, std::vector<char>& to_delete)
+void optimize_generic_path_dp_inner(double epsilon, int start, int end, const std::vector<T>& path, std::vector<char>& to_delete)
 {
+    if (end == -1) end = path.size() -1;
     assert(to_delete.size() == path.size());
     double dmax = 0;
     int index = 0;
@@ -227,8 +228,8 @@ void optimize_generic_path_dp(double epsilon, int start, int end, const std::vec
         }
     }
     if (dmax > epsilon) {
-        optimize_generic_path_dp(epsilon, start, index, path, to_delete);
-        optimize_generic_path_dp(epsilon, index, end, path, to_delete);
+        optimize_generic_path_dp_inner(epsilon, start, index, path, to_delete);
+        optimize_generic_path_dp_inner(epsilon, index, end, path, to_delete);
     } else {
         if (start == end)
             return;
@@ -240,18 +241,26 @@ void optimize_generic_path_dp(double epsilon, int start, int end, const std::vec
     }
 };
 
-std::vector<distance_with_velocity_t> optimize_path_dp(std::vector<distance_with_velocity_t>& path, double epsilon)
+
+template <class T>
+std::vector<char> optimize_generic_path_dp(double epsilon, const std::vector<T>& path) {
+  std::vector<char> to_delete(path.size(), false);
+  //DouglasPeucker algorithm
+  optimize_generic_path_dp_inner(epsilon, 0, path.size() - 1, path, to_delete);
+  return to_delete;
+}
+
+template <class T>
+std::vector<T> optimize_path_dp(std::vector<T>& path, double epsilon)
 {
-    std::vector<char> to_delete(path.size(), false);
-    //DouglasPeucker algorithm
-    optimize_generic_path_dp(epsilon, 0, path.size() - 1, path, to_delete);
-    std::vector<distance_with_velocity_t> ret;
+    std::vector<char> to_delete = optimize_generic_path_dp( epsilon, path);
+    std::vector<T> ret;
     ret.reserve(path.size());
-    for (int i = 0; i < path.size(); i++) {
+    for (unsigned i = 0; i < path.size(); i++) {
         if (!to_delete[i]) {
             ret.push_back(path[i]);
         } else {
-            std::cerr << "Kasuje wezel " << i << " to znaczy " << path[i] << std::endl;
+            //std::cerr << "Kasuje wezel " << i << " to znaczy " << path[i] << std::endl;
         }
     }
     ret.shrink_to_fit();
@@ -295,6 +304,13 @@ template void beizer_spline<5>(const std::vector<generic_position_t<double, 5>>&
     const double dt,
     const double arc_l,
     const bool velocity_included);
+
+
+template std::vector<generic_position_t<double,2>> optimize_path_dp<generic_position_t<double,2>>(std::vector<generic_position_t<double,2>>& path, double epsilon);
+template std::vector<generic_position_t<double,3>> optimize_path_dp<generic_position_t<double,3>>(std::vector<generic_position_t<double,3>>& path, double epsilon);
+template std::vector<generic_position_t<double,4>> optimize_path_dp<generic_position_t<double,4>>(std::vector<generic_position_t<double,4>>& path, double epsilon);
+template std::vector<generic_position_t<double,5>> optimize_path_dp<generic_position_t<double,5>>(std::vector<generic_position_t<double,5>>& path, double epsilon);
+template std::vector<generic_position_t<double,6>> optimize_path_dp<generic_position_t<double,6>>(std::vector<generic_position_t<double,6>>& path, double epsilon);
 
 
 } // namespace raspigcd
