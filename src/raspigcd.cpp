@@ -45,6 +45,7 @@ This is simple program that uses the library. It will execute given GCode.
 #include <sstream>
 #include <streambuf>
 #include <string>
+#include <tuple>
 
 #include <video.hpp>
 
@@ -389,6 +390,44 @@ partitioned_program_t preprocess_program_parts(partitioned_program_t program_par
     return program_parts;
 }
 
+using low_level_components_t = std::tuple<
+    std::shared_ptr<low_steppers>,
+    std::shared_ptr<low_spindles_pwm>,
+    std::shared_ptr<low_buttons>>;
+
+// void execute_gcode_string(std::string &gcode_string,low_level_components_t llc) {
+//     auto &[steppers_drv, spindles_drv,buttons_drv ] = llc;
+//
+//
+// }
+
+//partitioned_program_t preprocess_gcode() {
+//
+//}
+
+
+program_t enrich_gcode_with_feedrate_commands(const program_t& program_, const configuration::global& cfg)
+{
+    auto program = program_;
+    double previous_feedrate_g1 = 0.1;
+    for (auto& p : program) {
+        if (p.count('G')) {
+            if (p['G'] == 0) {
+                p['F'] = *std::max_element(
+                    std::begin(cfg.max_velocity_mm_s),
+                    std::end(cfg.max_velocity_mm_s));
+            } else if (p['G'] == 1) {
+                if (p.count('F')) {
+                    previous_feedrate_g1 = p['F'];
+                } else {
+                    p['F'] = previous_feedrate_g1;
+                }
+            }
+        }
+    }
+    return program;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -490,45 +529,14 @@ int main(int argc, char** argv)
                 std::istreambuf_iterator<char>());
 
             auto program = gcode_to_maps_of_arguments(gcode_text);
-            double previous_feedrate_g0 = 0.1;
-            for (auto& p : program) {
-                if (p.count('G')) {
-                    if (p['G'] == 0) {
-                        p['F'] = *std::max_element(
-                            std::begin(cfg.max_velocity_mm_s),
-                            std::end(cfg.max_velocity_mm_s));
-                    } else if (p['G'] == 1) {
-                        if (p.count('F')) {
-                            previous_feedrate_g0 = p['F'];
-                        } else {
-                            p['F'] = previous_feedrate_g0;
-                        }
-                    }
-                }
-            }
-            if (save_to_files_list.size() > 0) {
-                std::cout << "SAVING RAW FILE TO: " << (save_to_files_list.front() + ".stage0") << std::endl;
-                std::fstream f(save_to_files_list.front() + ".stage0", std::fstream::out);
-                f << back_to_gcode(group_gcode_commands(program)) << std::endl;
-            }
+            program = enrich_gcode_with_feedrate_commands(program, cfg);
             if (!raw_gcode) {
                 program = optimize_path_douglas_peucker(program, cfg.douglas_peucker_marigin);
-                if (save_to_files_list.size() > 0) {
-                    std::cout << "SAVING optimize_path_douglas_peucker FILE TO: " << (save_to_files_list.front() + ".stage1") << std::endl;
-                    std::fstream f(save_to_files_list.front() + ".stage1", std::fstream::out);
-                    f << back_to_gcode(group_gcode_commands(program)) << std::endl;
-                }
             }
             auto program_parts = group_gcode_commands(program);
             block_t machine_state = {{'F', 0.5}};
-
             if (!raw_gcode) {
                 program_parts = insert_additional_nodes_inbetween(program_parts, machine_state, cfg);
-                if (save_to_files_list.size() > 0) {
-                    std::cout << "SAVING insert_additional_nodes_inbetween FILE TO: " << (save_to_files_list.front() + ".stage2") << std::endl;
-                    std::fstream f(save_to_files_list.front() + ".stage2", std::fstream::out);
-                    f << back_to_gcode(program_parts) << std::endl;
-                }
                 program_parts = preprocess_program_parts(program_parts, cfg);
             } // if prepare paths
             std::atomic<int> break_execution_result = -1;
@@ -568,7 +576,7 @@ int main(int argc, char** argv)
             }
 
 
-            std::cout << "STARTING" << std::endl;
+            std::cout << "STARTING...." << std::endl;
 
             if (save_to_files_list.size() > 0) {
                 std::cout << "SAVING PREPROCESSED FILE TO: " << save_to_files_list.front() << std::endl;
@@ -634,10 +642,6 @@ int main(int argc, char** argv)
                                             std::cout << "wait for spindle..." << std::endl;
                                             std::this_thread::sleep_for(std::chrono::milliseconds(last_spindle_on_delay));
                                             std::cout << "wait for spindle... OK" << std::endl;
-                                            //                                            machine_state['X'] = ;
-                                            //                                            machine_state['Y'] = ;
-                                            //                                            machine_state['Z'] = ;
-                                            //                                            machine_state['A'] = ;
                                         }
                                     }
                                     int r = break_execution_result;

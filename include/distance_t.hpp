@@ -273,6 +273,21 @@ inline double point_segment_distance_3d(const generic_position_t<T,N>& A, const 
 
 //distance_t bezier(const std::vector<distance_t> &p, const double t);
 
+// /**
+//  * follows the path where first coordinates are position, and last coordinate is velocity.
+//  * It will execute on_point for each next position with given velocity and dt
+//  * @param path_points_with_velocity poins of path with velocity
+//  * @param on_point callback function that will be executed for each point
+//  * @param dt - time frame
+//  * @param min_velocity - minimal accepted velocity. Note that velocity of 0 will result in infinite loop
+//  * */
+// template <std::size_t N>
+// void follow_path_with_velocity(
+//     const std::vector<generic_position_t<double, N>> &path_points_with_velocity,
+//     std::function<void(const generic_position_t<double, N>& position)> on_point,
+//     double dt,
+//     const double min_velocity = 0.025
+// );
 
 /**
  * @brief @untested

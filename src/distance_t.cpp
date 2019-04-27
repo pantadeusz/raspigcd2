@@ -39,6 +39,43 @@ T generic_position_t<T, N>::sumv() const
 }
 
 template <std::size_t N>
+void follow_path_with_velocity(
+    const std::vector<generic_position_t<double, N>> &path_points_with_velocity,
+    std::function<void(const generic_position_t<double, N>& position)> on_point,
+    const double dt,
+    const double min_velocity
+) {
+    if (path_points_with_velocity.size() > 0) {
+        double curr_dist = 0.0;
+        auto pos = path_points_with_velocity.front();
+        generic_position_t<double, N> ndistv;
+        for (unsigned i = 0; i < path_points_with_velocity.size();) {
+            auto current_point = path_points_with_velocity[i].back(); 
+            if (current_point < min_velocity) {
+                std::cerr << "beizer_spline: velocity too small [" << i << "] " << path_points_with_velocity[i] << std::endl;
+                current_point = min_velocity;
+            }
+            double target_dist = current_point * dt;
+            ndistv = path_points_with_velocity[i] - pos;
+            ndistv.back() = 0;
+            double ndist = ndistv.length();
+            if ((curr_dist + ndist) >= target_dist) {
+                auto mv = (ndistv / ndist) * (target_dist - curr_dist);
+                pos = pos + mv;
+                on_point(pos);
+                curr_dist = 0.0;
+            } else {
+                curr_dist += ndist;
+                pos = path_points_with_velocity[i];
+                i++;
+            }
+        }
+        //        on_point(pos);
+    }
+}
+
+
+template <std::size_t N>
 void beizer_spline(const std::vector<generic_position_t<double, N>>& path,
     std::function<void(const generic_position_t<double, N>& position)> on_point,
     const double dt,
@@ -311,6 +348,27 @@ template std::vector<generic_position_t<double,3>> optimize_path_dp<generic_posi
 template std::vector<generic_position_t<double,4>> optimize_path_dp<generic_position_t<double,4>>(std::vector<generic_position_t<double,4>>& path, double epsilon);
 template std::vector<generic_position_t<double,5>> optimize_path_dp<generic_position_t<double,5>>(std::vector<generic_position_t<double,5>>& path, double epsilon);
 template std::vector<generic_position_t<double,6>> optimize_path_dp<generic_position_t<double,6>>(std::vector<generic_position_t<double,6>>& path, double epsilon);
+template std::vector<char > 
+optimize_generic_path_dp<raspigcd::generic_position_t<double, 5ul> >
+(double, std::vector<generic_position_t<double, 5ul>, std::allocator<generic_position_t<double, 5ul> > > const&);
 
+
+
+template void follow_path_with_velocity<2>(const std::vector<generic_position_t<double, 2>> &path_points_with_velocity,
+    std::function<void(const generic_position_t<double, 2>& position)> on_point, double dt,
+    const double min_velocity
+);
+template void follow_path_with_velocity<3>(const std::vector<generic_position_t<double, 3>> &path_points_with_velocity,
+    std::function<void(const generic_position_t<double, 3>& position)> on_point, double dt,
+    const double min_velocity
+);
+template void follow_path_with_velocity<4>(const std::vector<generic_position_t<double, 4>> &path_points_with_velocity,
+    std::function<void(const generic_position_t<double, 4>& position)> on_point, double dt,
+    const double min_velocity
+);
+template void follow_path_with_velocity<5>(const std::vector<generic_position_t<double, 5>> &path_points_with_velocity,
+    std::function<void(const generic_position_t<double, 5>& position)> on_point, double dt,
+    const double min_velocity
+);
 
 } // namespace raspigcd
