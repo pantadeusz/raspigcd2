@@ -35,6 +35,7 @@ This is simple program that uses the library. It will execute given GCode.
 #include <hardware/driver/raspberry_pi.hpp>
 #include <hardware/motor_layout.hpp>
 #include <hardware/stepping.hpp>
+#include <gcd/remove_g92_from_gcode.hpp>
 
 #include <configuration_json.hpp>
 
@@ -520,7 +521,9 @@ int main(int argc, char** argv)
                 video = std::make_shared<video_sdl>(&cfg, &stepping, (driver::low_buttons_fake*)buttons_drv.get());
             }
             //auto program_to_steps = converters::program_to_steps_factory("program_to_steps");
-            auto program_to_steps = converters::program_to_steps_factory("bezier_spline"); // TODO
+            //auto program_to_steps = converters::program_to_steps_factory("bezier_spline"); // TODO
+            auto program_to_steps = converters::program_to_steps_factory("linear_interpolation"); // TODO
+            
 
             i++;
             std::ifstream gcd_file(args.at(i));
@@ -530,6 +533,7 @@ int main(int argc, char** argv)
 
             auto program = gcode_to_maps_of_arguments(gcode_text);
             program = enrich_gcode_with_feedrate_commands(program, cfg);
+            program = remove_g92_from_gcode(program);
             if (!raw_gcode) {
                 program = optimize_path_douglas_peucker(program, cfg.douglas_peucker_marigin);
             }

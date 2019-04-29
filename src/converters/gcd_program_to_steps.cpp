@@ -27,9 +27,10 @@
 namespace raspigcd {
 namespace converters {
 
-inline void smart_append(std::list<raspigcd::hardware::multistep_command>& fragment, const raspigcd::hardware::multistep_commands_t& steps_todo)
+//inline void smart_append(std::list<raspigcd::hardware::multistep_command>& fragment, const raspigcd::hardware::multistep_commands_t& steps_todo)
+auto smart_append = [](auto& fragment, const raspigcd::hardware::multistep_commands_t& steps_todo) -> void 
 {
-    for (auto e : steps_todo) {
+/*    for (auto e : steps_todo) {
         if (e.count > 0) {
             if ((fragment.size() == 0) ||
                 !(multistep_command_same_command(e, fragment.back()))) {
@@ -41,6 +42,26 @@ inline void smart_append(std::list<raspigcd::hardware::multistep_command>& fragm
                     fragment.back().count += e.count;
                 }
             }
+        }
+    } */
+    std::size_t i0 = 0;
+    auto e = steps_todo[i0];
+    if (e.count > 0) {
+        if ((fragment.size() == 0) ||
+            !(multistep_command_same_command(e, fragment.back()))) {
+            fragment.push_back(e);
+            i0++;
+        }
+    }
+    for (std::size_t i = i0 ; i< steps_todo.size() ;i++) {
+        e = steps_todo[i];
+        if (e.count > 0) {
+                if (fragment.back().count > 0x0fffffff) {
+                    fragment.push_back(e);
+                } else {
+                    fragment.back().count += e.count;
+                }
+            
         }
     }
 };
@@ -251,6 +272,104 @@ hardware::multistep_commands_t bezier_spline_program_to_steps(
 
 
 
+hardware::multistep_commands_t linear_interpolation_to_steps(
+    const gcd::program_t& prog_,
+    const configuration::actuators_organization& conf_,
+    hardware::motor_layout& ml_,
+    const gcd::block_t initial_state_, // = {{'F',0}},
+    std::function<void(const gcd::block_t)> finish_callback_f_)
+{
+    double arc_length = 0.5;
+
+
+    using namespace raspigcd::hardware;
+    using namespace raspigcd::gcd;
+    using namespace raspigcd::movement::simple_steps;
+    using namespace movement::physics;
+
+    // std::cout << back_to_gcode({prog_}) << std::endl;
+
+    gcd::block_t state = initial_state_;
+    double dt = ((double)conf_.tick_duration_us) / 1000000.0;
+    std::vector<distance_with_velocity_t> distances;
+    distances.reserve(1000000);
+
+    distances.push_back(block_to_distance_with_v_t(state));
+    for (const auto& block : prog_) {
+        finish_callback_f_(state);
+        auto next_state = gcd::merge_blocks(state, block);
+
+        if (next_state.at('G') == 92) {
+            // change position, but not generate steps
+            throw std::invalid_argument("G92 is not supported in spline mode");
+        } else if (next_state.at('G') == 4) {
+            throw std::invalid_argument("G4 is not supported in spline mode");
+        } else if ((next_state.at('G') == 1) || (next_state.at('G') == 0)) {
+            distances.push_back(block_to_distance_with_v_t(next_state));
+        }
+        state = next_state;
+    }
+    finish_callback_f_(state);
+    distances.shrink_to_fit();
+    //distances = optimize_path_dp(distances, std::max(arc_length * 0.5, 0.01));
+    // remove nodes that are touching each other (by using its average coordinate)
+    distances = [&distances, &arc_length]() {
+        std::vector<distance_with_velocity_t> ret;
+        ret.reserve(distances.size());
+        distance_with_velocity_t* prev = nullptr;
+        for (auto& e : distances) {
+            if (prev != nullptr) {
+                distance_t a = {(*prev)[0], (*prev)[1], (*prev)[2]};
+                distance_t b = {e[0], e[1], e[2]};
+                if ((b - a).length() >= arc_length * e[3]) {
+                    ret.push_back(e);
+                } else {
+                    ret.back() = e;
+                }
+            } else {
+                ret.push_back(e);
+            }
+            prev = &e;
+        }
+        ret.shrink_to_fit();
+        return ret;
+    }();
+
+    state = initial_state_;
+    distance_with_velocity_t pp0 = distances.front();
+    steps_t pos_from_steps = ml_.cartesian_to_steps({pp0[0], pp0[1], pp0[2], pp0[3]});
+    steps_t pos_to_steps = ml_.cartesian_to_steps({pp0[0], pp0[1], pp0[2], pp0[3]});
+    std::list<multistep_command> fragment; // fraagment of the commands list generated in this stage
+    for (auto& pp : distances) {
+        pp.back() = std::max(pp.back(), 0.01); // make v more reasonable
+    }
+    std::vector<multistep_command> result;
+    result.reserve(200000000);
+    follow_path_with_velocity<5>(distances, [&](const distance_with_velocity_t& position) {
+        //if (!(position == pp0)) {
+            distance_t dest_pos = {position[0], position[1], position[2], position[3]};
+            multistep_commands_t steps_todo;
+
+            pos_to_steps = ml_.cartesian_to_steps(dest_pos);
+            chase_steps(steps_todo, pos_from_steps, pos_to_steps);
+            smart_append(result, steps_todo);
+            //result.insert(result.end(), steps_todo.begin(), steps_todo.end());
+            if (result.size() > 1024 * 1024 * 64) {
+                std::cerr << "bezier_spline_program_to_steps: problem in generating steps - the size is too big: " << result.size() << "; p: " << position << std::endl;
+                throw std::invalid_argument("bezier_spline_program_to_steps: problem in generating steps - the size is too big");
+            }
+            pos_from_steps = pos_to_steps;
+        //}
+    },
+        dt, 0.025
+);
+    //return collapse_repeated_steps(result);
+    result.shrink_to_fit();
+    return result; //std::vector<multistep_command> (result.begin(), result.end());
+
+}
+
+
 
 program_to_steps_f_t program_to_steps_factory(const std::string f_name)
 {
@@ -260,10 +379,10 @@ program_to_steps_f_t program_to_steps_factory(const std::string f_name)
     if (f_name == "bezier_spline") {
         return bezier_spline_program_to_steps;
     }
-    //if (f_name == "linear_interpolation") {
-    //    return linear_interpolation_to_steps;
-    //}
-    throw std::invalid_argument("bad function name");
+    if (f_name == "linear_interpolation") {
+        return linear_interpolation_to_steps;
+    }
+    throw std::invalid_argument("bad function name - available are program_to_steps bezier_spline linear_interpolation");
 }
 
 

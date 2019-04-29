@@ -46,27 +46,43 @@ void follow_path_with_velocity(
     const double min_velocity
 ) {
     if (path_points_with_velocity.size() > 0) {
-        double curr_dist = 0.0;
         auto pos = path_points_with_velocity.front();
+        double curr_dist = 0.0;
+        auto current_velocity = pos.back(); 
         generic_position_t<double, N> ndistv;
         for (unsigned i = 0; i < path_points_with_velocity.size();) {
-            auto current_point = path_points_with_velocity[i].back(); 
-            if (current_point < min_velocity) {
-                std::cerr << "beizer_spline: velocity too small [" << i << "] " << path_points_with_velocity[i] << std::endl;
-                current_point = min_velocity;
+            if (current_velocity < min_velocity) {
+                std::cerr << "beizer_spline: velocity too small [" << i << "] " << pos << std::endl;
+                current_velocity = min_velocity;
             }
-            double target_dist = current_point * dt;
-            ndistv = path_points_with_velocity[i] - pos;
+            double target_dist = current_velocity * dt; // s = v * t
+            ndistv = path_points_with_velocity[i] - pos; // distance to go between points
             ndistv.back() = 0;
             double ndist = ndistv.length();
             if ((curr_dist + ndist) >= target_dist) {
                 auto mv = (ndistv / ndist) * (target_dist - curr_dist);
                 pos = pos + mv;
+                
+                auto segment_vect = path_points_with_velocity[i] - path_points_with_velocity[i-1];
+                auto dist_to_first = pos - path_points_with_velocity[i-1];
+                auto dist_to_second = path_points_with_velocity[i] - pos;
+                dist_to_first.back() = 0;
+                dist_to_second.back() = 0;
+                segment_vect.back() = 0;
+                pos.back() = (dist_to_first.length()*path_points_with_velocity[i].back() + 
+                             dist_to_second.length()*path_points_with_velocity[i-1].back())/
+                             segment_vect.length();
+
+
+                //pos.back() = path_points_with_velocity[i].back(); // velocity
+                
+                current_velocity = pos.back();
                 on_point(pos);
                 curr_dist = 0.0;
             } else {
                 curr_dist += ndist;
                 pos = path_points_with_velocity[i];
+                current_velocity = pos.back();
                 i++;
             }
         }
