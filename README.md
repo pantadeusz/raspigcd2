@@ -1,5 +1,12 @@
 # raspigcd2
 
+## WARNING
+
+The developement was moved to [raspigcd v2.0.1.alpha](https://github.com/pantadeusz/raspigcd/tree/v2.0.1.alpha) and will be merged into [master](https://github.com/pantadeusz/raspigcd) after testing and polishing.
+
+## About this repo
+
+
 [![Build Status](https://travis-ci.org/pantadeusz/raspigcd2.svg?branch=master)](https://travis-ci.org/pantadeusz/raspigcd2)
 
 The second attempt to raspberry pi gcode interpreter
